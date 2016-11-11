@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<configuration status="OFF">
+    <appenders>
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{HH:mm:ss.SSS} [%t] %-5level %logger{36} - %msg%n"/>
+        </Console>
+    </appenders>
+    <loggers>
+        <root level="warn">
+            <appender-ref ref="Console"/>
+        </root>
+        <Logger name="bazahe" level="info"/>
+        <Logger name="bazahe.httpproxy" level="debug"/>
+    </loggers>
+</configuration>
