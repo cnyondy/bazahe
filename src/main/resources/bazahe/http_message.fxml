@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.TextArea?>
+<fx:root type="javafx.scene.control.SplitPane" xmlns:fx="http://javafx.com/fxml">
+    <TextArea fx:id="headerText"></TextArea>
+    <TextArea fx:id="bodyText"></TextArea>
+</fx:root>

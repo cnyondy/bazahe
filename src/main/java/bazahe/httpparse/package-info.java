@@ -1,9 +1,9 @@
 /**
- * Simple multi thread Http proxy impl
+ * Http parsers
  *
  * @author Liu Dong
  */
 @ParametersAreNonnullByDefault
-package bazahe.httpproxy;
+package bazahe.httpparse;
 
 import javax.annotation.ParametersAreNonnullByDefault;

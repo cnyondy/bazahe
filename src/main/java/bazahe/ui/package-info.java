@@ -1,9 +1,9 @@
 /**
- * Simple multi thread Http proxy impl
+ * JavaFX UI logics
  *
  * @author Liu Dong
  */
 @ParametersAreNonnullByDefault
-package bazahe.httpproxy;
+package bazahe.ui;
 
 import javax.annotation.ParametersAreNonnullByDefault;

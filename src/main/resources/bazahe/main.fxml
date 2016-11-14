@@ -1,25 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import bazahe.ui.HttpMessagePane?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Text?>
-<GridPane xmlns:fx="http://javafx.com/fxml" fx:id="gridPane"
-          fx:controller="bazahe.controller.MainController" alignment="center" hgap="10" vgap="10">
+<?import javafx.scene.layout.VBox?>
+<VBox xmlns:fx="http://javafx.com/fxml" fx:id="root" fx:controller="bazahe.ui.MainController">
     <padding>
-        <Insets top="25" right="25" bottom="10" left="25"/>
+        <Insets></Insets>
     </padding>
-    <Text text="Welcome" GridPane.columnIndex="0" GridPane.rowIndex="0" GridPane.columnSpan="2"/>
-
-    <Label text="User Name:" GridPane.columnIndex="0" GridPane.rowIndex="1"/>
-    <TextField GridPane.columnIndex="1" GridPane.rowIndex="1"/>
-
-    <Label text="Password:" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
-    <PasswordField fx:id="passwordField" GridPane.columnIndex="1" GridPane.rowIndex="2"/>
-
-    <HBox spacing="10" alignment="bottom_right"
-          GridPane.columnIndex="1" GridPane.rowIndex="4">
-        <Button text="Sign In" onAction="#handleSubmitButtonAction"/>
-    </HBox>
-
-    <Text fx:id="actionTarget" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.halignment="RIGHT"
-          GridPane.rowIndex="6"/>
-</GridPane>
+    <ToolBar>
+        <Button onAction="#configureProxy" fx:id="proxyConfigureButton">Proxy</Button>
+        <Button onAction="#proxyControl" fx:id="proxyControlButton">Start</Button>
+    </ToolBar>
+    <SplitPane prefHeight="${root.height}" fx:id="splitPane">
+        <VBox SplitPane.resizableWithParent="false">
+            <ListView fx:id="requestList" prefHeight="${splitPane.height}"/>
+        </VBox>
+        <HttpMessagePane fx:id="requestPane"/>
+        <HttpMessagePane fx:id="responsePane"/>
+    </SplitPane>
+</VBox>

@@ -1,9 +1,9 @@
-package bazahe;
+package bazahe.ui;
 
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
+import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.layout.Pane;
 import javafx.stage.Stage;
 
 /**
@@ -13,9 +13,9 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        Pane pane = FXMLLoader.load(getClass().getResource("/bazahe/main.fxml"));
-        Scene scene = new Scene(pane, 300, 275);
-        stage.setTitle("FXML Welcome");
+        Parent parent = FXMLLoader.load(getClass().getResource("/bazahe/main.fxml"));
+        Scene scene = new Scene(parent, 1024, 768);
+        stage.setTitle("Bazahe");
         stage.setScene(scene);
         stage.show();
     }
