@@ -4,7 +4,6 @@ import bazahe.exception.HttpParserException;
 import net.dongliu.commons.collection.Lists;
 
 import javax.annotation.Nullable;
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -15,10 +14,12 @@ import java.util.List;
  *
  * @author Liu Dong
  */
-public class HttpInputStream extends BufferedInputStream {
+public class HttpInputStream extends InputStream {
+    private volatile boolean closed;
+    private final InputStream inputStream;
 
     public HttpInputStream(InputStream input) {
-        super(input);
+        this.inputStream = input;
     }
 
     private final byte[] lineBuffer = new byte[65536];
@@ -30,10 +31,15 @@ public class HttpInputStream extends BufferedInputStream {
      */
     @Nullable
     public String readLine() throws IOException {
+        if (this.line != null) {
+            String line = this.line;
+            this.line = null;
+            return line;
+        }
         int count = 0;
         boolean flag = false;
         while (true) {
-            int c = super.read();
+            int c = read();
             if (c == -1) {
                 break;
             }
@@ -56,6 +62,18 @@ public class HttpInputStream extends BufferedInputStream {
         return new String(lineBuffer, 0, count - 1, StandardCharsets.US_ASCII);
     }
 
+    @Nullable
+    private volatile String line;
+
+    /**
+     * Hacker for putback request line... do not relay on this method
+     */
+    public void putBackLine(String line) {
+        if (this.line != null) {
+            throw new IllegalStateException();
+        }
+        this.line = line;
+    }
 
     /**
      * Read http request header.
@@ -78,7 +96,7 @@ public class HttpInputStream extends BufferedInputStream {
      * @return null if reach end of input stream
      */
     @Nullable
-    public ResponseHeaders readReponseHeaders() throws IOException {
+    public ResponseHeaders readResponseHeaders() throws IOException {
         String line = readLine();
         if (line == null) {
             return null;
@@ -102,6 +120,57 @@ public class HttpInputStream extends BufferedInputStream {
             rawHeaders.add(line);
         }
         return rawHeaders;
+    }
+
+
+    @Override
+    public int read() throws IOException {
+        return inputStream.read();
+    }
+
+    @Override
+    public int read(byte[] b) throws IOException {
+        return inputStream.read(b);
+    }
+
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+        return inputStream.read(b, off, len);
+    }
+
+    @Override
+    public long skip(long n) throws IOException {
+        return inputStream.skip(n);
+    }
+
+    @Override
+    public int available() throws IOException {
+        return inputStream.available();
+    }
+
+    @Override
+    public void mark(int readlimit) {
+        inputStream.mark(readlimit);
+    }
+
+    @Override
+    public void reset() throws IOException {
+        inputStream.reset();
+    }
+
+    @Override
+    public boolean markSupported() {
+        return inputStream.markSupported();
+    }
+
+    @Override
+    public void close() throws IOException {
+        super.close();
+        closed = true;
+    }
+
+    public boolean isClosed() {
+        return closed;
     }
 
     /**

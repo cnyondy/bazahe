@@ -6,7 +6,7 @@
 <?import javafx.scene.layout.VBox?>
 <VBox xmlns:fx="http://javafx.com/fxml" fx:id="root" fx:controller="bazahe.ui.MainController">
     <padding>
-        <Insets></Insets>
+        <Insets/>
     </padding>
     <ToolBar>
         <Button onAction="#configureProxy" fx:id="proxyConfigureButton">Proxy</Button>
@@ -14,9 +14,8 @@
     </ToolBar>
     <SplitPane prefHeight="${root.height}" fx:id="splitPane">
         <VBox SplitPane.resizableWithParent="false">
-            <ListView fx:id="requestList" prefHeight="${splitPane.height}"/>
+            <ListView fx:id="requestList" VBox.vgrow="ALWAYS" maxWidth="Infinity" maxHeight="Infinity"/>
         </VBox>
-        <HttpMessagePane fx:id="requestPane"/>
-        <HttpMessagePane fx:id="responsePane"/>
+        <HttpMessagePane fx:id="httpMessagePane" visible="false"/>
     </SplitPane>
 </VBox>

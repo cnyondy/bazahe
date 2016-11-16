@@ -2,9 +2,15 @@ package bazahe.ui;
 
 import bazahe.httpparse.RequestHeaders;
 import bazahe.httpparse.RequestLine;
+import bazahe.httpproxy.ProxyServer;
+import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Button;
+import javafx.scene.control.ListCell;
+import javafx.scene.control.ListView;
+import javafx.scene.control.SplitPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 
 /**
@@ -12,7 +18,9 @@ import javafx.scene.layout.VBox;
  */
 public class MainController {
     @FXML
-    private ListView<RequestListItem> requestList;
+    private StackPane contentPane;
+    @FXML
+    private ListView<HttpMessage> requestList;
     @FXML
     private VBox root;
     @FXML
@@ -22,12 +30,11 @@ public class MainController {
     @FXML
     private Button proxyControlButton;
     @FXML
-    private HttpMessagePane requestPane;
-    @FXML
-    private HttpMessagePane responsePane;
+    private HttpMessagePane httpMessagePane;
 
     private boolean proxyStart;
-    private ProxyService proxyService;
+
+    private volatile ProxyServer proxyServer;
 
     @FXML
     void configureProxy(ActionEvent e) {
@@ -44,32 +51,43 @@ public class MainController {
 
     private void startProxy() {
         proxyStart = true;
-        proxyControlButton.setText("Stop");
         proxyConfigureButton.setDisable(true);
-        proxyService = new ProxyService();
-        proxyService.setHttpMessageListener(new UIHttpMessageListener(item -> requestList.getItems().add(item)));
-        proxyService.start();
+        proxyControlButton.setDisable(true);
+        proxyServer = new ProxyServer(1024);
+        proxyServer.setHttpMessageListener(new UIHttpMessageListener(item -> requestList.getItems().add(item)));
+        new Thread(() -> {
+            proxyServer.start();
+            Platform.runLater(() -> {
+                proxyControlButton.setText("Stop");
+                proxyControlButton.setDisable(false);
+            });
+        }).start();
     }
 
     private void stopProxy() {
         proxyStart = false;
-        proxyControlButton.setText("Start");
-        proxyConfigureButton.setDisable(false);
-        if (!proxyService.cancel()) {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setTitle("Error");
-            alert.setHeaderText("Stop proxy error");
-            alert.setContentText("Cannot stop proxy; Please restart the application manually");
-            alert.showAndWait();
-        }
+        proxyControlButton.setDisable(true);
+        new Thread(() -> {
+            proxyServer.stop();
+            Platform.runLater(() -> {
+                proxyControlButton.setText("Start");
+                proxyControlButton.setDisable(false);
+                proxyConfigureButton.setDisable(false);
+            });
+        }).start();
     }
 
     @FXML
     void initialize() {
+        AppResources.registerTask(() -> {
+            if (proxyServer != null) {
+                proxyServer.stop();
+            }
+        });
         splitPane.setDividerPositions(0.2, 0.6);
-        requestList.setCellFactory(param -> new ListCell<RequestListItem>() {
+        requestList.setCellFactory(param -> new ListCell<HttpMessage>() {
             @Override
-            protected void updateItem(RequestListItem item, boolean empty) {
+            protected void updateItem(HttpMessage item, boolean empty) {
                 super.updateItem(item, empty);
 
                 if (empty) {
@@ -77,15 +95,20 @@ public class MainController {
                 } else {
                     RequestHeaders requestHeaders = item.getRequestHeaders();
                     RequestLine requestLine = requestHeaders.getRequestLine();
-                    String text = requestLine.getMethod() + " " + requestLine.getUrl();
+                    String text;
+                    if (requestLine.getUrl().startsWith("http")) {
+                        text = requestLine.getMethod() + " " + requestLine.getUrl();
+                    } else {
+                        text = requestLine.getMethod() + " " + requestHeaders.getFirst("Host") + requestLine.getUrl();
+                    }
                     setText(text);
                 }
             }
         });
         requestList.getSelectionModel().selectedItemProperty().addListener((ov, oldValue, newValue) -> {
-            requestPane.setValues(newValue.getRequestHeaders(), newValue.getRequestBody());
-            if (newValue.getResponseHeaders() != null) {
-                responsePane.setValues(newValue.getResponseHeaders(), newValue.getResponseBody());
+            httpMessagePane.httpMessageProperty().set(newValue);
+            if (!httpMessagePane.visibleProperty().get()) {
+                httpMessagePane.setVisible(true);
             }
         });
     }

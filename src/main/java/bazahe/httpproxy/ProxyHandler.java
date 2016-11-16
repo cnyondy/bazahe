@@ -5,6 +5,7 @@ import bazahe.httpparse.HttpOutputStream;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.net.Socket;
 
 /**
  * Proxy handler
@@ -13,6 +14,6 @@ import java.io.IOException;
  */
 public interface ProxyHandler {
 
-    void handle(String rawRequestLine, HttpInputStream input, HttpOutputStream output,
+    void handle(Socket socket, HttpInputStream input, HttpOutputStream output,
                 @Nullable HttpMessageListener httpMessageListener) throws IOException;
 }

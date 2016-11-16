@@ -17,7 +17,7 @@ import javax.annotation.Nullable;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-public class RequestListItem {
+public class HttpMessage {
     private volatile String id;
     private volatile RequestHeaders requestHeaders;
     private volatile HttpBodyStore requestBody;

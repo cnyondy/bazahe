@@ -10,6 +10,7 @@ import net.dongliu.commons.io.Closeables;
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 /**
  * Proxy workers
@@ -52,9 +53,12 @@ public class ProxyWorker implements Runnable {
             } else {
                 handler = new CommonProxyHandler();
             }
-            handler.handle(rawRequestLine, input, output, httpMessageListener);
+            input.putBackLine(rawRequestLine);
+            handler.handle(socket, input, output, httpMessageListener);
         } catch (HttpParserException e) {
             log.error("Illegal http data", e);
+        } catch (SocketTimeoutException e) {
+            log.debug("Timeout", e);
         } catch (IOException e) {
             log.error("IO error", e);
         } catch (Exception e) {
@@ -62,9 +66,5 @@ public class ProxyWorker implements Runnable {
         } finally {
             Closeables.closeQuietly(input, output, socket);
         }
-    }
-
-    private void sendError(int status) {
-
     }
 }

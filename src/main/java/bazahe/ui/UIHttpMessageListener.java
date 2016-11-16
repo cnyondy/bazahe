@@ -1,8 +1,8 @@
 package bazahe.ui;
 
-import bazahe.httpproxy.HttpMessageListener;
 import bazahe.httpparse.RequestHeaders;
 import bazahe.httpparse.ResponseHeaders;
+import bazahe.httpproxy.HttpMessageListener;
 import bazahe.store.HttpBodyStore;
 import javafx.application.Platform;
 import lombok.extern.log4j.Log4j2;
@@ -19,21 +19,21 @@ import java.util.function.Consumer;
  */
 @Log4j2
 public class UIHttpMessageListener implements HttpMessageListener {
-    private final Consumer<RequestListItem> consumer;
-    private final ConcurrentMap<String, RequestListItem> map;
+    private final Consumer<HttpMessage> consumer;
+    private final ConcurrentMap<String, HttpMessage> map;
 
-    public UIHttpMessageListener(Consumer<RequestListItem> consumer) {
+    public UIHttpMessageListener(Consumer<HttpMessage> consumer) {
         this.consumer = consumer;
         this.map = new ConcurrentHashMap<>();
     }
 
     @Override
     public OutputStream onRequest(String id, RequestHeaders requestHeaders) {
-        RequestListItem item = new RequestListItem();
+        HttpMessage item = new HttpMessage();
         item.setId(id);
         this.map.put(id, item);
         item.setRequestHeaders(requestHeaders);
-        HttpBodyStore bodyStore = new HttpBodyStore();
+        HttpBodyStore bodyStore = new HttpBodyStore(requestHeaders.contentType(), requestHeaders.contentEncoding());
         item.setRequestBody(bodyStore);
         Platform.runLater(() -> consumer.accept(item));
         return bodyStore;
@@ -41,13 +41,13 @@ public class UIHttpMessageListener implements HttpMessageListener {
 
     @Override
     public OutputStream onResponse(String id, ResponseHeaders responseHeaders) {
-        RequestListItem item = this.map.get(id);
+        HttpMessage item = this.map.get(id);
         if (item == null) {
             log.error("Cannot found request item for id: {]", id);
             return null;
         }
         item.setResponseHeaders(responseHeaders);
-        HttpBodyStore bodyStore = new HttpBodyStore();
+        HttpBodyStore bodyStore = new HttpBodyStore(responseHeaders.contentType(), responseHeaders.contentEncoding());
         item.setResponseBody(bodyStore);
         return bodyStore;
     }

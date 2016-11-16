@@ -21,7 +21,7 @@ class ObservableInputStream extends FilterInputStream {
 
     @Override
     public int read() throws IOException {
-        int v = super.read();
+        int v = in.read();
         if (v != -1) {
             output.write(v);
         }
@@ -30,7 +30,7 @@ class ObservableInputStream extends FilterInputStream {
 
     @Override
     public int read(byte[] b) throws IOException {
-        int n = super.read(b);
+        int n = in.read(b);
         if (n > 0) {
             output.write(b, 0, n);
         }
@@ -39,7 +39,7 @@ class ObservableInputStream extends FilterInputStream {
 
     @Override
     public int read(byte[] b, int off, int len) throws IOException {
-        int n = super.read(b, off, len);
+        int n = in.read(b, off, len);
         if (n > 0) {
             output.write(b, off, n);
         }
@@ -49,6 +49,6 @@ class ObservableInputStream extends FilterInputStream {
     @Override
     public void close() throws IOException {
         Closeables.closeQuietly(output);
-        super.close();
+        in.close();
     }
 }

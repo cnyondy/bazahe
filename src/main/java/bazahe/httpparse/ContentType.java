@@ -17,12 +17,14 @@ import java.nio.charset.Charset;
 public class ContentType {
 
     public static final ContentType UNKNOWN = new ContentType("", null);
-    private final String type;
+    private final String rawMimeType;
+    private final MimeType mimeType;
     @Nullable
     private final Charset charset;
 
-    public ContentType(String type, @Nullable Charset charset) {
-        this.type = type;
+    public ContentType(String rawMimeType, @Nullable Charset charset) {
+        this.rawMimeType = rawMimeType;
+        this.mimeType = MimeType.parse(rawMimeType);
         this.charset = charset;
     }
 
@@ -45,6 +47,11 @@ public class ContentType {
     }
 
     public boolean isText() {
-        return Strings.containsAny(type, "html", "text", "json", "xml");
+        return Strings.equalsAnyIgnoreCase(mimeType.getType(), "text")
+                || Strings.equalsAnyIgnoreCase(mimeType.getSubType(), "json", "x-www-form-urlencoded", "xml");
+    }
+
+    public boolean isImage() {
+        return mimeType.getType().equals("image");
     }
 }

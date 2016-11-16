@@ -16,6 +16,7 @@ import java.util.List;
  */
 public class HttpOutputStream extends OutputStream {
     private final OutputStream output;
+    private volatile boolean closed;
 
     public HttpOutputStream(OutputStream output) {
         this.output = output;
@@ -98,6 +99,11 @@ public class HttpOutputStream extends OutputStream {
     @Override
     public void close() throws IOException {
         output.close();
+        closed = true;
+    }
+
+    public boolean isClosed() {
+        return closed;
     }
 
     /**

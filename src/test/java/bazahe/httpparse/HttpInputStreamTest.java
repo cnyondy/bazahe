@@ -46,6 +46,6 @@ public class HttpInputStreamTest {
     private ResponseHeaders mockResponse() {
         @Cleanup InputStream input = getClass().getResourceAsStream("/resp.txt");
         @Cleanup HttpInputStream httpInputStream = new HttpInputStream(input);
-        return httpInputStream.readReponseHeaders();
+        return httpInputStream.readResponseHeaders();
     }
 }
