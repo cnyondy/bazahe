@@ -1,17 +1,15 @@
-package bazahe.ui;
+package bazahe.ui.controller;
 
+import bazahe.def.HttpMessage;
 import bazahe.httpparse.ContentType;
 import bazahe.httpparse.Headers;
 import bazahe.httpparse.ResponseHeaders;
 import bazahe.store.HttpBodyStore;
-import bazahe.ui.converter.AllTextMessageConverter;
-import bazahe.ui.converter.JsonTextMessageConverter;
+import bazahe.ui.TextMessageConverter;
+import bazahe.ui.pane.HttpMessagePane;
 import javafx.beans.property.ObjectProperty;
-import javafx.beans.property.SimpleObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.fxml.FXMLLoader;
-import javafx.geometry.Orientation;
 import javafx.scene.control.*;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
@@ -19,7 +17,6 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import lombok.SneakyThrows;
-import lombok.extern.log4j.Log4j2;
 import net.dongliu.commons.Joiner;
 import net.dongliu.commons.RefValues;
 import net.dongliu.commons.Strings;
@@ -35,8 +32,9 @@ import java.util.List;
 /**
  * @author Liu Dong
  */
-@Log4j2
-public class HttpMessagePane extends SplitPane {
+public class HttpMessageController {
+    @FXML
+    private HttpMessagePane root;
     @FXML
     private TextArea requestsHeaderText;
     @FXML
@@ -45,22 +43,14 @@ public class HttpMessagePane extends SplitPane {
     private BorderPane bodyPane;
     @FXML
     private ToggleGroup selectBody;
-    private ObjectProperty<HttpMessage> httpMessageProperty = new SimpleObjectProperty<>();
-
-    private static List<TextMessageConverter> messageConverters;
-
-    static {
-        messageConverters = Lists.of(
-                new JsonTextMessageConverter(),
-                new AllTextMessageConverter()
-        );
-    }
-
-    private static Joiner joiner = Joiner.of("\n");
 
     @FXML
     void initialize() {
-        this.setDividerPositions(0.4);
+        Joiner joiner = Joiner.of("\n");
+        ObjectProperty<HttpMessage> httpMessageProperty = root.httpMessageProperty();
+        if (httpMessageProperty == null) {
+            return;
+        }
         httpMessageProperty.addListener((o, old, newValue) -> {
             requestsHeaderText.setText(joiner.join(newValue.getRequestHeaders().getRawHeaders()));
             ResponseHeaders responseHeaders = newValue.getResponseHeaders();
@@ -78,6 +68,7 @@ public class HttpMessagePane extends SplitPane {
     }
 
     private void setSelectBody(Toggle toggle) {
+        ObjectProperty<HttpMessage> httpMessageProperty = root.httpMessageProperty();
         Object userData = toggle.getUserData();
         Headers headers;
         HttpBodyStore bodyStore;
@@ -123,6 +114,7 @@ public class HttpMessagePane extends SplitPane {
         }
 
         // textual body
+        List<TextMessageConverter> messageConverters = root.getMessageConverters();
         TextMessageConverter converter = Lists.findFirst(messageConverters, c -> c.accept(contentType));
         if (converter != null) {
             String text = converter.convert(bodyStore.getInputStream(), contentType);
@@ -142,23 +134,10 @@ public class HttpMessagePane extends SplitPane {
         bodyPane.setCenter(t);
     }
 
-
-    public ObjectProperty<HttpMessage> httpMessageProperty() {
-        return httpMessageProperty;
-    }
-
-    @SneakyThrows
-    public HttpMessagePane() {
-        setOrientation(Orientation.HORIZONTAL);
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/bazahe/http_message.fxml"));
-        fxmlLoader.setRoot(this);
-        fxmlLoader.setController(this);
-        fxmlLoader.load();
-    }
-
     @FXML
     @SneakyThrows
     void exportBody(ActionEvent e) {
+        ObjectProperty<HttpMessage> httpMessageProperty = root.httpMessageProperty();
         Toggle toggle = selectBody.selectedToggleProperty().get();
         HttpBodyStore bodyStore;
         if ("RequestBody".equals(toggle.getUserData())) {
@@ -176,18 +155,12 @@ public class HttpMessagePane extends SplitPane {
         }
 
         FileChooser fileChooser = new FileChooser();
-        File file = fileChooser.showSaveDialog(getScene().getWindow());
+        File file = fileChooser.showSaveDialog(requestsHeaderText.getScene().getWindow());
         try (OutputStream out = new FileOutputStream(file)) {
             InputOutputs.copy(bodyStore.getInputStream(), out);
         }
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setContentText("Export Finished!");
         alert.showAndWait();
-    }
-
-    public void clear() {
-        requestsHeaderText.setText("");
-        responseHeaderText.setText("");
-        bodyPane.setCenter(new Text());
     }
 }

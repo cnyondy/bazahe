@@ -1,8 +1,14 @@
-package bazahe.ui;
+package bazahe.ui.controller;
 
+import bazahe.def.HttpMessage;
+import bazahe.def.ProxyConfig;
 import bazahe.httpparse.RequestHeaders;
 import bazahe.httpparse.RequestLine;
 import bazahe.httpproxy.ProxyServer;
+import bazahe.ui.AppResources;
+import bazahe.ui.UIHttpMessageListener;
+import bazahe.ui.pane.HttpMessagePane;
+import bazahe.ui.pane.ProxyConfigDialog;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -12,6 +18,8 @@ import javafx.scene.control.ListView;
 import javafx.scene.control.SplitPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+
+import java.util.Optional;
 
 /**
  * @author Liu Dong
@@ -35,9 +43,16 @@ public class MainController {
     private boolean proxyStart;
 
     private volatile ProxyServer proxyServer;
+    private ProxyConfig config;
 
     @FXML
     void configureProxy(ActionEvent e) {
+        ProxyConfigDialog dialog = new ProxyConfigDialog();
+        dialog.proxyConfigProperty().setValue(config);
+        Optional<ProxyConfig> newConfig = dialog.showAndWait();
+        if (newConfig.isPresent()) {
+            config = newConfig.get();
+        }
     }
 
     @FXML
@@ -53,7 +68,7 @@ public class MainController {
         proxyStart = true;
         proxyConfigureButton.setDisable(true);
         proxyControlButton.setDisable(true);
-        proxyServer = new ProxyServer(1024);
+        proxyServer = new ProxyServer(config);
         proxyServer.setHttpMessageListener(new UIHttpMessageListener(item -> requestList.getItems().add(item)));
         new Thread(() -> {
             proxyServer.start();
@@ -111,6 +126,7 @@ public class MainController {
                 httpMessagePane.setVisible(true);
             }
         });
+        config = ProxyConfig.getDefault();
     }
 
 }

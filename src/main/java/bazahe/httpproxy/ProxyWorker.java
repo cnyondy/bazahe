@@ -24,12 +24,15 @@ public class ProxyWorker implements Runnable {
     private final HttpOutputStream output;
     @Nullable
     private final HttpMessageListener httpMessageListener;
+    private final String keyStorePath;
 
-    public ProxyWorker(Socket socket, @Nullable HttpMessageListener httpMessageListener) throws IOException {
+    public ProxyWorker(Socket socket, @Nullable HttpMessageListener httpMessageListener, String keyStorePath)
+            throws IOException {
         this.socket = socket;
         this.input = new HttpInputStream(socket.getInputStream());
         this.output = new HttpOutputStream(socket.getOutputStream());
         this.httpMessageListener = httpMessageListener;
+        this.keyStorePath = keyStorePath;
     }
 
     @Override
@@ -49,7 +52,7 @@ public class ProxyWorker implements Runnable {
             }
             ProxyHandler handler;
             if (requestLine.getMethod().equalsIgnoreCase("CONNECT")) {
-                handler = new ConnectProxyHandler();
+                handler = new ConnectProxyHandler(keyStorePath);
             } else {
                 handler = new CommonProxyHandler();
             }

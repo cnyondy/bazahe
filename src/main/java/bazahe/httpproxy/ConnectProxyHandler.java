@@ -11,6 +11,7 @@ import net.dongliu.commons.concurrent.Lazy;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.*;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.Socket;
@@ -25,11 +26,13 @@ import java.security.SecureRandom;
  */
 @Log4j2
 public class ConnectProxyHandler extends Http1xHandler {
-    private final Lazy<SSLContext> sslContextLazy = Lazy.create(ConnectProxyHandler::createSSlContext);
+    private final Lazy<SSLContext> sslContextLazy = Lazy.create(this::createSSlContext);
 
     private String target;
+    private final String keyStorePath;
 
-    public ConnectProxyHandler() {
+    public ConnectProxyHandler(String keyStorePath) {
+        this.keyStorePath = keyStorePath;
     }
 
     @Override
@@ -67,9 +70,9 @@ public class ConnectProxyHandler extends Http1xHandler {
 
 
     @SneakyThrows
-    private static SSLContext createSSlContext() {
+    private SSLContext createSSlContext() {
         KeyStore keyStore = KeyStore.getInstance("JKS");
-        try (InputStream inputStream = ConnectProxyHandler.class.getResourceAsStream("/yourKEYSTORE")) {
+        try (InputStream inputStream = new FileInputStream(keyStorePath)) {
             keyStore.load(inputStream, "123456".toCharArray());
         }
 

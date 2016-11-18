@@ -1,5 +1,6 @@
 package bazahe.httpproxy;
 
+import bazahe.def.ProxyConfig;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
@@ -26,6 +27,8 @@ public class ProxyServer {
 
     private final String host;
     private final int port;
+    private final String keyStorePath;
+
     private volatile ServerSocket serverSocket;
     @Setter
     private volatile HttpMessageListener httpMessageListener;
@@ -34,13 +37,10 @@ public class ProxyServer {
     private volatile Thread masterThread;
     private final AtomicInteger threadCounter = new AtomicInteger();
 
-    public ProxyServer(int port) {
-        this("", port);
-    }
-
-    public ProxyServer(String host, int port) {
-        this.host = host;
-        this.port = port;
+    public ProxyServer(ProxyConfig config) {
+        this.host = config.getHost();
+        this.port = config.getPort();
+        this.keyStorePath = config.getKeyStore();
     }
 
     /**
@@ -93,7 +93,7 @@ public class ProxyServer {
             ProxyWorker worker;
             try {
                 socket.setSoTimeout(2000);
-                worker = new ProxyWorker(socket, httpMessageListener);
+                worker = new ProxyWorker(socket, httpMessageListener, keyStorePath);
             } catch (Exception e) {
                 Closeables.closeQuietly(socket);
                 log.error("Create new proxy worker failed.", e);
@@ -122,6 +122,6 @@ public class ProxyServer {
     }
 
     public static void main(String[] args) {
-        new ProxyServer(1024).run();
+        new ProxyServer(ProxyConfig.getDefault()).run();
     }
 }

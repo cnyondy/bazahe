@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import bazahe.ui.HttpMessagePane?>
+<?import bazahe.ui.pane.HttpMessagePane?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.VBox?>
-<VBox xmlns:fx="http://javafx.com/fxml" fx:id="root" fx:controller="bazahe.ui.MainController">
+<VBox xmlns:fx="http://javafx.com/fxml" fx:id="root" fx:controller="bazahe.ui.controller.MainController">
     <padding>
         <Insets/>
     </padding>

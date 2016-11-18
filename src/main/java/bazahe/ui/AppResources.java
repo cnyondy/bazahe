@@ -7,10 +7,10 @@ import java.util.List;
 /**
  * @author Liu Dong
  */
-class AppResources {
+public class AppResources {
     static final List<Runnable> tasks = Collections.synchronizedList(new ArrayList<>());
 
-    static void registerTask(Runnable runnable) {
+    public static void registerTask(Runnable runnable) {
         tasks.add(runnable);
     }
 }

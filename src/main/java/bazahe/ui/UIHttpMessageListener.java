@@ -1,5 +1,6 @@
 package bazahe.ui;
 
+import bazahe.def.HttpMessage;
 import bazahe.httpparse.RequestHeaders;
 import bazahe.httpparse.ResponseHeaders;
 import bazahe.httpproxy.HttpMessageListener;
