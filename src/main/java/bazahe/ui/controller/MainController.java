@@ -129,4 +129,8 @@ public class MainController {
         config = ProxyConfig.getDefault();
     }
 
+    @FXML
+    private void clearAll(ActionEvent actionEvent) {
+        requestList.getItems().clear();
+    }
 }

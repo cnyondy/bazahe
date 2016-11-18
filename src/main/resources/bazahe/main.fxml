@@ -3,7 +3,9 @@
 <?import bazahe.ui.pane.HttpMessagePane?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
+<?import javafx.scene.layout.FlowPane?>
 <?import javafx.scene.layout.VBox?>
+<?import javafx.scene.layout.HBox?>
 <VBox xmlns:fx="http://javafx.com/fxml" fx:id="root" fx:controller="bazahe.ui.controller.MainController">
     <padding>
         <Insets/>
@@ -14,6 +16,9 @@
     </ToolBar>
     <SplitPane prefHeight="${root.height}" fx:id="splitPane">
         <VBox SplitPane.resizableWithParent="false">
+            <HBox>
+                <Button text="Clear" onAction="#clearAll"/>
+            </HBox>
             <ListView fx:id="requestList" VBox.vgrow="ALWAYS" maxWidth="Infinity" maxHeight="Infinity"/>
         </VBox>
         <HttpMessagePane fx:id="httpMessagePane" visible="false"/>

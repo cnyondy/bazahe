@@ -24,7 +24,7 @@ public class ProxyConfig {
         ProxyConfig proxyConfig = new ProxyConfig();
         proxyConfig.setHost("");
         proxyConfig.setPort(1024);
-        proxyConfig.setKeyStore("bazahe.jks");
+        proxyConfig.setKeyStore("certificates/bazahe.jks");
         proxyConfig.setTimeout(60000);
         return proxyConfig;
     }

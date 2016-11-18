@@ -45,4 +45,5 @@ public class RequestHeaders extends Headers {
         return !"TRACE".equalsIgnoreCase(requestLine.getMethod())
                 && !"GET".equalsIgnoreCase(requestLine.getMethod());
     }
+
 }

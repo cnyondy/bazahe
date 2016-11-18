@@ -52,10 +52,10 @@ public class HttpMessageController {
             return;
         }
         httpMessageProperty.addListener((o, old, newValue) -> {
-            requestsHeaderText.setText(joiner.join(newValue.getRequestHeaders().getRawHeaders()));
+            requestsHeaderText.setText(joiner.join(newValue.getRequestHeaders().toRawLines()));
             ResponseHeaders responseHeaders = newValue.getResponseHeaders();
             if (responseHeaders != null) {
-                responseHeaderText.setText(joiner.join(responseHeaders.getRawHeaders()));
+                responseHeaderText.setText(joiner.join(responseHeaders.toRawLines()));
             }
 
             Toggle toggle = selectBody.selectedToggleProperty().get();
