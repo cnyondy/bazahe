@@ -9,7 +9,7 @@
         <Insets/>
     </padding>
     <ToolBar>
-        <Button onAction="#configureProxy" fx:id="proxyConfigureButton">Proxy</Button>
+        <Button onAction="#configureProxy" fx:id="proxyConfigureButton">Configure</Button>
         <Button onAction="#proxyControl" fx:id="proxyControlButton">Start</Button>
     </ToolBar>
     <SplitPane prefHeight="${root.height}" fx:id="splitPane">

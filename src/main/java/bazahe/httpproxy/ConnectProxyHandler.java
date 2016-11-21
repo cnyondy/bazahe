@@ -76,7 +76,7 @@ public class ConnectProxyHandler extends Http1xHandler {
 
 
     private KeyStore generateKeyStoreForSite(String domain) {
-        return appKeyStoreGeneratorLazy.get().generateKeyStore(domain, 365, appKeyStorePassword);
+        return appKeyStoreGeneratorLazy.get().generateKeyStore(domain, 10, appKeyStorePassword);
     }
 
     @SneakyThrows

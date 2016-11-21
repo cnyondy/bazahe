@@ -67,7 +67,7 @@ public class AppKeyStoreGenerator {
 
     @SneakyThrows
     public KeyStore generateKeyStore(String domain, int validityDays, char[] password) {
-        log.info("Generating certificate for domain {}, valid for {} days", domain, validityDays);
+        log.info("Generating certificate for domain {}", domain);
         // generate the key pair for the new certificate
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
         keyGen.initialize(2048, secureRandom);

@@ -24,7 +24,7 @@
     <Label text="KeyStorePassword" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
     <PasswordField fx:id="KeyStorePasswordField" GridPane.columnIndex="1" GridPane.rowIndex="5" prefWidth="250"/>
 
-    <Label text="KeyPassword" GridPane.columnIndex="0" GridPane.rowIndex="6"/>
+    <Label text="KeyAliasName" GridPane.columnIndex="0" GridPane.rowIndex="6"/>
     <TextField fx:id="aliasField" GridPane.columnIndex="1" GridPane.rowIndex="6" prefWidth="250"/>
 
 
