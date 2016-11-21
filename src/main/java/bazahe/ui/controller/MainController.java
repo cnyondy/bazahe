@@ -10,21 +10,24 @@ import bazahe.ui.UIHttpMessageListener;
 import bazahe.ui.pane.HttpMessagePane;
 import bazahe.ui.pane.ProxyConfigDialog;
 import javafx.application.Platform;
+import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
-import javafx.scene.control.ListCell;
-import javafx.scene.control.ListView;
-import javafx.scene.control.SplitPane;
+import javafx.scene.Node;
+import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
+import lombok.SneakyThrows;
 
+import java.net.URL;
 import java.util.Optional;
 
 /**
  * @author Liu Dong
  */
 public class MainController {
+    @FXML
+    private TreeView<RTreeItem> requestTree;
     @FXML
     private StackPane contentPane;
     @FXML
@@ -39,6 +42,8 @@ public class MainController {
     private Button proxyControlButton;
     @FXML
     private HttpMessagePane httpMessagePane;
+    @FXML
+    private CheckBox groupedCheckBox;
 
     private boolean proxyStart;
 
@@ -69,7 +74,10 @@ public class MainController {
         proxyConfigureButton.setDisable(true);
         proxyControlButton.setDisable(true);
         proxyServer = new ProxyServer(config);
-        proxyServer.setHttpMessageListener(new UIHttpMessageListener(item -> requestList.getItems().add(item)));
+        proxyServer.setHttpMessageListener(new UIHttpMessageListener(item -> {
+            requestList.getItems().add(item);
+            manifestTree(item);
+        }));
         new Thread(() -> {
             proxyServer.start();
             Platform.runLater(() -> {
@@ -99,6 +107,9 @@ public class MainController {
                 proxyServer.stop();
             }
         });
+        config = ProxyConfig.getDefault();
+
+
         splitPane.setDividerPositions(0.2, 0.6);
         requestList.setCellFactory(param -> new ListCell<HttpMessage>() {
             @Override
@@ -123,11 +134,85 @@ public class MainController {
                 httpMessagePane.setVisible(true);
             }
         });
-        config = ProxyConfig.getDefault();
+
+
+        TreeItem<RTreeItem> root = new TreeItem<>(new RTreeItem.Node(""));
+        root.setExpanded(true);
+        requestTree.setRoot(root);
+        requestTree.setShowRoot(false);
+        requestTree.setCellFactory(param -> new TreeCell<RTreeItem>() {
+            @Override
+            protected void updateItem(RTreeItem item, boolean empty) {
+                super.updateItem(item, empty);
+
+                if (empty) {
+                    setText(null);
+                } else {
+                    String text;
+                    if (item instanceof RTreeItem.Node) {
+                        text = ((RTreeItem.Node) item).getPattern() + "(" + ((RTreeItem.Node) item).getCount() + ")";
+                    } else if (item instanceof RTreeItem.Leaf) {
+                        HttpMessage message = ((RTreeItem.Leaf) item).getMessage();
+                        RequestHeaders requestHeaders = message.getRequestHeaders();
+                        RequestLine requestLine = requestHeaders.getRequestLine();
+                        text = requestLine.getMethod() + " " + message.getUrl();
+                    } else {
+                        text = "BUG..";
+                    }
+                    setText(text);
+                }
+            }
+        });
+        requestTree.getSelectionModel().selectedItemProperty().addListener((ov, o, n) -> {
+            if (n == null || n.getValue() instanceof RTreeItem.Node) {
+                httpMessagePane.setVisible(false);
+            } else {
+                RTreeItem.Leaf value = (RTreeItem.Leaf) n.getValue();
+                httpMessagePane.httpMessageProperty().set(value.getMessage());
+                httpMessagePane.setVisible(true);
+            }
+        });
+
+
     }
 
     @FXML
     private void clearAll(ActionEvent actionEvent) {
         requestList.getItems().clear();
+        requestTree.setRoot(new TreeItem<>(new RTreeItem.Node("")));
+    }
+
+    @FXML
+    private void group(ActionEvent actionEvent) {
+        ObservableList<Node> children = contentPane.getChildren();
+        if (groupedCheckBox.isSelected()) {
+            children.remove(requestTree);
+            children.add(requestTree);
+        } else {
+            children.remove(requestList);
+            children.add(requestList);
+        }
+    }
+
+    @SneakyThrows
+    private void manifestTree(HttpMessage httpMessage) {
+        TreeItem<RTreeItem> root = requestTree.getRoot();
+        URL url = new URL(httpMessage.getUrl());
+        String host = url.getHost();
+
+        for (TreeItem<RTreeItem> item : root.getChildren()) {
+            RTreeItem.Node node = (RTreeItem.Node) item.getValue();
+            if (node.getPattern().equals(host)) {
+                item.getChildren().add(new TreeItem<>(new RTreeItem.Leaf(httpMessage)));
+                node.increaseChinldren();
+                return;
+            }
+        }
+
+        RTreeItem.Node node = new RTreeItem.Node(host);
+        TreeItem<RTreeItem> nodeItem = new TreeItem<>(node);
+        root.getChildren().add(nodeItem);
+        nodeItem.getChildren().add(new TreeItem<>(new RTreeItem.Leaf(httpMessage)));
+        node.increaseChinldren();
     }
 }
