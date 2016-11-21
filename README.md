@@ -1,7 +1,8 @@
 
 Read Http/Https data via Http Proxy
 
-Support Http1.x, Https1.x, Http2.0 support to be added.
+This project is under development, it lack features, and may have unexpected bugs.
+Current Ssupport Http1.x / Https1.x. Http2.0 support to be added.
 
 
 ## Https Traffics
