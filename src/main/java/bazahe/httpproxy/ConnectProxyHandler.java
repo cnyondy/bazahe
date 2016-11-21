@@ -12,7 +12,6 @@ import net.dongliu.commons.concurrent.Lazy;
 import javax.annotation.Nullable;
 import javax.net.ssl.*;
 import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.KeyStore;
@@ -66,7 +65,7 @@ public class ConnectProxyHandler extends Http1xHandler {
         sslSocket.setUseClientMode(false);
 
         super.handle(new HttpInputStream(new BufferedInputStream(sslSocket.getInputStream())),
-                new HttpOutputStream(new BufferedOutputStream(sslSocket.getOutputStream())),
+                new HttpOutputStream(sslSocket.getOutputStream()),
                 httpMessageListener);
     }
 

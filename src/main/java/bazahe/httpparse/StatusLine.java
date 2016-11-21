@@ -29,12 +29,17 @@ public class StatusLine {
             throw new HttpParserException("Invalid http status line: " + str);
         }
         String version = str.substring(0, idx);
+        int code;
+        String msg;
         int idx2 = str.indexOf(' ', idx + 1);
         if (idx2 < 0) {
-            throw new HttpParserException("Invalid http status line: " + str);
+            code = Integer.parseInt(str.substring(idx + 1));
+            msg = "";
+        } else {
+            code = Integer.parseInt(str.substring(idx + 1, idx2));
+            msg = str.substring(idx2 + 1);
         }
-        int code = Integer.parseInt(str.substring(idx + 1, idx2));
-        String msg = str.substring(idx2 + 1);
+
         return new StatusLine(version, code, msg);
     }
 }
