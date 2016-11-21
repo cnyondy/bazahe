@@ -82,7 +82,15 @@ public class HttpMessageController {
             throw new RuntimeException();
         }
 
-        if (headers == null || bodyStore == null || bodyStore.getSize() == 0) {
+        if (headers == null || bodyStore == null) {
+            bodyPane.setCenter(new Text());
+            return;
+        }
+        if (!bodyStore.isClosed()) {
+            bodyPane.setCenter(new Text("Still reading..."));
+            return;
+        }
+        if (bodyStore.getSize() == 0) {
             bodyPane.setCenter(new Text());
             return;
         }

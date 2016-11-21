@@ -65,6 +65,8 @@ public class ProxyConfigDialog extends Dialog<ProxyConfig> {
             controller.getPortFiled().setText("" + n.getPort());
             controller.getTimeoutField().setText("" + n.getTimeout());
             controller.getKeyStoreField().setText(n.getKeyStore());
+            controller.getKeyStorePasswordField().setText(new String(n.getKeyStorePassword()));
+            controller.getAliasField().setText(n.getAlias());
         });
     }
 
@@ -74,6 +76,8 @@ public class ProxyConfigDialog extends Dialog<ProxyConfig> {
         proxyConfig.setPort(Integer.parseInt(controller.getPortFiled().getText()));
         proxyConfig.setTimeout(Integer.parseInt(controller.getTimeoutField().getText()));
         proxyConfig.setKeyStore(controller.getKeyStoreField().getText());
+        proxyConfig.setKeyStorePassword(controller.getKeyStorePasswordField().getText().toCharArray());
+        proxyConfig.setAlias(controller.getAliasField().getText());
         return proxyConfig;
     }
 

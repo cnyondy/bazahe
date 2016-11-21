@@ -110,19 +110,16 @@ public class MainController {
                 } else {
                     RequestHeaders requestHeaders = item.getRequestHeaders();
                     RequestLine requestLine = requestHeaders.getRequestLine();
-                    String text;
-                    if (requestLine.getUrl().startsWith("http")) {
-                        text = requestLine.getMethod() + " " + requestLine.getUrl();
-                    } else {
-                        text = requestLine.getMethod() + " " + requestHeaders.getFirst("Host") + requestLine.getUrl();
-                    }
+                    String text = requestLine.getMethod() + item.getUrl();
                     setText(text);
                 }
             }
         });
         requestList.getSelectionModel().selectedItemProperty().addListener((ov, oldValue, newValue) -> {
-            httpMessagePane.httpMessageProperty().set(newValue);
-            if (!httpMessagePane.visibleProperty().get()) {
+            if (newValue == null) {
+                httpMessagePane.setVisible(false);
+            } else {
+                httpMessagePane.httpMessageProperty().set(newValue);
                 httpMessagePane.setVisible(true);
             }
         });

@@ -3,9 +3,7 @@ package bazahe.def;
 import bazahe.httpparse.RequestHeaders;
 import bazahe.httpparse.ResponseHeaders;
 import bazahe.store.HttpBodyStore;
-import lombok.AllArgsConstructor;
 import lombok.Getter;
-import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import javax.annotation.Nullable;
@@ -15,13 +13,19 @@ import javax.annotation.Nullable;
  */
 @Getter
 @Setter
-@AllArgsConstructor
-@NoArgsConstructor
 public class HttpMessage {
-    private volatile String id;
-    private volatile RequestHeaders requestHeaders;
-    private volatile HttpBodyStore requestBody;
+    private final String id;
+    private final String url;
+    private final RequestHeaders requestHeaders;
+    private final HttpBodyStore requestBody;
     @Nullable
     private volatile ResponseHeaders responseHeaders;
     private volatile HttpBodyStore responseBody;
+
+    public HttpMessage(String id, String url, RequestHeaders requestHeaders, HttpBodyStore requestBody) {
+        this.id = id;
+        this.url = url;
+        this.requestHeaders = requestHeaders;
+        this.requestBody = requestBody;
+    }
 }

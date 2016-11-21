@@ -16,7 +16,7 @@ public interface HttpMessageListener {
      *
      * @return a output stream for body to write
      */
-    OutputStream onRequest(String id, RequestHeaders requestHeaders);
+    OutputStream onRequest(String id, String url, RequestHeaders requestHeaders);
 
     /**
      * On response received

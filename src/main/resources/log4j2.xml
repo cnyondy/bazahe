@@ -10,6 +10,5 @@
             <appender-ref ref="Console"/>
         </root>
         <Logger name="bazahe" level="info"/>
-        <Logger name="bazahe.httpproxy" level="debug"/>
     </loggers>
 </configuration>

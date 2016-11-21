@@ -1,5 +1,6 @@
 package bazahe.httpproxy;
 
+import bazahe.def.ProxyConfig;
 import bazahe.httpparse.HttpInputStream;
 import bazahe.httpparse.HttpOutputStream;
 import bazahe.httpparse.RequestHeaders;
@@ -11,12 +12,11 @@ import net.dongliu.commons.concurrent.Lazy;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.*;
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.net.Socket;
 import java.security.KeyStore;
 import java.security.SecureRandom;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Connect may proxy maybe: https(1.x, 2.0), webSocket, or even plain http1.x traffics
@@ -26,13 +26,16 @@ import java.security.SecureRandom;
  */
 @Log4j2
 public class ConnectProxyHandler extends Http1xHandler {
-    private final Lazy<SSLContext> sslContextLazy = Lazy.create(this::createSSlContext);
+    private final static ConcurrentHashMap<String, SSLContext> sslContextCache = new ConcurrentHashMap<>();
 
     private String target;
-    private final String keyStorePath;
+    private final ProxyConfig proxyConfig;
+    private final Lazy<AppKeyStoreGenerator> appKeyStoreGeneratorLazy;
+    private final static char[] appKeyStorePassword = "123456".toCharArray();
 
-    public ConnectProxyHandler(String keyStorePath) {
-        this.keyStorePath = keyStorePath;
+    public ConnectProxyHandler(ProxyConfig proxyConfig, Lazy<AppKeyStoreGenerator> appKeyStoreGeneratorLazy) {
+        this.proxyConfig = proxyConfig;
+        this.appKeyStoreGeneratorLazy = appKeyStoreGeneratorLazy;
     }
 
     @Override
@@ -55,7 +58,8 @@ public class ConnectProxyHandler extends Http1xHandler {
 
 
         // upgrade socket to ssl socket
-        SSLSocketFactory sslSocketFactory = sslContextLazy.get().getSocketFactory();
+        SSLContext sslContext = sslContextCache.computeIfAbsent(host, this::createSSlContext);
+        SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
         SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socket, null, socket.getPort(), false);
         sslSocket.setUseClientMode(false);
 
@@ -69,15 +73,15 @@ public class ConnectProxyHandler extends Http1xHandler {
     }
 
 
-    @SneakyThrows
-    private SSLContext createSSlContext() {
-        KeyStore keyStore = KeyStore.getInstance("JKS");
-        try (InputStream inputStream = new FileInputStream(keyStorePath)) {
-            keyStore.load(inputStream, "123456".toCharArray());
-        }
+    private KeyStore generateKeyStoreForSite(String domain) {
+        return appKeyStoreGeneratorLazy.get().generateKeyStore(domain, 365, appKeyStorePassword);
+    }
 
+    @SneakyThrows
+    private SSLContext createSSlContext(String domain) {
+        KeyStore keyStore = generateKeyStoreForSite(domain);
         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        keyManagerFactory.init(keyStore, "123456".toCharArray());
+        keyManagerFactory.init(keyStore, appKeyStorePassword);
         KeyManager[] keyManagers = keyManagerFactory.getKeyManagers();
 
         TrustManager[] trustAllCerts = new TrustManager[]{

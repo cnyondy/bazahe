@@ -1,15 +1,19 @@
 package bazahe.httpproxy;
 
+import bazahe.def.ProxyConfig;
 import bazahe.exception.HttpParserException;
 import bazahe.httpparse.HttpInputStream;
 import bazahe.httpparse.HttpOutputStream;
 import bazahe.httpparse.RequestLine;
 import lombok.extern.log4j.Log4j2;
+import net.dongliu.commons.concurrent.Lazy;
 import net.dongliu.commons.io.Closeables;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 
 /**
@@ -24,15 +28,18 @@ public class ProxyWorker implements Runnable {
     private final HttpOutputStream output;
     @Nullable
     private final HttpMessageListener httpMessageListener;
-    private final String keyStorePath;
+    private final ProxyConfig proxyConfig;
+    private final Lazy<AppKeyStoreGenerator> appKeyStoreGeneratorLazy;
 
-    public ProxyWorker(Socket socket, @Nullable HttpMessageListener httpMessageListener, String keyStorePath)
+    public ProxyWorker(Socket socket, @Nullable HttpMessageListener httpMessageListener, ProxyConfig proxyConfig,
+                       Lazy<AppKeyStoreGenerator> appKeyStoreGeneratorLazy)
             throws IOException {
         this.socket = socket;
         this.input = new HttpInputStream(socket.getInputStream());
         this.output = new HttpOutputStream(socket.getOutputStream());
         this.httpMessageListener = httpMessageListener;
-        this.keyStorePath = keyStorePath;
+        this.proxyConfig = proxyConfig;
+        this.appKeyStoreGeneratorLazy = appKeyStoreGeneratorLazy;
     }
 
     @Override
@@ -52,7 +59,7 @@ public class ProxyWorker implements Runnable {
             }
             ProxyHandler handler;
             if (requestLine.getMethod().equalsIgnoreCase("CONNECT")) {
-                handler = new ConnectProxyHandler(keyStorePath);
+                handler = new ConnectProxyHandler(proxyConfig, appKeyStoreGeneratorLazy);
             } else {
                 handler = new CommonProxyHandler();
             }
@@ -61,11 +68,15 @@ public class ProxyWorker implements Runnable {
         } catch (HttpParserException e) {
             log.error("Illegal http data", e);
         } catch (SocketTimeoutException e) {
-            log.debug("Timeout", e);
-        } catch (IOException e) {
+            log.debug("Socket Timeout", e);
+        } catch (SocketException e) {
+            log.debug("Socket reset or closed?", e);
+        } catch (IOException | UncheckedIOException e) {
             log.error("IO error", e);
         } catch (Exception e) {
             log.error("Error while handle http traffic", e);
+        } catch (Throwable e) {
+            log.error("", e);
         } finally {
             Closeables.closeQuietly(input, output, socket);
         }

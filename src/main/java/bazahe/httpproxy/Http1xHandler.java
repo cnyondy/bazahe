@@ -33,8 +33,6 @@ public abstract class Http1xHandler implements ProxyHandler {
     public void handle(Socket socket, HttpInputStream input, HttpOutputStream output,
                        @Nullable HttpMessageListener httpMessageListener) throws IOException {
         // set tcp timeout(also keep-alive) to 60 secs.
-        // TODO: this should be configured
-        socket.setSoTimeout(60000);
         while (true) {
             boolean shouldBreak = handleOneRequest(input, output, httpMessageListener);
             if (shouldBreak) {
@@ -63,18 +61,20 @@ public abstract class Http1xHandler implements ProxyHandler {
         }
 
         String id = Digests.md5().update(rawRequestLine).toHexLower() + System.nanoTime();
+        RequestLine requestLine = requestHeaders.getRequestLine();
+        String method = requestLine.getMethod();
+        List<Header> newRequestHeaders = filterRequestHeaders(requestHeaders);
+        String url = getUrl(requestLine.getUrl());
+
         @Nullable OutputStream requestOutput = null;
         if (httpMessageListener != null) {
-            requestOutput = httpMessageListener.onRequest(id, requestHeaders);
+            requestOutput = httpMessageListener.onRequest(id, url, requestHeaders);
         }
 
         boolean shouldClose = requestHeaders.shouldClose();
         @Cleanup @Nullable InputStream requestBody = getRequestBodyInputStream(input, requestHeaders, requestOutput);
 
-        RequestLine requestLine = requestHeaders.getRequestLine();
-        String method = requestLine.getMethod();
-        List<Header> newRequestHeaders = filterRequestHeaders(requestHeaders);
-        RequestBuilder rb = Requests.newRequest(method, getUrl(requestLine.getUrl()))
+        RequestBuilder rb = Requests.newRequest(method, url)
                 .compress(false).followRedirect(false)
                 .verify(false)
                 .headers(newRequestHeaders);

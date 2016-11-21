@@ -29,13 +29,10 @@ public class UIHttpMessageListener implements HttpMessageListener {
     }
 
     @Override
-    public OutputStream onRequest(String id, RequestHeaders requestHeaders) {
-        HttpMessage item = new HttpMessage();
-        item.setId(id);
-        this.map.put(id, item);
-        item.setRequestHeaders(requestHeaders);
+    public OutputStream onRequest(String id, String url, RequestHeaders requestHeaders) {
         HttpBodyStore bodyStore = new HttpBodyStore(requestHeaders.contentType(), requestHeaders.contentEncoding());
-        item.setRequestBody(bodyStore);
+        HttpMessage item = new HttpMessage(id, url, requestHeaders, bodyStore);
+        this.map.put(id, item);
         Platform.runLater(() -> consumer.accept(item));
         return bodyStore;
     }

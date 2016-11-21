@@ -4,6 +4,7 @@ import bazahe.def.ProxyConfig;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
+import net.dongliu.commons.concurrent.Lazy;
 import net.dongliu.commons.io.Closeables;
 
 import javax.annotation.concurrent.ThreadSafe;
@@ -13,7 +14,6 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -25,9 +25,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 @ThreadSafe
 public class ProxyServer {
 
-    private final String host;
-    private final int port;
-    private final String keyStorePath;
+    private final ProxyConfig proxyConfig;
+    private final Lazy<AppKeyStoreGenerator> appKeyStoreGeneratorLazy;
 
     private volatile ServerSocket serverSocket;
     @Setter
@@ -38,9 +37,10 @@ public class ProxyServer {
     private final AtomicInteger threadCounter = new AtomicInteger();
 
     public ProxyServer(ProxyConfig config) {
-        this.host = config.getHost();
-        this.port = config.getPort();
-        this.keyStorePath = config.getKeyStore();
+        this.proxyConfig = config;
+        this.appKeyStoreGeneratorLazy = Lazy.create(() -> new AppKeyStoreGenerator(proxyConfig.getKeyStore(),
+                proxyConfig.getKeyStorePassword(), proxyConfig.getAlias())
+        );
     }
 
     /**
@@ -50,11 +50,13 @@ public class ProxyServer {
         executor = Executors.newCachedThreadPool(r -> {
             Thread t = new Thread(r);
             t.setName("proxy-server-worker-" + threadCounter.getAndIncrement());
+            t.setDaemon(true);
             return t;
         });
 
         masterThread = new Thread(this::run);
         masterThread.setName("proxy-server-master");
+        masterThread.setDaemon(true);
         masterThread.start();
     }
 
@@ -71,12 +73,12 @@ public class ProxyServer {
      */
     @SneakyThrows
     private void run() {
-        if (host.isEmpty()) {
-            serverSocket = new ServerSocket(port, 128);
+        if (proxyConfig.getHost().isEmpty()) {
+            serverSocket = new ServerSocket(proxyConfig.getPort(), 128);
         } else {
-            serverSocket = new ServerSocket(port, 128, InetAddress.getByName(host));
+            serverSocket = new ServerSocket(proxyConfig.getPort(), 128, InetAddress.getByName(proxyConfig.getHost()));
         }
-        log.info("proxy server run at {}:{}", host, port);
+        log.info("proxy server run at {}:{}", proxyConfig.getHost(), proxyConfig.getPort());
         while (true) {
             Socket socket;
             try {
@@ -92,8 +94,8 @@ public class ProxyServer {
             }
             ProxyWorker worker;
             try {
-                socket.setSoTimeout(2000);
-                worker = new ProxyWorker(socket, httpMessageListener, keyStorePath);
+                socket.setSoTimeout(proxyConfig.getTimeout());
+                worker = new ProxyWorker(socket, httpMessageListener, proxyConfig, appKeyStoreGeneratorLazy);
             } catch (Exception e) {
                 Closeables.closeQuietly(socket);
                 log.error("Create new proxy worker failed.", e);
@@ -117,11 +119,6 @@ public class ProxyServer {
             masterThread.interrupt();
             Closeables.closeQuietly(serverSocket);
             executor.shutdownNow();
-            executor.awaitTermination(1, TimeUnit.SECONDS);
         }
-    }
-
-    public static void main(String[] args) {
-        new ProxyServer(ProxyConfig.getDefault()).run();
     }
 }
