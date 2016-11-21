@@ -30,8 +30,10 @@ import java.util.Map;
 public abstract class Http1xHandler implements ProxyHandler {
 
     @Override
-    public void handle(Socket socket, HttpInputStream input, HttpOutputStream output,
-                       @Nullable HttpMessageListener httpMessageListener) throws IOException {
+    public abstract void handle(Socket socket, String rawRequestLine, @Nullable HttpMessageListener httpMessageListener) throws IOException;
+
+    protected void handle(HttpInputStream input, HttpOutputStream output,
+                          @Nullable HttpMessageListener httpMessageListener) throws IOException {
         // set tcp timeout(also keep-alive) to 60 secs.
         while (true) {
             boolean shouldBreak = handleOneRequest(input, output, httpMessageListener);

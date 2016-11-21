@@ -4,6 +4,7 @@ import bazahe.exception.HttpParserException;
 import net.dongliu.commons.Strings;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
 import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -12,6 +13,7 @@ import java.nio.charset.StandardCharsets;
 /**
  * @author Liu Dong
  */
+@ThreadSafe
 class ChunkedInputStream extends FilterInputStream {
     private boolean closed = false;
 
@@ -62,7 +64,7 @@ class ChunkedInputStream extends FilterInputStream {
     }
 
     @Override
-    public int read() throws IOException {
+    public synchronized int read() throws IOException {
         checkClosed();
         nextChunkIfNecessary();
         if (end) {
@@ -77,12 +79,12 @@ class ChunkedInputStream extends FilterInputStream {
     }
 
     @Override
-    public int read(byte[] b) throws IOException {
+    public synchronized int read(byte[] b) throws IOException {
         return read(b, 0, b.length);
     }
 
     @Override
-    public int read(byte[] b, int off, int len) throws IOException {
+    public synchronized int read(byte[] b, int off, int len) throws IOException {
         checkClosed();
         nextChunkIfNecessary();
         if (end) {
@@ -98,7 +100,7 @@ class ChunkedInputStream extends FilterInputStream {
     }
 
     @Override
-    public long skip(long n) throws IOException {
+    public synchronized long skip(long n) throws IOException {
         checkClosed();
         if (end) {
             return 0;
@@ -108,13 +110,13 @@ class ChunkedInputStream extends FilterInputStream {
     }
 
     @Override
-    public int available() throws IOException {
+    public synchronized int available() throws IOException {
         checkClosed();
         return (int) Math.min(super.available(), this.remainLen);
     }
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         closed = true;
     }
 
@@ -135,7 +137,7 @@ class ChunkedInputStream extends FilterInputStream {
     }
 
     @Override
-    public boolean markSupported() {
+    public synchronized boolean markSupported() {
         return false;
     }
 

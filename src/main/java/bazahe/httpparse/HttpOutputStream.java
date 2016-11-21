@@ -3,6 +3,7 @@ package bazahe.httpparse;
 import lombok.val;
 import net.dongliu.commons.io.InputOutputs;
 
+import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -14,6 +15,7 @@ import java.util.List;
  *
  * @author Liu Dong
  */
+@ThreadSafe
 public class HttpOutputStream extends OutputStream {
     private final OutputStream output;
     private volatile boolean closed;
@@ -25,7 +27,7 @@ public class HttpOutputStream extends OutputStream {
     /**
      * Output http response headers
      */
-    public void writeResponseHeaders(ResponseHeaders headers) throws IOException {
+    public synchronized void writeResponseHeaders(ResponseHeaders headers) throws IOException {
         writeLine(headers.getRawStatusLine());
         writeRawHeaders(headers);
     }
@@ -33,12 +35,12 @@ public class HttpOutputStream extends OutputStream {
     /**
      * Output http request headers
      */
-    public void writeRequestHeaders(RequestHeaders headers) throws IOException {
+    public synchronized void writeRequestHeaders(RequestHeaders headers) throws IOException {
         writeLine(headers.getRawRequestLine());
         writeRawHeaders(headers);
     }
 
-    public void writeHeaders(List<Header> respHeaders) throws IOException {
+    public synchronized void writeHeaders(List<Header> respHeaders) throws IOException {
         for (val header : respHeaders) {
             output.write(header.getKey().getBytes(StandardCharsets.US_ASCII));
             output.write(':');
@@ -54,7 +56,7 @@ public class HttpOutputStream extends OutputStream {
     /**
      * Write one http header
      */
-    public void writeRawHeaders(Headers headers) throws IOException {
+    public synchronized void writeRawHeaders(Headers headers) throws IOException {
         for (String header : headers.getRawHeaders()) {
             writeLine(header);
         }
@@ -62,7 +64,7 @@ public class HttpOutputStream extends OutputStream {
         output.write('\n');
     }
 
-    public void writeRawHeaders(List<String> lines) throws IOException {
+    public synchronized void writeRawHeaders(List<String> lines) throws IOException {
         for (String header : lines) {
             writeLine(header);
         }
@@ -70,46 +72,46 @@ public class HttpOutputStream extends OutputStream {
         output.write('\n');
     }
 
-    public void writeLine(String line) throws IOException {
+    public synchronized void writeLine(String line) throws IOException {
         output.write(line.getBytes(StandardCharsets.US_ASCII));
         output.write('\r');
         output.write('\n');
     }
 
     @Override
-    public void write(int b) throws IOException {
+    public synchronized void write(int b) throws IOException {
         output.write(b);
     }
 
     @Override
-    public void write(byte[] b) throws IOException {
+    public synchronized void write(byte[] b) throws IOException {
         output.write(b);
     }
 
     @Override
-    public void write(byte[] b, int off, int len) throws IOException {
+    public synchronized void write(byte[] b, int off, int len) throws IOException {
         output.write(b, off, len);
     }
 
     @Override
-    public void flush() throws IOException {
+    public synchronized void flush() throws IOException {
         output.flush();
     }
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         output.close();
         closed = true;
     }
 
-    public boolean isClosed() {
+    public synchronized boolean isClosed() {
         return closed;
     }
 
     /**
      * Write http body to output stream
      */
-    public void writeBody(long len, InputStream input) throws IOException {
+    public synchronized void writeBody(long len, InputStream input) throws IOException {
         if (len > 0) {
             InputOutputs.copy(input, output);
             return;

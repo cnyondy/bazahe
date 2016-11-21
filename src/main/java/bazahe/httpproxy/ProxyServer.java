@@ -95,7 +95,7 @@ public class ProxyServer {
             ProxyWorker worker;
             try {
                 socket.setSoTimeout(proxyConfig.getTimeout());
-                worker = new ProxyWorker(socket, httpMessageListener, proxyConfig, appKeyStoreGeneratorLazy);
+                worker = new ProxyWorker(socket, httpMessageListener, appKeyStoreGeneratorLazy);
             } catch (Exception e) {
                 Closeables.closeQuietly(socket);
                 log.error("Create new proxy worker failed.", e);

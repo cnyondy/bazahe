@@ -1,9 +1,7 @@
 package bazahe.httpproxy;
 
-import bazahe.def.ProxyConfig;
 import bazahe.exception.HttpParserException;
 import bazahe.httpparse.HttpInputStream;
-import bazahe.httpparse.HttpOutputStream;
 import bazahe.httpparse.RequestLine;
 import lombok.extern.log4j.Log4j2;
 import net.dongliu.commons.concurrent.Lazy;
@@ -24,27 +22,22 @@ import java.net.SocketTimeoutException;
 @Log4j2
 public class ProxyWorker implements Runnable {
     private final Socket socket;
-    private final HttpInputStream input;
-    private final HttpOutputStream output;
     @Nullable
     private final HttpMessageListener httpMessageListener;
-    private final ProxyConfig proxyConfig;
     private final Lazy<AppKeyStoreGenerator> appKeyStoreGeneratorLazy;
 
-    public ProxyWorker(Socket socket, @Nullable HttpMessageListener httpMessageListener, ProxyConfig proxyConfig,
+    public ProxyWorker(Socket socket, @Nullable HttpMessageListener httpMessageListener,
                        Lazy<AppKeyStoreGenerator> appKeyStoreGeneratorLazy)
             throws IOException {
         this.socket = socket;
-        this.input = new HttpInputStream(socket.getInputStream());
-        this.output = new HttpOutputStream(socket.getOutputStream());
         this.httpMessageListener = httpMessageListener;
-        this.proxyConfig = proxyConfig;
         this.appKeyStoreGeneratorLazy = appKeyStoreGeneratorLazy;
     }
 
     @Override
     public void run() {
         try {
+            HttpInputStream input = new HttpInputStream(socket.getInputStream());
             String rawRequestLine = input.readLine();
             if (rawRequestLine == null) {
                 //error
@@ -59,12 +52,11 @@ public class ProxyWorker implements Runnable {
             }
             ProxyHandler handler;
             if (requestLine.getMethod().equalsIgnoreCase("CONNECT")) {
-                handler = new ConnectProxyHandler(proxyConfig, appKeyStoreGeneratorLazy);
+                handler = new ConnectProxyHandler(appKeyStoreGeneratorLazy);
             } else {
                 handler = new CommonProxyHandler();
             }
-            input.putBackLine(rawRequestLine);
-            handler.handle(socket, input, output, httpMessageListener);
+            handler.handle(socket, rawRequestLine, httpMessageListener);
         } catch (HttpParserException e) {
             log.error("Illegal http data", e);
         } catch (SocketTimeoutException e) {
@@ -78,7 +70,7 @@ public class ProxyWorker implements Runnable {
         } catch (Throwable e) {
             log.error("", e);
         } finally {
-            Closeables.closeQuietly(input, output, socket);
+            Closeables.closeQuietly(socket);
         }
     }
 }

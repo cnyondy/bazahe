@@ -1,6 +1,5 @@
 package bazahe.httpproxy;
 
-import bazahe.def.ProxyConfig;
 import bazahe.httpparse.HttpInputStream;
 import bazahe.httpparse.HttpOutputStream;
 import bazahe.httpparse.RequestHeaders;
@@ -12,6 +11,8 @@ import net.dongliu.commons.concurrent.Lazy;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.*;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.security.KeyStore;
@@ -29,18 +30,18 @@ public class ConnectProxyHandler extends Http1xHandler {
     private final static ConcurrentHashMap<String, SSLContext> sslContextCache = new ConcurrentHashMap<>();
 
     private String target;
-    private final ProxyConfig proxyConfig;
     private final Lazy<AppKeyStoreGenerator> appKeyStoreGeneratorLazy;
     private final static char[] appKeyStorePassword = "123456".toCharArray();
 
-    public ConnectProxyHandler(ProxyConfig proxyConfig, Lazy<AppKeyStoreGenerator> appKeyStoreGeneratorLazy) {
-        this.proxyConfig = proxyConfig;
+    public ConnectProxyHandler(Lazy<AppKeyStoreGenerator> appKeyStoreGeneratorLazy) {
         this.appKeyStoreGeneratorLazy = appKeyStoreGeneratorLazy;
     }
 
     @Override
-    public void handle(Socket socket, HttpInputStream input, HttpOutputStream output,
-                       @Nullable HttpMessageListener httpMessageListener) throws IOException {
+    public void handle(Socket socket, String rawRequestLine, @Nullable HttpMessageListener httpMessageListener)
+            throws IOException {
+        HttpInputStream input = new HttpInputStream(socket.getInputStream());
+        input.putBackLine(rawRequestLine);
         RequestHeaders headers = input.readRequestHeaders();
         if (headers == null) {
             //should not happen because we already check it
@@ -53,6 +54,7 @@ public class ConnectProxyHandler extends Http1xHandler {
         String host = Strings.before(target, ":");
         int port = Integer.parseInt(Strings.after(target, ":"));
         // just tell client ok..
+        HttpOutputStream output = new HttpOutputStream(socket.getOutputStream());
         output.writeLine("HTTP/1.1 200 OK\r\n");
         output.flush();
 
@@ -63,8 +65,9 @@ public class ConnectProxyHandler extends Http1xHandler {
         SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socket, null, socket.getPort(), false);
         sslSocket.setUseClientMode(false);
 
-        super.handle(sslSocket, new HttpInputStream(sslSocket.getInputStream()),
-                new HttpOutputStream(sslSocket.getOutputStream()), httpMessageListener);
+        super.handle(new HttpInputStream(new BufferedInputStream(sslSocket.getInputStream())),
+                new HttpOutputStream(new BufferedOutputStream(sslSocket.getOutputStream())),
+                httpMessageListener);
     }
 
     @Override

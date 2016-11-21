@@ -4,16 +4,18 @@ import bazahe.exception.HttpParserException;
 import net.dongliu.commons.collection.Lists;
 
 import javax.annotation.Nullable;
+import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 /**
- * Input stream for http parser
+ * Input stream for http parser.
  *
  * @author Liu Dong
  */
+@ThreadSafe
 public class HttpInputStream extends InputStream {
     private volatile boolean closed;
     private final InputStream inputStream;
@@ -22,7 +24,7 @@ public class HttpInputStream extends InputStream {
         this.inputStream = input;
     }
 
-    private final byte[] lineBuffer = new byte[65536];
+    private byte[] lineBuffer = new byte[256];
 
     /**
      * Read ascii line, separated by '\r\n'
@@ -30,7 +32,7 @@ public class HttpInputStream extends InputStream {
      * @return the line. return null if reach end of input stream
      */
     @Nullable
-    public String readLine() throws IOException {
+    public synchronized String readLine() throws IOException {
         if (this.line != null) {
             String line = this.line;
             this.line = null;
@@ -52,6 +54,11 @@ public class HttpInputStream extends InputStream {
                     flag = false;
                 }
             }
+            if (count >= lineBuffer.length) {
+                byte[] newBuffer = new byte[lineBuffer.length * 2];
+                System.arraycopy(lineBuffer, 0, newBuffer, 0, lineBuffer.length);
+                lineBuffer = newBuffer;
+            }
             lineBuffer[count] = (byte) c;
             count++;
         }
@@ -63,12 +70,12 @@ public class HttpInputStream extends InputStream {
     }
 
     @Nullable
-    private volatile String line;
+    private String line;
 
     /**
      * Hacker for putback request line... do not relay on this method
      */
-    public void putBackLine(String line) {
+    public synchronized void putBackLine(String line) {
         if (this.line != null) {
             throw new IllegalStateException();
         }
@@ -81,7 +88,7 @@ public class HttpInputStream extends InputStream {
      * @return null if reach end of input stream
      */
     @Nullable
-    public RequestHeaders readRequestHeaders() throws IOException {
+    public synchronized RequestHeaders readRequestHeaders() throws IOException {
         String line = readLine();
         if (line == null) {
             return null;
@@ -96,7 +103,7 @@ public class HttpInputStream extends InputStream {
      * @return null if reach end of input stream
      */
     @Nullable
-    public ResponseHeaders readResponseHeaders() throws IOException {
+    public synchronized ResponseHeaders readResponseHeaders() throws IOException {
         String line = readLine();
         if (line == null) {
             return null;
@@ -105,7 +112,7 @@ public class HttpInputStream extends InputStream {
         return new ResponseHeaders(line, rawHeaders);
     }
 
-    public List<String> readHeaders() throws IOException {
+    public synchronized List<String> readHeaders() throws IOException {
         String line;
         List<String> rawHeaders = Lists.create();
         while (true) {
@@ -124,27 +131,27 @@ public class HttpInputStream extends InputStream {
 
 
     @Override
-    public int read() throws IOException {
+    public synchronized int read() throws IOException {
         return inputStream.read();
     }
 
     @Override
-    public int read(byte[] b) throws IOException {
+    public synchronized int read(byte[] b) throws IOException {
         return inputStream.read(b);
     }
 
     @Override
-    public int read(byte[] b, int off, int len) throws IOException {
+    public synchronized int read(byte[] b, int off, int len) throws IOException {
         return inputStream.read(b, off, len);
     }
 
     @Override
-    public long skip(long n) throws IOException {
+    public synchronized long skip(long n) throws IOException {
         return inputStream.skip(n);
     }
 
     @Override
-    public int available() throws IOException {
+    public synchronized int available() throws IOException {
         return inputStream.available();
     }
 
@@ -154,22 +161,22 @@ public class HttpInputStream extends InputStream {
     }
 
     @Override
-    public void reset() throws IOException {
+    public synchronized void reset() throws IOException {
         inputStream.reset();
     }
 
     @Override
-    public boolean markSupported() {
+    public synchronized boolean markSupported() {
         return inputStream.markSupported();
     }
 
     @Override
-    public void close() throws IOException {
+    public synchronized void close() throws IOException {
         super.close();
         closed = true;
     }
 
-    public boolean isClosed() {
+    public synchronized boolean isClosed() {
         return closed;
     }
 
@@ -178,7 +185,7 @@ public class HttpInputStream extends InputStream {
      *
      * @param len the content-len. if len == -1 means chunked
      */
-    public InputStream getBody(long len) {
+    public synchronized InputStream getBody(long len) {
         if (len >= 0) {
             return new FixLenInputStream(this, len);
         } else {

@@ -110,7 +110,7 @@ public class MainController {
                 } else {
                     RequestHeaders requestHeaders = item.getRequestHeaders();
                     RequestLine requestLine = requestHeaders.getRequestLine();
-                    String text = requestLine.getMethod() + item.getUrl();
+                    String text = requestLine.getMethod() + " " + item.getUrl();
                     setText(text);
                 }
             }

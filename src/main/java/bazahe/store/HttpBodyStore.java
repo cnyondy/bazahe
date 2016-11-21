@@ -3,6 +3,10 @@ package bazahe.store;
 import bazahe.httpparse.ContentType;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
+import net.dongliu.commons.BinarySize;
+import net.dongliu.commons.io.ByteArrayOutputStreamEx;
+import net.dongliu.commons.io.Closeables;
+import net.dongliu.commons.io.InputOutputs;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
@@ -18,8 +22,12 @@ import java.util.zip.GZIPInputStream;
 @ThreadSafe
 @Log4j2
 public class HttpBodyStore extends OutputStream {
-    private ByteArrayOutputStream bos;
+    private ByteArrayOutputStreamEx bos;
+    private OutputStream fos;
+    private File file;
     private boolean closed;
+
+    private static final int MAX_BUFFER_SIZE = (int) BinarySize.kilobyte(512);
 
     @Nullable
     @Getter
@@ -31,7 +39,7 @@ public class HttpBodyStore extends OutputStream {
     public HttpBodyStore(@Nullable ContentType contentType, @Nullable String contentEncoding) {
         this.contentType = contentType;
         this.contentEncoding = contentEncoding;
-        this.bos = new ByteArrayOutputStream();
+        this.bos = new ByteArrayOutputStreamEx();
     }
 
     @Override
@@ -58,7 +66,7 @@ public class HttpBodyStore extends OutputStream {
     public synchronized void close() throws IOException {
         super.close();
         try {
-            this.bos.close();
+            Closeables.closeQuietly(fos, bos);
         } finally {
             closed = true;
         }
@@ -69,27 +77,58 @@ public class HttpBodyStore extends OutputStream {
     }
 
     private OutputStream delegate() {
+        if (fos != null) {
+            return fos;
+        }
+        if (bos.size() > MAX_BUFFER_SIZE) {
+            try {
+                file = File.createTempFile("bazahe_tmp", ".tmp");
+                file.deleteOnExit();
+                fos = new BufferedOutputStream(new FileOutputStream(file));
+                bos.close();
+                InputOutputs.copy(bos.asInputStream(), fos);
+            } catch (IOException e) {
+                log.error("Create tmp file for http body failed", e);
+                //TODO: deal with this...
+            }
+            bos = null;
+            return fos;
+        }
         return bos;
     }
 
     /**
      * The len of data
      */
-    public long getSize() {
+    public synchronized long getSize() {
         if (!closed) {
             throw new IllegalStateException("Still writing");
         }
-        return bos.toByteArray().length;
+        if (bos != null) {
+            return bos.toByteArray().length;
+        } else if (file != null) {
+            return file.length();
+        } else {
+            throw new RuntimeException();
+        }
+
     }
 
-    private InputStream inputStream() {
+    private InputStream inputStream() throws FileNotFoundException {
         if (!closed) {
             throw new IllegalStateException("Still writing");
         }
-        return new ByteArrayInputStream(bos.toByteArray());
+        if (bos != null) {
+            return bos.asInputStream();
+        } else if (file != null) {
+            return new BufferedInputStream(new FileInputStream(file));
+        } else {
+            // should not happen
+            throw new RuntimeException();
+        }
     }
 
-    public InputStream getInputStream() throws IOException {
+    public synchronized InputStream getInputStream() throws IOException {
         InputStream input = inputStream();
         if (getSize() == 0) {
             return input;
