@@ -50,7 +50,7 @@ public abstract class Headers {
      * If is chunked http body
      */
     public boolean chunked() {
-        return "chunked".equalsIgnoreCase(getFirst("Content-Encoding"));
+        return "chunked".equalsIgnoreCase(getFirst("Transfer-Encoding"));
     }
 
     /**

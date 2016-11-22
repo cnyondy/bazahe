@@ -47,6 +47,35 @@ class ObservableInputStream extends FilterInputStream {
     }
 
     @Override
+    public long skip(long n) throws IOException {
+        byte[] buffer = new byte[(int) Math.min(1024, n)];
+        long count = 0;
+        while (count < n) {
+            int read = read(buffer);
+            if (read == -1) {
+                break;
+            }
+            count += read;
+        }
+        return count;
+    }
+
+    @Override
+    public synchronized void mark(int readlimit) {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public synchronized void reset() throws IOException {
+        throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public boolean markSupported() {
+        return false;
+    }
+
+    @Override
     public void close() throws IOException {
         Closeables.closeQuietly(output);
         in.close();

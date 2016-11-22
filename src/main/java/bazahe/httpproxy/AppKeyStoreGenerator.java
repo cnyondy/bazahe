@@ -82,8 +82,8 @@ public class AppKeyStoreGenerator {
     }
 
     @SneakyThrows
-    public KeyStore generateKeyStore(String domain, int validityDays, char[] password) {
-        log.info("Generating certificate for domain {}", domain);
+    public KeyStore generateKeyStore(String host, int validityDays, char[] password) {
+        log.info("Generating certificate for host {}", host);
         // generate the key pair for the new certificate
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
         keyGen.initialize(2048, secureRandom);
@@ -114,7 +114,12 @@ public class AppKeyStoreGenerator {
         ExtensionsGenerator extensionsGenerator = new ExtensionsGenerator();
         extensionsGenerator.addExtension(Extension.subjectAlternativeName, false, () -> {
             ASN1EncodableVector nameVector = new ASN1EncodableVector();
-            nameVector.add(new GeneralName(GeneralName.dNSName, domain));
+            int hostType = getHostType(host);
+            if (hostType == 0 || hostType == 1) {
+                nameVector.add(new GeneralName(GeneralName.iPAddress, host));
+            } else {
+                nameVector.add(new GeneralName(GeneralName.dNSName, host));
+            }
             return GeneralNames.getInstance(new DERSequence(nameVector)).toASN1Primitive();
         });
         Extensions x509Extensions = extensionsGenerator.generate();
@@ -143,6 +148,20 @@ public class AppKeyStoreGenerator {
         X509Certificate[] chain = new X509Certificate[]{clientCertificate, caCertificate};
         store.setKeyEntry("bazahe app", privateKey, password, chain);
         return store;
+    }
+
+    static final int TYPE_IPV6 = 0;
+    static final int TYPE_IPV4 = 1;
+    static final int TYPE_DOMAIN = 2;
+
+    static int getHostType(String host) {
+        if (host.contains(":") && !host.contains(".")) {
+            return TYPE_IPV6;
+        }
+        if (host.matches("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) {
+            return TYPE_IPV4;
+        }
+        return TYPE_DOMAIN;
     }
 
     @SneakyThrows
