@@ -1,9 +1,24 @@
 
 Read Http/Https data via Http Proxy
 
-This project is under development, it lack features, and may have unexpected bugs.
-Current Ssupport Http1.x / Https1.x. Http2.0 support to be added.
+This project now is still under development, it lack features, and may have unexpected bugs. Current support Http1.x / Https1.x.
 
+
+## Build
+Bazahe use [javafx maven plugin](https://github.com/javafx-maven-plugin/javafx-maven-plugin) to build.
+
+Create executable java jar:
+
+```sh
+mvn jfx:jar
+```
+
+The jar file can be found in target/jfx/app/. Use
+
+```sh
+java -jar target/jfx/app/bazahe-0.1.0-jfx.jar
+```
+to run the program.
 
 ## Https Traffics
 Bazahe use mitm to capture https traffics, This need a self signed certificate.
