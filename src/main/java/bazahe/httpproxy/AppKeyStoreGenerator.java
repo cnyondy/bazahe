@@ -80,7 +80,7 @@ public class AppKeyStoreGenerator {
         calendar.add(Calendar.DAY_OF_YEAR, validityDays);
         Date expireDate = calendar.getTime();
 
-        String appDName = String.format("CN=%s, OU=TianCao, O=TianCao, L=Beijing, ST=Beijing, C=CN", domain);
+        String appDName = "CN=ClearTheSky, OU=TianCao, O=TianCao, L=Beijing, ST=Beijing, C=CN";
         X500Name x500Name = new X500Name(appDName);
 
         V3TBSCertificateGenerator certificateGenerator = new V3TBSCertificateGenerator();
@@ -99,13 +99,15 @@ public class AppKeyStoreGenerator {
         certificateGenerator.setStartDate(new Time(startDate));
         certificateGenerator.setEndDate(new Time(expireDate));
 
-        // Set SubjectAlternativeName
-//        X509ExtensionsGenerator x509ExtensionsGenerator = new X509ExtensionsGenerator();
-//        GeneralNames subjectAltName = new GeneralNames(new GeneralName(GeneralName.dNSName, "www.v2ex.com"));
-//        x509ExtensionsGenerator.addExtension(X509Extensions.SubjectAlternativeName, true, new DEROctetString
-//                (subjectAltName));
-//        X509Extensions x509Extensions = x509ExtensionsGenerator.generate();
-//        certificateGenerator.setExtensions(x509Extensions);
+//        Set SubjectAlternativeName
+        X509ExtensionsGenerator x509ExtensionsGenerator = new X509ExtensionsGenerator();
+        x509ExtensionsGenerator.addExtension(X509Extensions.SubjectAlternativeName, false, () -> {
+            ASN1EncodableVector nameVector = new ASN1EncodableVector();
+            nameVector.add(new GeneralName(GeneralName.dNSName, domain));
+            return new GeneralNames(new DERSequence(nameVector)).getDERObject();
+        });
+        X509Extensions x509Extensions = x509ExtensionsGenerator.generate();
+        certificateGenerator.setExtensions(x509Extensions);
 
         TBSCertificateStructure tbsCertificateStructure = certificateGenerator.generateTBSCertificate();
 
@@ -164,7 +166,7 @@ public class AppKeyStoreGenerator {
         String path = "/Users/dongliu/code/java/bazahe/certificates/root_ca.p12";
         AppKeyStoreGenerator generator = new AppKeyStoreGenerator(path, "123456".toCharArray(), "mykey");
         KeyStore appKeyStore = generator.generateKeyStore("www.v2ex.com", 365, "123456".toCharArray());
-        try (FileOutputStream outputStream = new FileOutputStream("bazahe_1.p12")) {
+        try (FileOutputStream outputStream = new FileOutputStream("bazahe.p12")) {
             appKeyStore.store(outputStream, "123456".toCharArray());
         }
     }

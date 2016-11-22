@@ -6,6 +6,7 @@ This project now is still under development, it lack features, and may have unex
 
 ## Build
 Bazahe use [javafx maven plugin](https://github.com/javafx-maven-plugin/javafx-maven-plugin) to build.
+To build this project, Java8u40+ required.
 
 Create executable java jar:
 
