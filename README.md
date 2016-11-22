@@ -21,26 +21,18 @@ java -jar target/jfx/app/bazahe-0.1.0-jfx.jar
 ```
 to run the program.
 
+Also, could use `mvn jfx:native` to create platform-dependent native routine.
+
 ## Https Traffics
-Bazahe use mitm to capture https traffics, This need a self signed certificate.
-This project already contains one default ca root certificate in certificates directory, you need install the ca certificate into you system.
-However, it is strongly suggested to create your own ca root certificate.
+Bazahe use mitm to capture https traffics, This need a self signed certificate installed.
 
+You can select one if you already have a ca root key store, or you could generate new one.
 
-## Create yourself CA ROOT Certificate
+To generate a new keystore file, ist, you need go to Configure-Generate New KeyStore File, to generate new ca keyStore and certificate files.
+After doing this, three files are generated:
 
-```sh
-dname="CN=Love ISummer, OU=Qunar DZS, O=Qunar, L=Beijing, ST=Beijing, C=CN"
+* root_ca.p12  the keyStore file, used by bazehe
+* root_ca.crt  the root certificate in der format, used to install into macOS/iOS/Windows(For Windows may need to rename the file name to root_ca.cer)
+* root_ca.pem  the root certificate in pem format, used to install into Linux/Android(For some Android may need to rename the file name to root_ca.cer)
 
-# Make CA Root Certificate, in p#12 format
-keytool -genkeypair -storetype pkcs12 -keystore root_ca.p12 -storepass "${password_for_root_ca_key}" \
-    -keyalg RSA -sigalg SHA256withRSA \
-    -dname "$dname" \
-    -validity 1000
-
-# Convert CA Root Certificate to crt format
-openssl pkcs12 -in root_ca.p12 -out root_ca.pem -passin "pass:${password_for_root_ca_key}" \
-    -passout "pass:${password_for_root_ca_key}"
-# Convert CA Root Certificate to pem format
-openssl x509 -outform der -in root_ca.pem -out root_ca.crt -passin "pass:${password_for_root_ca_key}"
-```
+Then install the ca certificate into you operation system.

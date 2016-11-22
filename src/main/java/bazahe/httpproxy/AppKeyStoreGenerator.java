@@ -7,19 +7,21 @@ import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x500.X500Name;
 import org.bouncycastle.asn1.x509.*;
+import org.bouncycastle.asn1.x509.Certificate;
+import org.bouncycastle.cert.jcajce.JcaX509ExtensionUtils;
 import org.bouncycastle.crypto.params.RSAPrivateCrtKeyParameters;
-import org.bouncycastle.jce.PrincipalUtil;
 import org.bouncycastle.jce.provider.X509CertificateObject;
-import org.bouncycastle.x509.extension.SubjectKeyIdentifierStructure;
 
 import java.io.*;
-import java.math.BigInteger;
 import java.security.*;
+import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
 import java.security.interfaces.RSAPrivateCrtKey;
 import java.security.spec.RSAPrivateCrtKeySpec;
-import java.util.Calendar;
-import java.util.Date;
+import java.util.*;
+
+import static org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers.pkcs_9_at_friendlyName;
+import static org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers.pkcs_9_at_localKeyId;
 
 /**
  * Dynamic generate self signed certificate for mitm proxy, with specified root ca private key and certificate.
@@ -31,38 +33,52 @@ public class AppKeyStoreGenerator {
     private final X509Certificate caCertificate;
     private final RSAPrivateCrtKeyParameters privateKeyParameters;
 
+    private final SecureRandom secureRandom;
+    private final Random random;
+    private final JcaX509ExtensionUtils jcaX509ExtensionUtils;
 
-    private SecureRandom secureRandom;
+    static {
+        Security.addProvider(new org.bouncycastle.jce.provider.BouncyCastleProvider());
+    }
 
 
     @SneakyThrows
-    public AppKeyStoreGenerator(String caKeyStorePath, char[] caKeyStorePassword, String alias) {
+    public AppKeyStoreGenerator(String caKeyStorePath, char[] caKeyStorePassword) {
 
-        log.info("Loading CA certificate/private key from file {}, alias {}", caKeyStorePath, alias);
+        log.info("Loading CA certificate/private key from file {}", caKeyStorePath);
         KeyStore caKeyStore = KeyStore.getInstance("PKCS12");
         try (InputStream input = new FileInputStream(caKeyStorePath)) {
             caKeyStore.load(input, caKeyStorePassword);
         }
+
+        Enumeration<String> aliases = caKeyStore.aliases();
+        String alias = aliases.nextElement();
+        log.info("Loading CA certificate/private by alias {}", alias);
+
         Key key = caKeyStore.getKey(alias, caKeyStorePassword);
-        if (key == null) {
-            throw new RuntimeException("Specified key of the KeyStore not found!");
-        }
+        Objects.requireNonNull(key, "Specified key of the KeyStore not found!");
         RSAPrivateCrtKey privateCrtKey = (RSAPrivateCrtKey) key;
-        privateKeyParameters = new RSAPrivateCrtKeyParameters(privateCrtKey.getModulus(),
+        privateKeyParameters = getPrivateKeyParameters(privateCrtKey);
+        // and get the certificate
+
+        caCertificate = (X509Certificate) caKeyStore.getCertificate(alias);
+        Objects.requireNonNull(caCertificate, "Specified certificate of the KeyStore not found!");
+        log.debug("Successfully loaded CA key and certificate. CA DN is {}", caCertificate.getSubjectDN().getName());
+        caCertificate.verify(caCertificate.getPublicKey());
+        log.debug("Successfully verified CA certificate with its own public key.");
+
+        secureRandom = new SecureRandom();
+        random = new Random();
+        jcaX509ExtensionUtils = new JcaX509ExtensionUtils();
+    }
+
+    private RSAPrivateCrtKeyParameters getPrivateKeyParameters(RSAPrivateCrtKey privateCrtKey) {
+        return new RSAPrivateCrtKeyParameters(privateCrtKey.getModulus(),
                 privateCrtKey.getPublicExponent(),
                 privateCrtKey.getPrivateExponent(),
                 privateCrtKey.getPrimeP(), privateCrtKey.getPrimeQ(), privateCrtKey.getPrimeExponentP(),
                 privateCrtKey.getPrimeExponentQ(),
                 privateCrtKey.getCrtCoefficient());
-        // and get the certificate
-        caCertificate = (X509Certificate) caKeyStore.getCertificate(alias);
-        if (caCertificate == null) {
-            throw new RuntimeException("Specified certificate of the KeyStore not found!");
-        }
-        log.debug("Successfully loaded CA key and certificate. CA DN is {}", caCertificate.getSubjectDN().getName());
-        caCertificate.verify(caCertificate.getPublicKey());
-        log.debug("Successfully verified CA certificate with its own public key.");
-        secureRandom = new SecureRandom();
     }
 
     @SneakyThrows
@@ -81,92 +97,107 @@ public class AppKeyStoreGenerator {
         Date expireDate = calendar.getTime();
 
         String appDName = "CN=ClearTheSky, OU=TianCao, O=TianCao, L=Beijing, ST=Beijing, C=CN";
-        X500Name x500Name = new X500Name(appDName);
+        X500Name subject = new X500Name(appDName);
+        ASN1ObjectIdentifier sigOID = PKCSObjectIdentifiers.sha256WithRSAEncryption;
+        AlgorithmIdentifier sigAlgId = new AlgorithmIdentifier(sigOID, DERNull.INSTANCE);
 
         V3TBSCertificateGenerator certificateGenerator = new V3TBSCertificateGenerator();
-        certificateGenerator.setSerialNumber(new DERInteger(BigInteger.valueOf(System.currentTimeMillis())));
-        certificateGenerator.setIssuer(PrincipalUtil.getSubjectX509Principal(caCertificate));
-        certificateGenerator.setSubject(x500Name);
-        DERObjectIdentifier sigOID = PKCSObjectIdentifiers.sha256WithRSAEncryption;
-        AlgorithmIdentifier sigAlgId = new AlgorithmIdentifier(sigOID, new DERNull());
+        certificateGenerator.setSerialNumber(new ASN1Integer(random.nextLong() + System.currentTimeMillis()));
+        certificateGenerator.setIssuer(getSubject(caCertificate));
+        certificateGenerator.setSubject(subject);
         certificateGenerator.setSignature(sigAlgId);
-        try (InputStream bis = new ByteArrayInputStream(publicKey.getEncoded());
-             ASN1InputStream asn1InputStream = new ASN1InputStream(bis)) {
-            SubjectPublicKeyInfo publicKeyInfo = new SubjectPublicKeyInfo((ASN1Sequence) asn1InputStream.readObject());
-            certificateGenerator.setSubjectPublicKeyInfo(publicKeyInfo);
-
-        }
+        certificateGenerator.setSubjectPublicKeyInfo(getPublicKeyInfo(publicKey));
         certificateGenerator.setStartDate(new Time(startDate));
         certificateGenerator.setEndDate(new Time(expireDate));
 
-//        Set SubjectAlternativeName
-        X509ExtensionsGenerator x509ExtensionsGenerator = new X509ExtensionsGenerator();
-        x509ExtensionsGenerator.addExtension(X509Extensions.SubjectAlternativeName, false, () -> {
+        // Set SubjectAlternativeName
+        ExtensionsGenerator extensionsGenerator = new ExtensionsGenerator();
+        extensionsGenerator.addExtension(Extension.subjectAlternativeName, false, () -> {
             ASN1EncodableVector nameVector = new ASN1EncodableVector();
             nameVector.add(new GeneralName(GeneralName.dNSName, domain));
-            return new GeneralNames(new DERSequence(nameVector)).getDERObject();
+            return GeneralNames.getInstance(new DERSequence(nameVector)).toASN1Primitive();
         });
-        X509Extensions x509Extensions = x509ExtensionsGenerator.generate();
+        Extensions x509Extensions = extensionsGenerator.generate();
         certificateGenerator.setExtensions(x509Extensions);
 
-        TBSCertificateStructure tbsCertificateStructure = certificateGenerator.generateTBSCertificate();
+        TBSCertificate tbsCertificateStructure = certificateGenerator.generateTBSCertificate();
+        byte[] data = toBinaryData(tbsCertificateStructure);
+        byte[] signatureData = signData(sigOID, data, privateKeyParameters, secureRandom);
 
-        byte[] data;
-        try (ByteArrayOutputStream bos = new ByteArrayOutputStream();
-             DEROutputStream derOutputStream = new DEROutputStream(bos)) {
-            derOutputStream.writeObject(tbsCertificateStructure);
-            data = bos.toByteArray();
-        }
-
-        PrivateKey caPrivateKey = KeyFactory.getInstance("RSA").generatePrivate(getKeySpec());
-        Signature signature = Signature.getInstance(sigOID.getId());
-        signature.initSign(caPrivateKey, secureRandom);
-        signature.update(data);
-        byte[] signatureData = signature.sign();
-
-        // and finally construct the certificate structure
         ASN1EncodableVector asn1EncodableVector = new ASN1EncodableVector();
         asn1EncodableVector.add(tbsCertificateStructure);
         asn1EncodableVector.add(sigAlgId);
         asn1EncodableVector.add(new DERBitString(signatureData));
 
         DERSequence derSequence = new DERSequence(asn1EncodableVector);
-        X509CertificateStructure x509CertificateStructure = new X509CertificateStructure(derSequence);
-        X509CertificateObject clientCertificate = new X509CertificateObject(x509CertificateStructure);
+        Certificate certificate = Certificate.getInstance(derSequence);
+        X509CertificateObject clientCertificate = new X509CertificateObject(certificate);
         log.debug("Verifying certificate for correct signature with CA public key");
         clientCertificate.verify(caCertificate.getPublicKey());
-        clientCertificate.setBagAttribute(PKCSObjectIdentifiers.pkcs_9_at_friendlyName,
-                new DERBMPString("Certificate for IPSec WLAN access"));
-        clientCertificate.setBagAttribute(PKCSObjectIdentifiers.pkcs_9_at_localKeyId, new
-                SubjectKeyIdentifierStructure(publicKey));
+        clientCertificate.setBagAttribute(pkcs_9_at_friendlyName, new DERBMPString("Certificate for Bazahe App"));
+        clientCertificate.setBagAttribute(pkcs_9_at_localKeyId,
+                jcaX509ExtensionUtils.createSubjectKeyIdentifier(publicKey));
         KeyStore store = KeyStore.getInstance("PKCS12");
         store.load(null, null);
 
-        X509Certificate[] chain = new X509Certificate[2];
-        // first the client, then the CA certificate
-        chain[0] = clientCertificate;
-        chain[1] = caCertificate;
-
+        X509Certificate[] chain = new X509Certificate[]{clientCertificate, caCertificate};
         store.setKeyEntry("bazahe app", privateKey, password, chain);
         return store;
     }
 
-    private RSAPrivateCrtKeySpec getKeySpec() {
-        return new RSAPrivateCrtKeySpec(this.privateKeyParameters.getModulus(), this.privateKeyParameters
-                .getPublicExponent(),
-                this.privateKeyParameters.getExponent(), this.privateKeyParameters.getP(), this
-                .privateKeyParameters.getQ(),
-                this.privateKeyParameters.getDP(), this.privateKeyParameters.getDQ(), this
-                .privateKeyParameters.getQInv());
+    @SneakyThrows
+    private static byte[] signData(ASN1ObjectIdentifier sigOID, byte[] data,
+                                   RSAPrivateCrtKeyParameters privateKeyParameters,
+                                   SecureRandom secureRandom) {
+        PrivateKey caPrivateKey = KeyFactory.getInstance("RSA").generatePrivate(getKeySpec(privateKeyParameters));
+        Signature signature = Signature.getInstance(sigOID.getId());
+        signature.initSign(caPrivateKey, secureRandom);
+        signature.update(data);
+        return signature.sign();
+    }
+
+    private static byte[] toBinaryData(TBSCertificate tbsCertificateStructure) throws IOException {
+        byte[] data;
+        try (ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+            DEROutputStream derOutputStream = new DEROutputStream(bos);
+            try {
+                derOutputStream.writeObject(tbsCertificateStructure);
+                data = bos.toByteArray();
+            } finally {
+                derOutputStream.close();
+            }
+        }
+        return data;
+    }
+
+    private static X500Name getSubject(X509Certificate certificate) throws IOException, CertificateEncodingException {
+        TBSCertificateStructure tbsCert = TBSCertificateStructure.getInstance(
+                ASN1Primitive.fromByteArray(certificate.getTBSCertificate()));
+        return tbsCert.getSubject();
+    }
+
+    private static SubjectPublicKeyInfo getPublicKeyInfo(PublicKey publicKey) throws IOException {
+        try (InputStream bis = new ByteArrayInputStream(publicKey.getEncoded());
+             ASN1InputStream asn1InputStream = new ASN1InputStream(bis)) {
+            return SubjectPublicKeyInfo.getInstance(asn1InputStream.readObject());
+        }
+    }
+
+    private static RSAPrivateCrtKeySpec getKeySpec(RSAPrivateCrtKeyParameters privateKeyParameters) {
+        return new RSAPrivateCrtKeySpec(privateKeyParameters.getModulus(),
+                privateKeyParameters.getPublicExponent(), privateKeyParameters.getExponent(),
+                privateKeyParameters.getP(), privateKeyParameters.getQ(),
+                privateKeyParameters.getDP(), privateKeyParameters.getDQ(), privateKeyParameters.getQInv());
     }
 
 
     @SneakyThrows
     public static void main(String[] args) {
         String path = "/Users/dongliu/code/java/bazahe/certificates/root_ca.p12";
-        AppKeyStoreGenerator generator = new AppKeyStoreGenerator(path, "123456".toCharArray(), "mykey");
+        AppKeyStoreGenerator generator = new AppKeyStoreGenerator(path, "123456".toCharArray());
         KeyStore appKeyStore = generator.generateKeyStore("www.v2ex.com", 365, "123456".toCharArray());
-        try (FileOutputStream outputStream = new FileOutputStream("bazahe.p12")) {
+//        KeyStore appKeyStore = generator.sign();
+        try (FileOutputStream outputStream = new FileOutputStream("x.p12")) {
             appKeyStore.store(outputStream, "123456".toCharArray());
         }
     }

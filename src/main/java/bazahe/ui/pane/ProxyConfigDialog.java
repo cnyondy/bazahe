@@ -25,7 +25,7 @@
 package bazahe.ui.pane;
 
 import bazahe.def.ProxyConfig;
-import bazahe.ui.controller.ConfigureController;
+import bazahe.ui.controller.ProxyConfigController;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXMLLoader;
@@ -47,7 +47,7 @@ public class ProxyConfigDialog extends Dialog<ProxyConfig> {
     public ProxyConfigDialog() {
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/bazahe/proxy_config.fxml"));
         GridPane gridPane = loader.load();
-        ConfigureController controller = loader.getController();
+        ProxyConfigController controller = loader.getController();
 
         getDialogPane().setContent(gridPane);
         setTitle("Proxy Setting");
@@ -66,18 +66,16 @@ public class ProxyConfigDialog extends Dialog<ProxyConfig> {
             controller.getTimeoutField().setText("" + n.getTimeout());
             controller.getKeyStoreField().setText(n.getKeyStore());
             controller.getKeyStorePasswordField().setText(new String(n.getKeyStorePassword()));
-            controller.getAliasField().setText(n.getAlias());
         });
     }
 
-    private ProxyConfig getProxyConfig(ConfigureController controller) {
+    private ProxyConfig getProxyConfig(ProxyConfigController controller) {
         ProxyConfig proxyConfig = new ProxyConfig();
         proxyConfig.setHost(controller.getHostField().getText());
         proxyConfig.setPort(Integer.parseInt(controller.getPortFiled().getText()));
         proxyConfig.setTimeout(Integer.parseInt(controller.getTimeoutField().getText()));
         proxyConfig.setKeyStore(controller.getKeyStoreField().getText());
         proxyConfig.setKeyStorePassword(controller.getKeyStorePasswordField().getText().toCharArray());
-        proxyConfig.setAlias(controller.getAliasField().getText());
         return proxyConfig;
     }
 

@@ -4,6 +4,8 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 
+import java.io.Serializable;
+
 /**
  * The proxy config infos
  *
@@ -12,7 +14,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @ToString
-public class ProxyConfig {
+public class ProxyConfig implements Serializable {
     private String host;
     private int port;
     // timeout in milliseconds
@@ -20,15 +22,13 @@ public class ProxyConfig {
     // path for keyStore file
     private String keyStore;
     private char[] keyStorePassword;
-    private String alias;
 
     public static ProxyConfig getDefault() {
         ProxyConfig proxyConfig = new ProxyConfig();
         proxyConfig.setHost("");
         proxyConfig.setPort(1024);
-        proxyConfig.setKeyStore("certificates/root_ca.p12");
-        proxyConfig.setKeyStorePassword("123456".toCharArray());
-        proxyConfig.setAlias("mykey");
+        proxyConfig.setKeyStore("");
+        proxyConfig.setKeyStorePassword(new char[0]);
         proxyConfig.setTimeout(60000);
         return proxyConfig;
     }

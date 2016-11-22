@@ -158,6 +158,7 @@ public class HttpMessageController {
         if (bodyStore == null) {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setContentText("This http message has nobody");
+            alert.setHeaderText("");
             alert.showAndWait();
             return;
         }
@@ -169,6 +170,7 @@ public class HttpMessageController {
         }
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setContentText("Export Finished!");
+        alert.setHeaderText("");
         alert.showAndWait();
     }
 }

@@ -39,7 +39,7 @@ public class ProxyServer {
     public ProxyServer(ProxyConfig config) {
         this.proxyConfig = config;
         this.appKeyStoreGeneratorLazy = Lazy.create(() -> new AppKeyStoreGenerator(proxyConfig.getKeyStore(),
-                proxyConfig.getKeyStorePassword(), proxyConfig.getAlias())
+                proxyConfig.getKeyStorePassword())
         );
     }
 

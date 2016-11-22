@@ -18,8 +18,12 @@ import javafx.scene.control.*;
 import javafx.scene.layout.StackPane;
 import javafx.scene.layout.VBox;
 import lombok.SneakyThrows;
+import net.dongliu.commons.Marshaller;
 
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Optional;
 
 /**
@@ -49,14 +53,18 @@ public class MainController {
 
     private volatile ProxyServer proxyServer;
     private ProxyConfig config;
+    private Path configPath = Paths.get(System.getProperty("user.home"), ".bazahe_config");
 
     @FXML
+    @SneakyThrows
     void configureProxy(ActionEvent e) {
         ProxyConfigDialog dialog = new ProxyConfigDialog();
         dialog.proxyConfigProperty().setValue(config);
         Optional<ProxyConfig> newConfig = dialog.showAndWait();
         if (newConfig.isPresent()) {
             config = newConfig.get();
+            byte[] data = Marshaller.marshal(config);
+            Files.write(configPath, data);
         }
     }
 
@@ -101,13 +109,19 @@ public class MainController {
     }
 
     @FXML
+    @SneakyThrows
     void initialize() {
         AppResources.registerTask(() -> {
             if (proxyServer != null) {
                 proxyServer.stop();
             }
         });
-        config = ProxyConfig.getDefault();
+
+        if (Files.exists(configPath)) {
+            config = (ProxyConfig) Marshaller.unmarshal(Files.readAllBytes(configPath));
+        } else {
+            config = ProxyConfig.getDefault();
+        }
 
 
         splitPane.setDividerPositions(0.2, 0.6);
