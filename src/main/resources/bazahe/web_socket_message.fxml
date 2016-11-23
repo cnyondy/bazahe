@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import bazahe.ui.pane.WebSocketMessagePane?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.text.Text?>
+<fx:root type="bazahe.ui.pane.WebSocketMessagePane" xmlns:fx="http://javafx.com/fxml"
+         fx:controller="bazahe.ui.controller.WebSocketMessageController"
+         fx:id="root">
+    <top>
+        <HBox spacing="4" alignment="CENTER_LEFT">
+            <Text fx:id="description"/>
+            <Button onAction="#exportBody">Export Body</Button>
+        </HBox>
+    </top>
+    <center>
+    </center>
+</fx:root>

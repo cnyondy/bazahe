@@ -30,7 +30,7 @@ import java.net.Socket;
 public class ConnectProxyHandler implements ProxyHandler {
 
     @Override
-    public void handle(Socket socket, String rawRequestLine, @Nullable HttpMessageListener httpMessageListener)
+    public void handle(Socket socket, String rawRequestLine, @Nullable MessageListener messageListener)
             throws IOException {
         HttpInputStream input = new HttpInputStream(socket.getInputStream());
         input.putBackLine(rawRequestLine);
@@ -79,7 +79,7 @@ public class ConnectProxyHandler implements ProxyHandler {
         }
 
         try {
-            handle(serverSocket, clientSocket, protocol, target, httpMessageListener);
+            handle(serverSocket, clientSocket, protocol, target, messageListener);
         } finally {
             Closeables.closeQuietly(clientSocket);
         }
@@ -87,7 +87,7 @@ public class ConnectProxyHandler implements ProxyHandler {
     }
 
     private void handle(Socket serverSocket, Socket clientSocket, String protocol, String target,
-                        @Nullable HttpMessageListener httpMessageListener) throws IOException {
+                        @Nullable MessageListener messageListener) throws IOException {
         HttpInputStream srcInput = new HttpInputStream(new BufferedInputStream(
                 new ObservableInputStream(serverSocket.getInputStream(), clientSocket.getOutputStream())));
         HttpInputStream destInput = new HttpInputStream(new BufferedInputStream(
@@ -95,7 +95,7 @@ public class ConnectProxyHandler implements ProxyHandler {
 
 
         while (true) {
-            boolean finish = handleOneRequest(srcInput, destInput, protocol, target, httpMessageListener);
+            boolean finish = handleOneRequest(srcInput, destInput, protocol, target, messageListener);
             if (finish) {
                 break;
             }
@@ -106,7 +106,7 @@ public class ConnectProxyHandler implements ProxyHandler {
     @SneakyThrows
     private boolean handleOneRequest(HttpInputStream srcInput, HttpInputStream destInput,
                                      String protocol, String target,
-                                     @Nullable HttpMessageListener httpMessageListener) {
+                                     @Nullable MessageListener messageListener) {
         @Nullable RequestHeaders requestHeaders = srcInput.readRequestHeaders();
         // client close connection
         if (requestHeaders == null) {
@@ -126,8 +126,8 @@ public class ConnectProxyHandler implements ProxyHandler {
         String url = protocol + "://" + target + requestLine.getUrl();
 
         @Nullable OutputStream requestStore = null;
-        if (httpMessageListener != null) {
-            requestStore = httpMessageListener.onRequest(id, url, requestHeaders);
+        if (messageListener != null) {
+            requestStore = messageListener.onHttpRequest(id, url, requestHeaders);
         }
 
         boolean shouldClose = requestHeaders.shouldClose();
@@ -151,8 +151,8 @@ public class ConnectProxyHandler implements ProxyHandler {
         }
 
         @Nullable OutputStream responseStore = null;
-        if (httpMessageListener != null) {
-            responseStore = httpMessageListener.onResponse(id, responseHeaders);
+        if (messageListener != null) {
+            responseStore = messageListener.onHttpResponse(id, responseHeaders);
         }
         @Cleanup InputStream responseBody = getResponseBodyInput(destInput, responseHeaders, requestLine.getMethod());
         try {
@@ -172,7 +172,7 @@ public class ConnectProxyHandler implements ProxyHandler {
         if ("websocket".equals(upgrade) && responseHeaders.getStatusLine().getCode() == 101) {
             // upgrade to websocket
             log.info("{} upgrade to websocket", url);
-            tunnel(srcInput, destInput);
+            handleWebSocket(srcInput, destInput, requestHeaders, responseHeaders, url, messageListener);
             shouldClose = true;
         } else if ("h2c".equals(upgrade) && responseHeaders.getStatusLine().getCode() == 101) {
             // upgrade to http2
@@ -182,6 +182,51 @@ public class ConnectProxyHandler implements ProxyHandler {
         }
 
         return shouldClose;
+    }
+
+    @SneakyThrows
+    private void handleWebSocket(InputStream srcInput, InputStream destInput, RequestHeaders requestHeaders,
+                                 ResponseHeaders responseHeaders, String url,
+                                 @Nullable MessageListener messageListener) {
+        int version = Strings.toInt(Strings.nullToEmpty(requestHeaders.getFirst("Sec-WebSocket-Version")), -1);
+        //TODO: server may not support the version. in this case server will send supported versions, client should
+
+        Thread thread = new Thread(() -> {
+            try {
+                readWebSocket(destInput, url, messageListener, false);
+            } catch (Throwable t) {
+                log.warn("Read webSocket error", t);
+            }
+        });
+        thread.start();
+
+        readWebSocket(srcInput, url, messageListener, true);
+        thread.join();
+    }
+
+    private void readWebSocket(InputStream inputStream, String url,
+                               @Nullable MessageListener messageListener, boolean isRequest)
+            throws IOException {
+        WebSocketInputStream srcWSInput = new WebSocketInputStream(inputStream);
+
+        while (true) {
+            int type = srcWSInput.readMessage();
+            if (type == -1) {
+                break;
+            }
+            String id = Digests.md5().update(url + System.currentTimeMillis()).toHexLower();
+            @Nullable OutputStream outputStream;
+            if (messageListener != null) {
+                outputStream = messageListener.onWebSocket(id, url, type, isRequest);
+            } else {
+                outputStream = null;
+            }
+            try {
+                srcWSInput.readMessageBody(outputStream);
+            } finally {
+                Closeables.closeQuietly(outputStream);
+            }
+        }
     }
 
     private void tunnel(InputStream input1, InputStream input2) throws InterruptedException {

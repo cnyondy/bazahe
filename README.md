@@ -1,7 +1,8 @@
 
 Read Http/Https data via Http Proxy
 
-This project now is still under development, it lack features, and may have unexpected bugs. Current support Http1.x / Https1.x.
+This project now is still under development, it lack features, and may have unexpected bugs.
+Current support Http1.x/Https1.x/WebSocket.
 
 
 ## Build

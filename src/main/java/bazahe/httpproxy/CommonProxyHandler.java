@@ -32,13 +32,13 @@ public class CommonProxyHandler implements ProxyHandler {
 
     @Override
     public void handle(Socket socket, String rawRequestLine,
-                       @Nullable HttpMessageListener httpMessageListener) throws IOException {
+                       @Nullable MessageListener messageListener) throws IOException {
         HttpInputStream inputStream = new HttpInputStream(new BufferedInputStream(socket.getInputStream()));
         inputStream.putBackLine(rawRequestLine);
         HttpOutputStream outputStream = new HttpOutputStream(socket.getOutputStream());
 
         while (true) {
-            boolean shouldBreak = handleOneRequest(inputStream, outputStream, httpMessageListener);
+            boolean shouldBreak = handleOneRequest(inputStream, outputStream, messageListener);
             if (shouldBreak) {
                 log.debug("Server close connection");
                 break;
@@ -48,7 +48,7 @@ public class CommonProxyHandler implements ProxyHandler {
 
     @SneakyThrows
     private boolean handleOneRequest(HttpInputStream input, HttpOutputStream output,
-                                     @Nullable HttpMessageListener httpMessageListener) {
+                                     @Nullable MessageListener messageListener) {
         @Nullable RequestHeaders requestHeaders = input.readRequestHeaders();
         // client close connection
         if (requestHeaders == null) {
@@ -70,8 +70,8 @@ public class CommonProxyHandler implements ProxyHandler {
         String url = requestLine.getUrl();
 
         @Nullable OutputStream requestOutput = null;
-        if (httpMessageListener != null) {
-            requestOutput = httpMessageListener.onRequest(id, url, requestHeaders);
+        if (messageListener != null) {
+            requestOutput = messageListener.onHttpRequest(id, url, requestHeaders);
         }
 
         boolean shouldClose = requestHeaders.shouldClose();
@@ -90,8 +90,8 @@ public class CommonProxyHandler implements ProxyHandler {
         output.writeLine(rawResponse.getStatusLine());
         ResponseHeaders responseHeaders = toResponseHeaders(rawResponse.getStatusLine(), rawResponse.getHeaders());
         @Nullable OutputStream responseOutput = null;
-        if (httpMessageListener != null) {
-            responseOutput = httpMessageListener.onResponse(id, responseHeaders);
+        if (messageListener != null) {
+            responseOutput = messageListener.onHttpResponse(id, responseHeaders);
         }
         @Cleanup InputStream responseBody = getResponseBodyInput(responseOutput, rawResponse.getInput());
 

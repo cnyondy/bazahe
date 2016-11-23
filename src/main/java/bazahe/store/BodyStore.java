@@ -21,7 +21,7 @@ import java.util.zip.GZIPInputStream;
  */
 @ThreadSafe
 @Log4j2
-public class HttpBodyStore extends OutputStream {
+public class BodyStore extends OutputStream {
     private ByteArrayOutputStreamEx bos;
     private OutputStream fos;
     private File file;
@@ -36,7 +36,7 @@ public class HttpBodyStore extends OutputStream {
     @Getter
     private final String contentEncoding;
 
-    public HttpBodyStore(@Nullable ContentType contentType, @Nullable String contentEncoding) {
+    public BodyStore(@Nullable ContentType contentType, @Nullable String contentEncoding) {
         this.contentType = contentType;
         this.contentEncoding = contentEncoding;
         this.bos = new ByteArrayOutputStreamEx();

@@ -10,18 +10,23 @@ import java.io.OutputStream;
  *
  * @author Liu Dong
  */
-public interface HttpMessageListener {
+public interface MessageListener {
     /**
      * Http request received
      *
      * @return a output stream for body to write
      */
-    OutputStream onRequest(String id, String url, RequestHeaders requestHeaders);
+    OutputStream onHttpRequest(String id, String url, RequestHeaders requestHeaders);
 
     /**
      * On response received
      *
      * @return a output stram for body to write
      */
-    OutputStream onResponse(String id, ResponseHeaders responseHeaders);
+    OutputStream onHttpResponse(String id, ResponseHeaders responseHeaders);
+
+    /**
+     * One receive a websocket message
+     */
+    OutputStream onWebSocket(String id, String url, int type, boolean request);
 }

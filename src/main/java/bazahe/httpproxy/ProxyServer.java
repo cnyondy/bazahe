@@ -27,7 +27,7 @@ public class ProxyServer {
     private final ProxyConfig proxyConfig;
     private volatile ServerSocket serverSocket;
     @Setter
-    private volatile HttpMessageListener httpMessageListener;
+    private volatile MessageListener messageListener;
 
     private volatile ExecutorService executor;
     private volatile Thread masterThread;
@@ -92,7 +92,7 @@ public class ProxyServer {
             ProxyWorker worker;
             try {
                 socket.setSoTimeout(proxyConfig.getTimeout());
-                worker = new ProxyWorker(socket, httpMessageListener);
+                worker = new ProxyWorker(socket, messageListener);
             } catch (Exception e) {
                 Closeables.closeQuietly(socket);
                 log.error("Create new proxy worker failed.", e);

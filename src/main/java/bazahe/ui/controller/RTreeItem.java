@@ -1,6 +1,6 @@
 package bazahe.ui.controller;
 
-import bazahe.def.HttpMessage;
+import bazahe.def.Message;
 import lombok.Getter;
 
 /**
@@ -11,9 +11,9 @@ abstract class RTreeItem {
     static class Leaf extends RTreeItem {
 
         @Getter
-        private final HttpMessage message;
+        private final Message message;
 
-        Leaf(HttpMessage message) {
+        Leaf(Message message) {
             this.message = message;
         }
     }
@@ -28,7 +28,7 @@ abstract class RTreeItem {
             this.pattern = pattern;
         }
 
-        public void increaseChinldren() {
+        public void increaseChildren() {
             count++;
         }
     }

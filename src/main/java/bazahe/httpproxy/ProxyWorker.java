@@ -22,12 +22,12 @@ import java.net.SocketTimeoutException;
 public class ProxyWorker implements Runnable {
     private final Socket socket;
     @Nullable
-    private final HttpMessageListener httpMessageListener;
+    private final MessageListener messageListener;
 
-    public ProxyWorker(Socket socket, @Nullable HttpMessageListener httpMessageListener)
+    public ProxyWorker(Socket socket, @Nullable MessageListener messageListener)
             throws IOException {
         this.socket = socket;
-        this.httpMessageListener = httpMessageListener;
+        this.messageListener = messageListener;
     }
 
     @Override
@@ -52,7 +52,7 @@ public class ProxyWorker implements Runnable {
             } else {
                 handler = new CommonProxyHandler();
             }
-            handler.handle(socket, rawRequestLine, httpMessageListener);
+            handler.handle(socket, rawRequestLine, messageListener);
         } catch (HttpParserException e) {
             log.error("Illegal http data", e);
         } catch (SocketTimeoutException e) {

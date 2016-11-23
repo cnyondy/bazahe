@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import bazahe.ui.pane.HttpMessagePane?>
+<?import bazahe.ui.pane.WebSocketMessagePane?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
@@ -19,10 +20,13 @@
                 <CheckBox text="Grouped" onAction="#group" fx:id="groupedCheckBox" selected="true"/>
             </HBox>
             <StackPane fx:id="contentPane" VBox.vgrow="ALWAYS" maxWidth="Infinity" maxHeight="Infinity">
-                <ListView fx:id="requestList"/>
-                <TreeView fx:id="requestTree"/>
+                <ListView fx:id="messageListView"/>
+                <TreeView fx:id="messageTree"/>
             </StackPane>
         </VBox>
-        <HttpMessagePane fx:id="httpMessagePane" visible="false"/>
+        <StackPane>
+            <HttpMessagePane fx:id="httpMessagePane" visible="false"/>
+            <WebSocketMessagePane fx:id="webSocketMessagePane" visible="false"/>
+        </StackPane>
     </SplitPane>
 </VBox>

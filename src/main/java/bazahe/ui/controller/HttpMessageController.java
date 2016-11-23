@@ -4,7 +4,7 @@ import bazahe.def.HttpMessage;
 import bazahe.httpparse.ContentType;
 import bazahe.httpparse.Headers;
 import bazahe.httpparse.ResponseHeaders;
-import bazahe.store.HttpBodyStore;
+import bazahe.store.BodyStore;
 import bazahe.ui.TextMessageConverter;
 import bazahe.ui.pane.HttpMessagePane;
 import javafx.beans.property.ObjectProperty;
@@ -71,7 +71,7 @@ public class HttpMessageController {
         ObjectProperty<HttpMessage> httpMessageProperty = root.httpMessageProperty();
         Object userData = toggle.getUserData();
         Headers headers;
-        HttpBodyStore bodyStore;
+        BodyStore bodyStore;
         if ("RequestBody".equals(userData)) {
             headers = httpMessageProperty.get().getRequestHeaders();
             bodyStore = httpMessageProperty.get().getRequestBody();
@@ -98,7 +98,7 @@ public class HttpMessageController {
     }
 
     @SneakyThrows
-    private void setBody(@Nullable Headers headers, @Nullable HttpBodyStore bodyStore) {
+    private void setBody(@Nullable Headers headers, @Nullable BodyStore bodyStore) {
         if (headers == null || bodyStore == null) {
             return;
         }
@@ -147,7 +147,7 @@ public class HttpMessageController {
     void exportBody(ActionEvent e) {
         ObjectProperty<HttpMessage> httpMessageProperty = root.httpMessageProperty();
         Toggle toggle = selectBody.selectedToggleProperty().get();
-        HttpBodyStore bodyStore;
+        BodyStore bodyStore;
         if ("RequestBody".equals(toggle.getUserData())) {
             bodyStore = httpMessageProperty.get().getRequestBody();
         } else if ("ResponseBody".equals(toggle.getUserData())) {
