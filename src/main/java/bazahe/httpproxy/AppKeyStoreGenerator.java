@@ -13,6 +13,7 @@ import org.bouncycastle.crypto.params.RSAPrivateCrtKeyParameters;
 import org.bouncycastle.jce.provider.X509CertificateObject;
 
 import java.io.*;
+import java.math.BigInteger;
 import java.security.*;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
@@ -45,7 +46,7 @@ public class AppKeyStoreGenerator {
     @SneakyThrows
     public AppKeyStoreGenerator(String caKeyStorePath, char[] caKeyStorePassword) {
 
-        log.info("Loading CA certificate/private key from file {}", caKeyStorePath);
+        log.debug("Loading CA certificate/private key from file {}", caKeyStorePath);
         KeyStore caKeyStore = KeyStore.getInstance("PKCS12");
         try (InputStream input = new FileInputStream(caKeyStorePath)) {
             caKeyStore.load(input, caKeyStorePassword);
@@ -53,7 +54,7 @@ public class AppKeyStoreGenerator {
 
         Enumeration<String> aliases = caKeyStore.aliases();
         String alias = aliases.nextElement();
-        log.info("Loading CA certificate/private by alias {}", alias);
+        log.debug("Loading CA certificate/private by alias {}", alias);
 
         Key key = caKeyStore.getKey(alias, caKeyStorePassword);
         Objects.requireNonNull(key, "Specified key of the KeyStore not found!");
@@ -72,6 +73,10 @@ public class AppKeyStoreGenerator {
         jcaX509ExtensionUtils = new JcaX509ExtensionUtils();
     }
 
+    public BigInteger getCACertSerialNumber() {
+        return caCertificate.getSerialNumber();
+    }
+
     private RSAPrivateCrtKeyParameters getPrivateKeyParameters(RSAPrivateCrtKey privateCrtKey) {
         return new RSAPrivateCrtKeyParameters(privateCrtKey.getModulus(),
                 privateCrtKey.getPublicExponent(),
@@ -83,7 +88,7 @@ public class AppKeyStoreGenerator {
 
     @SneakyThrows
     public KeyStore generateKeyStore(String host, int validityDays, char[] password) {
-        log.info("Generating certificate for host {}", host);
+        log.debug("Generating certificate for host {}", host);
         // generate the key pair for the new certificate
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
         keyGen.initialize(2048, secureRandom);
@@ -114,7 +119,7 @@ public class AppKeyStoreGenerator {
         ExtensionsGenerator extensionsGenerator = new ExtensionsGenerator();
         extensionsGenerator.addExtension(Extension.subjectAlternativeName, false, () -> {
             ASN1EncodableVector nameVector = new ASN1EncodableVector();
-            int hostType = getHostType(host);
+            int hostType = SocketsUtils.getHostType(host);
             if (hostType == 0 || hostType == 1) {
                 nameVector.add(new GeneralName(GeneralName.iPAddress, host));
             } else {
@@ -150,19 +155,6 @@ public class AppKeyStoreGenerator {
         return store;
     }
 
-    static final int TYPE_IPV6 = 0;
-    static final int TYPE_IPV4 = 1;
-    static final int TYPE_DOMAIN = 2;
-
-    static int getHostType(String host) {
-        if (host.contains(":") && !host.contains(".")) {
-            return TYPE_IPV6;
-        }
-        if (host.matches("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) {
-            return TYPE_IPV4;
-        }
-        return TYPE_DOMAIN;
-    }
 
     @SneakyThrows
     private static byte[] signData(ASN1ObjectIdentifier sigOID, byte[] data,

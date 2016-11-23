@@ -4,7 +4,6 @@ import bazahe.exception.HttpParserException;
 import bazahe.httpparse.HttpInputStream;
 import bazahe.httpparse.RequestLine;
 import lombok.extern.log4j.Log4j2;
-import net.dongliu.commons.concurrent.Lazy;
 import net.dongliu.commons.io.Closeables;
 
 import javax.annotation.Nullable;
@@ -24,14 +23,11 @@ public class ProxyWorker implements Runnable {
     private final Socket socket;
     @Nullable
     private final HttpMessageListener httpMessageListener;
-    private final Lazy<AppKeyStoreGenerator> appKeyStoreGeneratorLazy;
 
-    public ProxyWorker(Socket socket, @Nullable HttpMessageListener httpMessageListener,
-                       Lazy<AppKeyStoreGenerator> appKeyStoreGeneratorLazy)
+    public ProxyWorker(Socket socket, @Nullable HttpMessageListener httpMessageListener)
             throws IOException {
         this.socket = socket;
         this.httpMessageListener = httpMessageListener;
-        this.appKeyStoreGeneratorLazy = appKeyStoreGeneratorLazy;
     }
 
     @Override
@@ -52,7 +48,7 @@ public class ProxyWorker implements Runnable {
             }
             ProxyHandler handler;
             if (requestLine.getMethod().equalsIgnoreCase("CONNECT")) {
-                handler = new ConnectProxyHandler(appKeyStoreGeneratorLazy);
+                handler = new ConnectProxyHandler();
             } else {
                 handler = new CommonProxyHandler();
             }

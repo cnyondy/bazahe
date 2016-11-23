@@ -7,20 +7,18 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import net.dongliu.commons.Strings;
 import net.dongliu.commons.codec.Digests;
-import net.dongliu.commons.concurrent.Lazy;
 import net.dongliu.commons.io.Closeables;
 import net.dongliu.commons.io.InputOutputs;
 
 import javax.annotation.Nullable;
-import javax.net.ssl.*;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
-import java.security.KeyStore;
-import java.security.SecureRandom;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Handle connect method.
@@ -30,14 +28,6 @@ import java.util.concurrent.ConcurrentHashMap;
  */
 @Log4j2
 public class ConnectProxyHandler implements ProxyHandler {
-    private final static ConcurrentHashMap<String, SSLContext> sslContextCache = new ConcurrentHashMap<>();
-
-    private final Lazy<AppKeyStoreGenerator> appKeyStoreGeneratorLazy;
-    private final static char[] appKeyStorePassword = "123456".toCharArray();
-
-    public ConnectProxyHandler(Lazy<AppKeyStoreGenerator> appKeyStoreGeneratorLazy) {
-        this.appKeyStoreGeneratorLazy = appKeyStoreGeneratorLazy;
-    }
 
     @Override
     public void handle(Socket socket, String rawRequestLine, @Nullable HttpMessageListener httpMessageListener)
@@ -72,14 +62,14 @@ public class ConnectProxyHandler implements ProxyHandler {
         Socket clientSocket;
         if (first == 22 && second <= 3 && third <= 3) {
             // ssl client hello message
-            SSLContext sslContext = sslContextCache.computeIfAbsent(host, this::createSSlContext);
+            SSLContext sslContext = SSLContextManager.getInstance().createSSlContext(host);
             SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
             SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(wrappedSocket, null, socket.getPort(),
                     false);
             sslSocket.setUseClientMode(false);
             serverSocket = sslSocket;
             protocol = "https";
-            SSLContext clientSSlContext = createClientSSlContext();
+            SSLContext clientSSlContext = SSLUtils.createClientSSlContext();
             SSLSocketFactory factory = clientSSlContext.getSocketFactory();
             clientSocket = factory.createSocket(host, port);
         } else {
@@ -98,14 +88,14 @@ public class ConnectProxyHandler implements ProxyHandler {
 
     private void handle(Socket serverSocket, Socket clientSocket, String protocol, String target,
                         @Nullable HttpMessageListener httpMessageListener) throws IOException {
-        HttpInputStream srcInput = new HttpInputStream(new BufferedInputStream(serverSocket.getInputStream()));
-        HttpOutputStream srcOutput = new HttpOutputStream(serverSocket.getOutputStream());
-        HttpInputStream destInput = new HttpInputStream(new BufferedInputStream(clientSocket.getInputStream()));
-        HttpOutputStream destOutput = new HttpOutputStream(clientSocket.getOutputStream());
+        HttpInputStream srcInput = new HttpInputStream(new BufferedInputStream(
+                new ObservableInputStream(serverSocket.getInputStream(), clientSocket.getOutputStream())));
+        HttpInputStream destInput = new HttpInputStream(new BufferedInputStream(
+                new ObservableInputStream(clientSocket.getInputStream(), serverSocket.getOutputStream())));
+
 
         while (true) {
-            boolean finish = handleOneRequest(srcInput, srcOutput, destInput, destOutput, protocol, target,
-                    httpMessageListener);
+            boolean finish = handleOneRequest(srcInput, destInput, protocol, target, httpMessageListener);
             if (finish) {
                 break;
             }
@@ -114,8 +104,7 @@ public class ConnectProxyHandler implements ProxyHandler {
     }
 
     @SneakyThrows
-    private boolean handleOneRequest(HttpInputStream srcInput, HttpOutputStream srcOutput,
-                                     HttpInputStream destInput, HttpOutputStream destOutput,
+    private boolean handleOneRequest(HttpInputStream srcInput, HttpInputStream destInput,
                                      String protocol, String target,
                                      @Nullable HttpMessageListener httpMessageListener) {
         @Nullable RequestHeaders requestHeaders = srcInput.readRequestHeaders();
@@ -128,9 +117,8 @@ public class ConnectProxyHandler implements ProxyHandler {
         log.debug("Accept new request: {}", rawRequestLine);
 
         // expect-100
-        // TODO: should forward "100-continue" if target support http 1.1
         if ("100-continue".equalsIgnoreCase(requestHeaders.getFirst("Expect"))) {
-            srcOutput.writeLine("HTTP/1.1 100 Continue\r\n");
+            // TODO: show read external server header, if have one
         }
 
         String id = Digests.md5().update(rawRequestLine).toHexLower() + System.nanoTime();
@@ -142,11 +130,8 @@ public class ConnectProxyHandler implements ProxyHandler {
             requestStore = httpMessageListener.onRequest(id, url, requestHeaders);
         }
 
-        destOutput.writeRequestHeaders(requestHeaders);
-
-
         boolean shouldClose = requestHeaders.shouldClose();
-        @Cleanup @Nullable InputStream requestBody = getRequestBodyInputStream(srcInput, requestHeaders, destOutput);
+        @Cleanup @Nullable InputStream requestBody = getRequestBodyInputStream(srcInput, requestHeaders);
         try {
             if (requestBody != null) {
                 if (requestStore != null) {
@@ -165,13 +150,11 @@ public class ConnectProxyHandler implements ProxyHandler {
             return true;
         }
 
-        srcOutput.writeResponseHeaders(responseHeaders);
         @Nullable OutputStream responseStore = null;
         if (httpMessageListener != null) {
             responseStore = httpMessageListener.onResponse(id, responseHeaders);
         }
-        @Cleanup InputStream responseBody = getResponseBodyInput(destInput, responseHeaders, requestLine.getMethod(),
-                srcOutput);
+        @Cleanup InputStream responseBody = getResponseBodyInput(destInput, responseHeaders, requestLine.getMethod());
         try {
             if (responseBody != null) {
                 if (responseStore != null) {
@@ -189,11 +172,11 @@ public class ConnectProxyHandler implements ProxyHandler {
         if ("websocket".equals(upgrade) && responseHeaders.getStatusLine().getCode() == 101) {
             // upgrade to websocket
             log.info("{} upgrade to websocket", url);
-            SocketsUtils.tunnel(srcInput, srcOutput, destInput, destOutput);
+            tunnel(srcInput, destInput);
             shouldClose = true;
         } else if ("h2c".equals(upgrade) && responseHeaders.getStatusLine().getCode() == 101) {
             // upgrade to http2
-            SocketsUtils.tunnel(srcInput, srcOutput, destInput, destOutput);
+            tunnel(srcInput, destInput);
             log.info("{} upgrade to http2", url);
             shouldClose = true;
         }
@@ -201,9 +184,21 @@ public class ConnectProxyHandler implements ProxyHandler {
         return shouldClose;
     }
 
-    private InputStream getResponseBodyInput(HttpInputStream destInput, ResponseHeaders responseHeaders, String method,
-                                             HttpOutputStream srcOutput) {
-        destInput = new HttpInputStream(new ObservableInputStream(destInput, srcOutput));
+    private void tunnel(InputStream input1, InputStream input2) throws InterruptedException {
+        Thread thread = new Thread(() -> {
+            try {
+                IOUtils.consumeAll(input1);
+            } catch (Throwable t) {
+                log.warn("tunnel traffic failed", t);
+            }
+        });
+        thread.start();
+        IOUtils.consumeAll(input2);
+        thread.join();
+    }
+
+    private InputStream getResponseBodyInput(HttpInputStream destInput, ResponseHeaders responseHeaders,
+                                             String method) {
         InputStream responseBody;
         if (responseHeaders.chunked()) {
             responseBody = destInput.getBody(-1);
@@ -220,9 +215,7 @@ public class ConnectProxyHandler implements ProxyHandler {
 
     @SneakyThrows
     @Nullable
-    private InputStream getRequestBodyInputStream(HttpInputStream input, RequestHeaders requestHeaders,
-                                                  OutputStream destOutput) {
-        input = new HttpInputStream(new ObservableInputStream(input, destOutput));
+    private InputStream getRequestBodyInputStream(HttpInputStream input, RequestHeaders requestHeaders) {
         InputStream requestBody;
         if (requestHeaders.chunked()) {
             requestBody = input.getBody(-1);
@@ -231,61 +224,11 @@ public class ConnectProxyHandler implements ProxyHandler {
         } else if (!requestHeaders.hasBody()) {
             requestBody = null;
         } else {
-            throw new HttpParserException("Where is body");
+            log.error("Cannot find body info, headers:", requestHeaders);
+            throw new HttpParserException("Cannot find body info");
         }
         return requestBody;
     }
 
 
-    private KeyStore generateKeyStoreForSite(String host) {
-        return appKeyStoreGeneratorLazy.get().generateKeyStore(host, 10, appKeyStorePassword);
-    }
-
-    @SneakyThrows
-    private SSLContext createSSlContext(String host) {
-        KeyStore keyStore = generateKeyStoreForSite(host);
-        KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
-        keyManagerFactory.init(keyStore, appKeyStorePassword);
-        KeyManager[] keyManagers = keyManagerFactory.getKeyManagers();
-
-        TrustManager[] trustAllCerts = new TrustManager[]{
-                new X509TrustManager() {
-                    public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-                    }
-
-                    public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-                    }
-
-                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                        return null;
-                    }
-                }
-        };
-
-        SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
-        sslContext.init(keyManagers, trustAllCerts, new SecureRandom());
-        return sslContext;
-    }
-
-
-    @SneakyThrows
-    private SSLContext createClientSSlContext() {
-        TrustManager[] trustAllCerts = new TrustManager[]{
-                new X509TrustManager() {
-                    public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-                    }
-
-                    public void checkServerTrusted(java.security.cert.X509Certificate[] certs, String authType) {
-                    }
-
-                    public java.security.cert.X509Certificate[] getAcceptedIssuers() {
-                        return null;
-                    }
-                }
-        };
-
-        SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
-        sslContext.init(null, trustAllCerts, new SecureRandom());
-        return sslContext;
-    }
 }

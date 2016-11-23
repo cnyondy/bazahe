@@ -38,12 +38,9 @@ public class RequestHeaders extends Headers {
      * If this request/response has body.
      */
     public boolean hasBody() {
-        /*
-         * For request, an entity-body is explicitly forbidden in TRACE requests only, all other request types are
-         * unrestricted
-         */
         return !"TRACE".equalsIgnoreCase(requestLine.getMethod())
-                && !"GET".equalsIgnoreCase(requestLine.getMethod());
+                && !"GET".equalsIgnoreCase(requestLine.getMethod())
+                && !"OPTIONS".equalsIgnoreCase(requestLine.getMethod());
     }
 
 }

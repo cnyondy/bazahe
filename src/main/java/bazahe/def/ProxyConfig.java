@@ -29,7 +29,7 @@ public class ProxyConfig implements Serializable {
         proxyConfig.setPort(1024);
         proxyConfig.setKeyStore("");
         proxyConfig.setKeyStorePassword(new char[0]);
-        proxyConfig.setTimeout(60000);
+        proxyConfig.setTimeout(120000);
         return proxyConfig;
     }
 }

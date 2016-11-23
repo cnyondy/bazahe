@@ -12,6 +12,30 @@ import java.io.OutputStream;
  */
 class SocketsUtils {
 
+    static final int HOST_TYPE_IPV6 = 0;
+    static final int HOST_TYPE_IPV4 = 1;
+    static final int HOST_TYPE_DOMAIN = 2;
+
+    static int getHostType(String host) {
+        if (host.contains(":") && !host.contains(".")) {
+            return HOST_TYPE_IPV6;
+        }
+        if (host.matches("^[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}\\.[0-9]{1,3}")) {
+            return HOST_TYPE_IPV4;
+        }
+        return HOST_TYPE_DOMAIN;
+    }
+
+    static boolean isIp(String host) {
+        int type = getHostType(host);
+        return type == HOST_TYPE_IPV4 || type == HOST_TYPE_IPV6;
+    }
+
+    static boolean isDomain(String host) {
+        int type = getHostType(host);
+        return type == HOST_TYPE_DOMAIN;
+    }
+
     @SneakyThrows
     static void tunnel(InputStream srcIn, OutputStream srcOut, InputStream destIn, OutputStream destOut) {
         try {

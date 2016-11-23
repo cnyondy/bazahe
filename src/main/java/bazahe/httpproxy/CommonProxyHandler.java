@@ -58,8 +58,7 @@ public class CommonProxyHandler implements ProxyHandler {
         String rawRequestLine = requestHeaders.getRawRequestLine();
         log.debug("Accept new request: {}", rawRequestLine);
 
-        // expect-100
-        // TODO: should forward "100-continue" if target support http 1.1
+        // expect-100. just tell client continue to send http body
         if ("100-continue".equalsIgnoreCase(requestHeaders.getFirst("Expect"))) {
             output.writeLine("HTTP/1.1 100 Continue\r\n");
         }

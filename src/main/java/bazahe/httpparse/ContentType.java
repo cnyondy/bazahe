@@ -6,6 +6,7 @@ import net.dongliu.commons.Strings;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import java.nio.charset.Charset;
+import java.nio.charset.UnsupportedCharsetException;
 
 /**
  * Http content type
@@ -43,7 +44,19 @@ public class ContentType {
                 break;
             }
         }
-        return new ContentType(type, encoding == null ? null : Charset.forName(encoding));
+        return new ContentType(type, toCharsetSafe(encoding));
+    }
+
+    @Nullable
+    private static Charset toCharsetSafe(@Nullable String encoding) {
+        if (encoding == null) {
+            return null;
+        }
+        try {
+            return Charset.forName(encoding);
+        } catch (UnsupportedCharsetException e) {
+            return null;
+        }
     }
 
     public boolean isText() {

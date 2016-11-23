@@ -110,7 +110,7 @@ public class HttpMessageController {
         ContentType contentType = RefValues.ifNullThen(headers.contentType(), ContentType.UNKNOWN);
         // handle images
         if (contentType.isImage() && Strings.equalsAny(contentType.getMimeType().getSubType(),
-                "bmp", "gif", "png", "jpeg")) {
+                "bmp", "gif", "png", "jpeg", "ico")) {
             Image image = new Image(bodyStore.getInputStream());
             ImageView imageView = new ImageView();
             imageView.setImage(image);
