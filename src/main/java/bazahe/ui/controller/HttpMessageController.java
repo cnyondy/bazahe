@@ -6,13 +6,12 @@ import bazahe.httpparse.Headers;
 import bazahe.httpparse.ResponseHeaders;
 import bazahe.store.BodyStore;
 import bazahe.ui.TextMessageConverter;
+import bazahe.ui.UIUtils;
 import bazahe.ui.pane.HttpMessagePane;
 import javafx.beans.property.ObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import javafx.scene.image.Image;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
@@ -111,13 +110,8 @@ public class HttpMessageController {
         // handle images
         if (contentType.isImage() && Strings.equalsAny(contentType.getMimeType().getSubType(),
                 "bmp", "gif", "png", "jpeg", "ico")) {
-            Image image = new Image(bodyStore.getInputStream());
-            ImageView imageView = new ImageView();
-            imageView.setImage(image);
-            ScrollPane scrollPane = new ScrollPane();
-            scrollPane.setStyle("-fx-background-color:transparent");
-            scrollPane.setContent(imageView);
-            bodyPane.setCenter(scrollPane);
+            Control imagePane = UIUtils.getImagePane(bodyStore.getInputStream());
+            bodyPane.setCenter(imagePane);
             return;
         }
 

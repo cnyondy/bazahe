@@ -1,7 +1,6 @@
 package bazahe.httpparse;
 
 import lombok.extern.log4j.Log4j2;
-import net.dongliu.commons.io.InputOutputs;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -17,10 +16,8 @@ import java.io.OutputStream;
 @Log4j2
 public class WebSocketInputStream extends DataInputStream {
 
-    private final InputStream inputStream;
-
     public WebSocketInputStream(InputStream inputStream) {
-        this.inputStream = inputStream;
+        super(inputStream);
     }
 
     private Frame lastFrame;
@@ -91,11 +88,11 @@ public class WebSocketInputStream extends DataInputStream {
      */
     @Nullable
     private Frame readFrameHeader() throws IOException {
-        int first = inputStream.read();
+        int first = in.read();
         if (first == -1) {
             return null;
         }
-        int second = inputStream.read();
+        int second = in.read();
         boolean fin = BitUtils.getBit(first, 7) != 0;
         boolean rsv1 = BitUtils.getBit(first, 6) != 0;
         boolean rsv2 = BitUtils.getBit(first, 5) != 0;
@@ -112,56 +109,10 @@ public class WebSocketInputStream extends DataInputStream {
         }
         byte[] maskData = null;
         if (mask) {
-            maskData = new byte[4];
-            InputOutputs.readExact(inputStream, maskData);
+            maskData = readExact(4);
         }
         log.debug("fin: {}, opcode: {}, mask: {}, payloadLen: {}", fin, opcode, mask, payloadLen);
         return new Frame(fin, opcode, payloadLen, mask, maskData);
-    }
-
-    @Override
-    public int read() throws IOException {
-        return inputStream.read();
-    }
-
-    @Override
-    public int read(byte[] b) throws IOException {
-        return inputStream.read(b);
-    }
-
-    @Override
-    public int read(byte[] b, int off, int len) throws IOException {
-        return inputStream.read(b, off, len);
-    }
-
-    @Override
-    public long skip(long n) throws IOException {
-        return inputStream.skip(n);
-    }
-
-    @Override
-    public int available() throws IOException {
-        return inputStream.available();
-    }
-
-    @Override
-    public void close() throws IOException {
-        inputStream.close();
-    }
-
-    @Override
-    public void mark(int readlimit) {
-        inputStream.mark(readlimit);
-    }
-
-    @Override
-    public void reset() throws IOException {
-        inputStream.reset();
-    }
-
-    @Override
-    public boolean markSupported() {
-        return inputStream.markSupported();
     }
 
     private class Frame {
@@ -197,7 +148,7 @@ public class WebSocketInputStream extends DataInputStream {
             long total = 0;
             while (true) {
                 int toRead = (int) Math.min(payloadLen - total, bufferSize);
-                int read = inputStream.read(buffer, 0, toRead);
+                int read = in.read(buffer, 0, toRead);
                 if (read == -1) {
                     break;
                 }
@@ -214,7 +165,7 @@ public class WebSocketInputStream extends DataInputStream {
             long total = 0;
             while (true) {
                 int toRead = (int) Math.min(payloadLen - total, bufferSize);
-                int read = inputStream.read(buffer, 0, toRead);
+                int read = in.read(buffer, 0, toRead);
                 if (read == -1) {
                     break;
                 }

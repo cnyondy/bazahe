@@ -3,6 +3,7 @@ package bazahe.httpparse;
 import net.dongliu.commons.io.InputOutputs;
 
 import java.io.EOFException;
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -11,7 +12,11 @@ import java.io.InputStream;
  *
  * @author Liu Dong
  */
-abstract class DataInputStream extends InputStream {
+abstract class DataInputStream extends FilterInputStream {
+
+    protected DataInputStream(InputStream in) {
+        super(in);
+    }
 
     /**
      * Read exactly size bytes

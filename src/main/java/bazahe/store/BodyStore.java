@@ -45,6 +45,7 @@ public class BodyStore extends OutputStream {
         this.bodyStoreType = RefValues.ifNullThen(bodyStoreType, BodyStoreType.unknown);
         this.charset = RefValues.ifNullThen(charset, StandardCharsets.UTF_8);
         this.contentEncoding = contentEncoding;
+        this.bos = new ByteArrayOutputStreamEx();
     }
 
 
@@ -78,22 +79,22 @@ public class BodyStore extends OutputStream {
 
     @Override
     public synchronized void write(int b) throws IOException {
-        delegate().write(b);
+        getOutput().write(b);
     }
 
     @Override
     public synchronized void write(byte[] b) throws IOException {
-        delegate().write(b);
+        getOutput().write(b);
     }
 
     @Override
     public synchronized void write(byte[] b, int off, int len) throws IOException {
-        delegate().write(b, off, len);
+        getOutput().write(b, off, len);
     }
 
     @Override
     public synchronized void flush() throws IOException {
-        delegate().flush();
+        getOutput().flush();
     }
 
     @Override
@@ -110,7 +111,7 @@ public class BodyStore extends OutputStream {
         return closed;
     }
 
-    private OutputStream delegate() {
+    private OutputStream getOutput() {
         if (fos != null) {
             return fos;
         }

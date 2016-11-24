@@ -14,52 +14,67 @@ import java.util.List;
  *
  * @author Liu Dong
  */
-public class TLSInputs {
+public class TLSInputStream extends DataInputStream {
 
+    public TLSInputStream(InputStream in) {
+        super(in);
+    }
 
-    public static TLSPlaintextHeader readPlaintextHeader(InputStream input) throws IOException {
-        int contentType = input.read();
-        int majorVersion = input.read();
-        int minorVersion = input.read();
-        int length = (input.read() << 8) + input.read();
+    /**
+     * Read TLSPlaintext Header
+     */
+    public TLSPlaintextHeader readPlaintextHeader() throws IOException {
+        int contentType = in.read();
+        int majorVersion = in.read();
+        int minorVersion = in.read();
+        int length = readUnsigned2();
         return new TLSPlaintextHeader(contentType, majorVersion, minorVersion, length);
     }
 
 
-    public static HandShakeMessage<?> readHandShakeMessage(InputStream input) throws IOException {
-        int messageType = input.read();
-        int length = (input.read() << 16) + (input.read() << 8) + input.read();
+    /**
+     * Read one TLS handshake message. Now only support helloRequest, clientHello, serverHello
+     *
+     * @throws IOException
+     */
+    public HandShakeMessage<?> readHandShakeMessage() throws IOException {
+        int messageType = in.read();
+        int length = readUnsigned3();
         if (messageType == HandShakeMessage.hello_request) {
-            return new HandShakeMessage<>(messageType, length, new HelloRequest());
+            return new HandShakeMessage<>(messageType, length, readHelloRequest(length));
         } else if (messageType == HandShakeMessage.client_hello) {
-            return new HandShakeMessage<>(messageType, length, readClientHello(input, length));
+            return new HandShakeMessage<>(messageType, length, readClientHello(length));
         } else if (messageType == HandShakeMessage.server_hello) {
-            return new HandShakeMessage<>(messageType, length, null);
+            return new HandShakeMessage<>(messageType, length, readServerHello(length));
         }
-        return null;
+        throw new UnsupportedOperationException();
     }
 
-    private static ClientHello readClientHello(InputStream input, int length) throws IOException {
-        int majorVersion = input.read();
-        int minorVersion = input.read();
-        byte[] random = new byte[32];
-        int read = InputOutputs.readExact(input, random);
-        int sessionIdLen = input.read();
-        byte[] sessionId = new byte[sessionIdLen];
-        read = InputOutputs.readExact(input, sessionId);
-        int cipherSuiteLen = (input.read() << 8) + input.read();
-        byte[] cipherSuite = new byte[cipherSuiteLen];
-        read = InputOutputs.readExact(input, cipherSuite);
-        int compressionMethodsLen = input.read();
-        byte[] compressionMethods = new byte[compressionMethodsLen];
-        read = InputOutputs.readExact(input, compressionMethods);
+    private ServerHello readServerHello(int length) {
+        return new ServerHello();
+    }
+
+    private HelloRequest readHelloRequest(int length) {
+        return new HelloRequest();
+    }
+
+    private ClientHello readClientHello(int length) throws IOException {
+        int majorVersion = in.read();
+        int minorVersion = in.read();
+        byte[] random = readExact(32);
+        int sessionIdLen = in.read();
+        byte[] sessionId = readExact(sessionIdLen);
+        int cipherSuiteLen = readUnsigned2();
+        byte[] cipherSuite = readExact(cipherSuiteLen);
+        int compressionMethodsLen = in.read();
+        byte[] compressionMethods = readExact(compressionMethodsLen);
 
         int readed = 2 + 32 + 1 + sessionIdLen + 2 + cipherSuiteLen + 1 + compressionMethodsLen;
         if (readed < length) {
             //read extensions
-            int extensionsNum = (input.read() << 8) + input.read();
+            int extensionsNum = readUnsigned2();
             for (int i = 0; i < extensionsNum; i++) {
-                Extension extension = readExtension(input);
+                Extension extension = readExtension();
                 if (extension.isALPN()) {
                     List<String> alpnNames = extension.ALPNNames();
                 }
@@ -68,11 +83,10 @@ public class TLSInputs {
         return new ClientHello();
     }
 
-    public static Extension readExtension(InputStream input) throws IOException {
-        int extensionType = (input.read() << 8) + input.read();
-        int extensionDataLen = (input.read() << 8) + input.read();
-        byte[] data = new byte[extensionDataLen];
-        int read = InputOutputs.readExact(input, data);
+    private Extension readExtension() throws IOException {
+        int extensionType = readUnsigned2();
+        int extensionDataLen = readUnsigned2();
+        byte[] data = readExact(extensionDataLen);
         return new Extension(extensionType, data);
     }
 
@@ -135,6 +149,10 @@ public class TLSInputs {
 
     public static class ClientHello {
 
+
+    }
+
+    public static class ServerHello {
 
     }
 

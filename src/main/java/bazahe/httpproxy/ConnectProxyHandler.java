@@ -47,10 +47,9 @@ public class ConnectProxyHandler implements ProxyHandler {
         output.flush();
 
         // read first two byte to see if is ssl/tls connection
-        byte[] heading = new byte[5];
-        int read = InputOutputs.readExact(input, heading);
-        TLSInputs.TLSPlaintextHeader tlsPlaintextHeader = TLSInputs.readPlaintextHeader(
-                new ByteArrayInputStream(heading));
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        TLSInputStream tlsIn = new TLSInputStream(new ObservableInputStream(socket.getInputStream(), bos));
+        TLSInputStream.TLSPlaintextHeader tlsPlaintextHeader = tlsIn.readPlaintextHeader();
 
         boolean ssl;
         Socket serverSocket;
@@ -61,10 +60,11 @@ public class ConnectProxyHandler implements ProxyHandler {
 //            int length = tlsPlaintextHeader.getLength();
 //            byte[] data = new byte[length];
 //            int read2 = InputOutputs.readExact(input, data);
-//            TLSInputs.HandShakeMessage<?> message = TLSInputs.readHandShakeMessage(new ByteArrayInputStream(data));
+//            TLSInputStream.HandShakeMessage<?> message = TLSInputStream.readHandShakeMessage(new
+// ByteArrayInputStream(data));
 
 
-            Socket wrappedSocket = new WrappedSocket(socket, heading);
+            Socket wrappedSocket = new WrappedSocket(socket, bos.toByteArray());
             SSLContext sslContext = SSLContextManager.getInstance().createSSlContext(host);
             SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
             SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(wrappedSocket, null, socket.getPort(),
@@ -78,7 +78,7 @@ public class ConnectProxyHandler implements ProxyHandler {
             //TODO: http2 established by  ALPN https://tools.ietf.org/html/rfc7301, by send protocol "h2"
 //            handleHttp2();
         } else {
-            serverSocket = new WrappedSocket(socket, heading);
+            serverSocket = new WrappedSocket(socket, bos.toByteArray());
             ssl = false;
             clientSocket = new Socket(host, port);
         }
