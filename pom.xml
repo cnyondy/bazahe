@@ -32,14 +32,14 @@
         </dependency>
 
         <dependency>
-        <groupId>org.bouncycastle</groupId>
-        <artifactId>bcprov-jdk15on</artifactId>
-        <version>1.55</version>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcprov-jdk15on</artifactId>
+            <version>1.55</version>
         </dependency>
         <dependency>
-        <groupId>org.bouncycastle</groupId>
-        <artifactId>bcpkix-jdk15on</artifactId>
-        <version>1.55</version>
+            <groupId>org.bouncycastle</groupId>
+            <artifactId>bcpkix-jdk15on</artifactId>
+            <version>1.55</version>
         </dependency>
 
         <dependency>
@@ -87,6 +87,17 @@
                 <version>8.7.0</version>
                 <configuration>
                     <mainClass>bazahe.ui.Main</mainClass>
+                    <jfxAppOutputDir>${project.build.directory}/app</jfxAppOutputDir>
+                    <nativeOutputDir>${project.build.directory}/native</nativeOutputDir>
+                    <jfxMainAppJarName>${project.artifactId}.jar</jfxMainAppJarName>
+                    <nativeReleaseVersion>${project.version}</nativeReleaseVersion>
+                    <appName>${project.artifactId}</appName>
+                    <vendor>net.dongliu.bazahe</vendor>
+                    <needMenu>true</needMenu>
+                    <bundleArguments>
+                        <runtime/>
+                        <launcher-cfg-format>prop</launcher-cfg-format>
+                    </bundleArguments>
                 </configuration>
             </plugin>
         </plugins>

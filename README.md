@@ -13,14 +13,14 @@ Create executable java jar:
 mvn jfx:jar
 ```
 
-The jar file can be found in target/jfx/app/. Use
+The jar file can be found at target/app/bazahe.jar. Use
 
 ```sh
-java -jar target/jfx/app/bazahe-0.1.0-jfx.jar
+java -jar target/app/bazahe.jar
 ```
 to run the program.
 
-Also, could use `mvn jfx:native` to create platform-dependent native routine.
+Also, you can use `mvn jfx:native` to create platform-dependent native routine(and installer), in target/native.
 
 ## Https Traffics
 Bazahe use mitm to capture https traffics, This need a self signed certificate installed.
