@@ -5,22 +5,22 @@ import bazahe.def.Message;
 import bazahe.def.ProxyConfig;
 import bazahe.def.WebSocketMessage;
 import bazahe.httpproxy.ProxyServer;
+import bazahe.httpproxy.SSLContextManager;
 import bazahe.ui.AppResources;
 import bazahe.ui.UIMessageListener;
 import bazahe.ui.pane.HttpMessagePane;
 import bazahe.ui.pane.ProxyConfigDialog;
 import bazahe.ui.pane.WebSocketMessagePane;
 import javafx.application.Platform;
-import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Node;
 import javafx.scene.control.Button;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.layout.VBox;
 import lombok.SneakyThrows;
+import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import net.dongliu.commons.Marshaller;
 import net.dongliu.commons.Strings;
@@ -33,6 +33,7 @@ import java.util.Optional;
 /**
  * @author Liu Dong
  */
+@Log4j2
 public class MainController {
 
     @FXML
@@ -59,8 +60,14 @@ public class MainController {
     @FXML
     @SneakyThrows
     void configureProxy(ActionEvent e) {
+        showConfigureDialog("");
+    }
+
+    @SneakyThrows
+    private void showConfigureDialog(String message) {
         ProxyConfigDialog dialog = new ProxyConfigDialog();
         dialog.proxyConfigProperty().setValue(config);
+        dialog.messageProperty().setValue(message);
         Optional<ProxyConfig> newConfig = dialog.showAndWait();
         if (newConfig.isPresent()) {
             config = newConfig.get();
@@ -83,16 +90,39 @@ public class MainController {
         proxyConfigureButton.setDisable(true);
         proxyControlButton.setDisable(true);
         proxyServer = new ProxyServer(config);
-        proxyServer.setMessageListener(new UIMessageListener(item -> Platform.runLater(() -> {
-            manifestTree(item);
-        })));
+        proxyServer.setMessageListener(new UIMessageListener(item -> Platform.runLater(() -> manifestTree(item))));
+        doStartBackground();
+    }
+
+    private void doStartBackground() {
         new Thread(() -> {
+            String keyStorePath = config.getKeyStore();
+            if (keyStorePath.isEmpty() || !Files.exists(Paths.get(keyStorePath))) {
+                showKeyStoreGenerator();
+                return;
+            }
+            SSLContextManager sslContextManager = SSLContextManager.getInstance();
+            try {
+                sslContextManager.init(keyStorePath, config.getKeyStorePassword());
+            } catch (Throwable e) {
+                log.error("", e);
+                showKeyStoreGenerator();
+                return;
+            }
+
             proxyServer.start();
             Platform.runLater(() -> {
                 proxyControlButton.setText("Stop");
                 proxyControlButton.setDisable(false);
             });
         }).start();
+    }
+
+    private void showKeyStoreGenerator() {
+        Platform.runLater(() -> {
+            showConfigureDialog("You need to choose one root keyStore, or generate new one, to enable mitm.");
+            doStartBackground();
+        });
     }
 
     private void stopProxy() {

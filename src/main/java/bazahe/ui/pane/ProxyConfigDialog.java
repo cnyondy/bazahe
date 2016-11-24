@@ -28,6 +28,8 @@ import bazahe.def.ProxyConfig;
 import bazahe.ui.controller.ProxyConfigController;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
+import javafx.beans.property.SimpleStringProperty;
+import javafx.beans.property.StringProperty;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.control.ButtonBar.ButtonData;
 import javafx.scene.control.ButtonType;
@@ -42,6 +44,8 @@ import lombok.SneakyThrows;
 public class ProxyConfigDialog extends Dialog<ProxyConfig> {
 
     private final ObjectProperty<ProxyConfig> proxyConfig = new SimpleObjectProperty<>();
+
+    private final StringProperty message = new SimpleStringProperty();
 
     @SneakyThrows
     public ProxyConfigDialog() {
@@ -67,6 +71,8 @@ public class ProxyConfigDialog extends Dialog<ProxyConfig> {
             controller.getKeyStoreField().setText(n.getKeyStore());
             controller.getKeyStorePasswordField().setText(new String(n.getKeyStorePassword()));
         });
+
+        message.addListener((ov, o, n) -> controller.getMessage().setText(n));
     }
 
     private ProxyConfig getProxyConfig(ProxyConfigController controller) {
@@ -79,7 +85,19 @@ public class ProxyConfigDialog extends Dialog<ProxyConfig> {
         return proxyConfig;
     }
 
+    public ProxyConfig getProxyConfig() {
+        return proxyConfig.get();
+    }
+
     public ObjectProperty<ProxyConfig> proxyConfigProperty() {
         return proxyConfig;
+    }
+
+    public String getMessage() {
+        return message.get();
+    }
+
+    public StringProperty messageProperty() {
+        return message;
     }
 }

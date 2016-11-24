@@ -5,6 +5,7 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextField;
+import javafx.scene.text.Text;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import lombok.Getter;
@@ -20,6 +21,9 @@ import java.nio.file.Paths;
  */
 public class ProxyConfigController {
 
+    @FXML
+    @Getter
+    private Text message;
     @FXML
     @Getter
     private TextField hostField;
@@ -46,7 +50,7 @@ public class ProxyConfigController {
                 fileChooser.setInitialDirectory(file.getParentFile());
             }
         }
-        fileChooser.setSelectedExtensionFilter(new FileChooser.ExtensionFilter("PKCS12 KeyStore File", ".p12"));
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PKCS12 KeyStore File", "*.p12"));
         File file = fileChooser.showOpenDialog(timeoutField.getScene().getWindow());
         if (file != null) {
             keyStoreField.setText(file.getAbsolutePath());

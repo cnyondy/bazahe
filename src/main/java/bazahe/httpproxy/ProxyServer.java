@@ -41,9 +41,6 @@ public class ProxyServer {
      * Start proxy server
      */
     public void start() {
-        SSLContextManager sslContextManager = SSLContextManager.getInstance();
-        sslContextManager.init(proxyConfig.getKeyStore(), proxyConfig.getKeyStorePassword());
-
         executor = Executors.newCachedThreadPool(r -> {
             Thread t = new Thread(r);
             t.setName("proxy-server-worker-" + threadCounter.getAndIncrement());

@@ -18,7 +18,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Liu Dong
  */
 @Log4j2
-class SSLContextManager {
+public class SSLContextManager {
 
     private AppKeyStoreGenerator appKeyStoreGenerator;
     private BigInteger lastCaCertSerialNumber;
