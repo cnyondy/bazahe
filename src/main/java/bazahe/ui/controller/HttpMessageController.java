@@ -9,7 +9,11 @@ import bazahe.ui.pane.HttpMessagePane;
 import javafx.beans.property.ObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.Node;
+import javafx.scene.control.ComboBox;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
@@ -112,7 +116,7 @@ public class HttpMessageController {
 
         // handle images
         if (bodyStore.isImage()) {
-            Control imagePane = UIUtils.getImagePane(bodyStore.getInputStream());
+            Node imagePane = UIUtils.getImagePane(bodyStore.getInputStream(), bodyStore.getType());
             bodyPane.setCenter(imagePane);
             return;
         }

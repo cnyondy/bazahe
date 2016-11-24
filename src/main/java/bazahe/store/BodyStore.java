@@ -68,6 +68,8 @@ public class BodyStore extends OutputStream {
                     bodyStoreType = BodyStoreType.gif;
                 } else if ("bmp".equals(subType)) {
                     bodyStoreType = BodyStoreType.bmp;
+                } else if ("x-icon".equals(subType)) {
+                    bodyStoreType = BodyStoreType.icon;
                 } else {
                     bodyStoreType = BodyStoreType.otherImage;
                 }
@@ -80,6 +82,10 @@ public class BodyStore extends OutputStream {
                     bodyStoreType = BodyStoreType.xml;
                 } else if ("www-form-encoded".equals(subType)) {
                     bodyStoreType = BodyStoreType.formEncoded;
+                } else if ("css".equals(subType)) {
+                    bodyStoreType = BodyStoreType.css;
+                } else if ("javascript".equals(subType)) {
+                    bodyStoreType = BodyStoreType.javascript;
                 } else {
                     bodyStoreType = BodyStoreType.plainText;
                 }
@@ -196,14 +202,15 @@ public class BodyStore extends OutputStream {
     }
 
     /**
-     * If is otherImage javafx supported
+     * If is image javafx supported
      */
     public boolean isImage() {
-        return type == BodyStoreType.png || type == BodyStoreType.bmp
-                || type == BodyStoreType.jpeg || type == BodyStoreType.gif;
+        return type.getType() == 1;
+//        return type == BodyStoreType.png || type == BodyStoreType.bmp
+//                || type == BodyStoreType.jpeg || type == BodyStoreType.gif;
     }
 
     public boolean isText() {
-        return type.isText();
+        return type.getType() == 0;
     }
 }
