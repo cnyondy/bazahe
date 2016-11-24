@@ -6,6 +6,7 @@ import bazahe.ui.pane.WebSocketMessagePane;
 import javafx.beans.property.ObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.TextArea;
 import javafx.scene.text.Text;
@@ -44,15 +45,20 @@ public class WebSocketMessageController {
                 root.setCenter(new Text("Binary message"));
                 return;
             }
-            TextArea textArea = getTextArea(n);
-            root.setCenter(textArea);
+            Node node = getTextArea(n);
+            root.setCenter(node);
         });
     }
 
     @SneakyThrows
-    private TextArea getTextArea(WebSocketMessage n) {
+    private Node getTextArea(WebSocketMessage n) {
+        BodyStore bodyStore = n.getBodyStore();
+        if (!bodyStore.isClosed()) {
+            return new Text("Still writing...");
+        }
+
         TextArea textArea = new TextArea();
-        InputStreamReader reader = new InputStreamReader(n.getBodyStore().getInputStream(), StandardCharsets.UTF_8);
+        InputStreamReader reader = new InputStreamReader(bodyStore.getInputStream(), StandardCharsets.UTF_8);
         String text = ReaderWriters.readAll(reader);
         textArea.setText(text);
         return textArea;

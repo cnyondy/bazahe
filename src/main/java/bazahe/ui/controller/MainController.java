@@ -21,7 +21,6 @@ import javafx.scene.layout.VBox;
 import lombok.SneakyThrows;
 import net.dongliu.commons.Marshaller;
 
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -223,15 +222,14 @@ public class MainController {
     }
 
     @SneakyThrows
-    private void manifestTree(Message httpMessage) {
+    private void manifestTree(Message message) {
         TreeItem<RTreeItem> root = messageTree.getRoot();
-        URL url = new URL(httpMessage.getUrl());
-        String host = url.getHost();
+        String host = message.getHost();
 
         for (TreeItem<RTreeItem> item : root.getChildren()) {
             RTreeItem.Node node = (RTreeItem.Node) item.getValue();
             if (node.getPattern().equals(host)) {
-                item.getChildren().add(new TreeItem<>(new RTreeItem.Leaf(httpMessage)));
+                item.getChildren().add(new TreeItem<>(new RTreeItem.Leaf(message)));
                 node.increaseChildren();
                 return;
             }
@@ -240,7 +238,7 @@ public class MainController {
         RTreeItem.Node node = new RTreeItem.Node(host);
         TreeItem<RTreeItem> nodeItem = new TreeItem<>(node);
         root.getChildren().add(nodeItem);
-        nodeItem.getChildren().add(new TreeItem<>(new RTreeItem.Leaf(httpMessage)));
+        nodeItem.getChildren().add(new TreeItem<>(new RTreeItem.Leaf(message)));
         node.increaseChildren();
     }
 }

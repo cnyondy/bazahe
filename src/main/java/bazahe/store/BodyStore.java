@@ -4,6 +4,7 @@ import bazahe.httpparse.ContentType;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import net.dongliu.commons.BinarySize;
+import net.dongliu.commons.RefValues;
 import net.dongliu.commons.io.ByteArrayOutputStreamEx;
 import net.dongliu.commons.io.Closeables;
 import net.dongliu.commons.io.InputOutputs;
@@ -11,6 +12,8 @@ import net.dongliu.commons.io.InputOutputs;
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.*;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.zip.DeflaterInputStream;
 import java.util.zip.GZIPInputStream;
 
@@ -29,17 +32,48 @@ public class BodyStore extends OutputStream {
 
     private static final int MAX_BUFFER_SIZE = (int) BinarySize.kilobyte(512);
 
-    @Nullable
     @Getter
-    private final ContentType contentType;
+    private final BodyStoreType bodyStoreType;
+    @Getter
+    private final Charset charset;
     @Nullable
     @Getter
     private final String contentEncoding;
 
-    public BodyStore(@Nullable ContentType contentType, @Nullable String contentEncoding) {
-        this.contentType = contentType;
+    public BodyStore(@Nullable BodyStoreType bodyStoreType, @Nullable Charset charset,
+                     @Nullable String contentEncoding) {
+        this.bodyStoreType = RefValues.ifNullThen(bodyStoreType, BodyStoreType.unknown);
+        this.charset = RefValues.ifNullThen(charset, StandardCharsets.UTF_8);
         this.contentEncoding = contentEncoding;
-        this.bos = new ByteArrayOutputStreamEx();
+    }
+
+
+    public static BodyStore of(@Nullable ContentType contentType, @Nullable String contentEncoding) {
+        if (contentType == null) {
+            return new BodyStore(null, null, contentEncoding);
+        } else {
+            BodyStoreType bodyStoreType;
+            if (contentType.isImage()) {
+                bodyStoreType = BodyStoreType.image;
+            } else if (contentType.isText()) {
+                String type = contentType.getMimeType().getType();
+                String subType = contentType.getMimeType().getSubType();
+                if ("json".equals(subType)) {
+                    bodyStoreType = BodyStoreType.json;
+                } else if ("html".equals(subType)) {
+                    bodyStoreType = BodyStoreType.html;
+                } else if ("xml".equals(subType)) {
+                    bodyStoreType = BodyStoreType.xml;
+                } else if ("www-form-encoded".equals(subType)) {
+                    bodyStoreType = BodyStoreType.formEncoded;
+                } else {
+                    bodyStoreType = BodyStoreType.plainText;
+                }
+            } else {
+                bodyStoreType = BodyStoreType.binary;
+            }
+            return new BodyStore(bodyStoreType, contentType.getCharset(), contentEncoding);
+        }
     }
 
     @Override

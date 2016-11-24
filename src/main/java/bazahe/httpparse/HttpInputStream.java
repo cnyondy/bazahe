@@ -1,10 +1,10 @@
 package bazahe.httpparse;
 
-import bazahe.exception.HttpParserException;
 import net.dongliu.commons.collection.Lists;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
+import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
@@ -119,7 +119,7 @@ public class HttpInputStream extends InputStream {
             line = readLine();
             if (line == null) {
                 // non-completed header
-                throw new HttpParserException("Http header read not finished when reach the end of stream");
+                throw new EOFException("Http header read not finished when reach the end of stream");
             }
             if (line.isEmpty()) {
                 break;

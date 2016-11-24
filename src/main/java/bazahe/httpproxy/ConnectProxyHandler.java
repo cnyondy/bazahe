@@ -14,10 +14,7 @@ import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-import java.io.BufferedInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.net.Socket;
 
 /**
@@ -50,43 +47,51 @@ public class ConnectProxyHandler implements ProxyHandler {
         output.flush();
 
         // read first two byte to see if is ssl/tls connection
-        int first = input.read();
-        int second = input.read();
-        int third = input.read();
+        byte[] heading = new byte[5];
+        int read = InputOutputs.readExact(input, heading);
+        TLSInputs.TLSPlaintextHeader tlsPlaintextHeader = TLSInputs.readPlaintextHeader(
+                new ByteArrayInputStream(heading));
 
-        byte[] heading = {(byte) first, (byte) second, (byte) third};
-        Socket wrappedSocket = new WrappedSocket(socket, heading);
-
-        String protocol;
+        boolean ssl;
         Socket serverSocket;
         Socket clientSocket;
-        if (first == 22 && second <= 3 && third <= 3) {
-            // ssl client hello message
+        if (tlsPlaintextHeader.isValidHandShake()) {
+            // read entire ssl client hello message, to serach ALPN extension. Java8 not support ALPN now
+            // see https://tools.ietf.org/html/rfc5246
+//            int length = tlsPlaintextHeader.getLength();
+//            byte[] data = new byte[length];
+//            int read2 = InputOutputs.readExact(input, data);
+//            TLSInputs.HandShakeMessage<?> message = TLSInputs.readHandShakeMessage(new ByteArrayInputStream(data));
+
+
+            Socket wrappedSocket = new WrappedSocket(socket, heading);
             SSLContext sslContext = SSLContextManager.getInstance().createSSlContext(host);
             SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
             SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(wrappedSocket, null, socket.getPort(),
                     false);
             sslSocket.setUseClientMode(false);
             serverSocket = sslSocket;
-            protocol = "https";
+            ssl = true;
             SSLContext clientSSlContext = SSLUtils.createClientSSlContext();
             SSLSocketFactory factory = clientSSlContext.getSocketFactory();
             clientSocket = factory.createSocket(host, port);
+            //TODO: http2 established by  ALPN https://tools.ietf.org/html/rfc7301, by send protocol "h2"
+//            handleHttp2();
         } else {
-            serverSocket = wrappedSocket;
-            protocol = "http";
+            serverSocket = new WrappedSocket(socket, heading);
+            ssl = false;
             clientSocket = new Socket(host, port);
         }
 
         try {
-            handle(serverSocket, clientSocket, protocol, target, messageListener);
+            handle(serverSocket, clientSocket, ssl, target, messageListener);
         } finally {
             Closeables.closeQuietly(clientSocket);
         }
 
     }
 
-    private void handle(Socket serverSocket, Socket clientSocket, String protocol, String target,
+    private void handle(Socket serverSocket, Socket clientSocket, Boolean ssl, String target,
                         @Nullable MessageListener messageListener) throws IOException {
         HttpInputStream srcInput = new HttpInputStream(new BufferedInputStream(
                 new ObservableInputStream(serverSocket.getInputStream(), clientSocket.getOutputStream())));
@@ -95,7 +100,7 @@ public class ConnectProxyHandler implements ProxyHandler {
 
 
         while (true) {
-            boolean finish = handleOneRequest(srcInput, destInput, protocol, target, messageListener);
+            boolean finish = handleOneRequest(srcInput, destInput, ssl, target, messageListener);
             if (finish) {
                 break;
             }
@@ -105,7 +110,7 @@ public class ConnectProxyHandler implements ProxyHandler {
 
     @SneakyThrows
     private boolean handleOneRequest(HttpInputStream srcInput, HttpInputStream destInput,
-                                     String protocol, String target,
+                                     boolean ssl, String target,
                                      @Nullable MessageListener messageListener) {
         @Nullable RequestHeaders requestHeaders = srcInput.readRequestHeaders();
         // client close connection
@@ -123,11 +128,19 @@ public class ConnectProxyHandler implements ProxyHandler {
 
         String id = Digests.md5().update(rawRequestLine).toHexLower() + System.nanoTime();
         RequestLine requestLine = requestHeaders.getRequestLine();
+        String upgrade = requestHeaders.getFirst("Upgrade");
+        String protocol;
+        if ("websocket".equals(upgrade)) {
+            protocol = ssl ? "wss" : "ws";
+        } else {
+            protocol = ssl ? "https" : "http";
+        }
         String url = protocol + "://" + target + requestLine.getUrl();
+        String host = AddressUtils.getHostFromTarget(target);
 
         @Nullable OutputStream requestStore = null;
         if (messageListener != null) {
-            requestStore = messageListener.onHttpRequest(id, url, requestHeaders);
+            requestStore = messageListener.onHttpRequest(id, host, url, requestHeaders);
         }
 
         boolean shouldClose = requestHeaders.shouldClose();
@@ -167,80 +180,28 @@ public class ConnectProxyHandler implements ProxyHandler {
             Closeables.closeQuietly(responseStore);
         }
 
-        String upgrade = requestHeaders.getFirst("Upgrade");
+        int code = responseHeaders.getStatusLine().getCode();
 
-        if ("websocket".equals(upgrade) && responseHeaders.getStatusLine().getCode() == 101) {
+        if ("websocket".equals(upgrade) && code == 101) {
             // upgrade to websocket
             log.info("{} upgrade to websocket", url);
-            handleWebSocket(srcInput, destInput, requestHeaders, responseHeaders, url, messageListener);
+            int version = Strings.toInt(Strings.nullToEmpty(requestHeaders.getFirst("Sec-WebSocket-Version")), -1);
+            //TODO: server may not support the version. in this case server will send supported versions, client should
+            WebSocketHandler webSocketHandler = new WebSocketHandler();
+            webSocketHandler.handle(srcInput, destInput, host, url, messageListener);
             shouldClose = true;
-        } else if ("h2c".equals(upgrade) && responseHeaders.getStatusLine().getCode() == 101) {
-            // upgrade to http2
-            tunnel(srcInput, destInput);
+        } else if ("h2c".equals(upgrade) && code == 101) {
+            // http2 from http1 upgrade
             log.info("{} upgrade to http2", url);
+            String http2Settings = requestHeaders.getFirst("HTTP2-Settings");
+            Http2Handler handler = new Http2Handler();
+            handler.handle(srcInput, destInput, protocol, target, messageListener);
             shouldClose = true;
         }
 
         return shouldClose;
     }
 
-    @SneakyThrows
-    private void handleWebSocket(InputStream srcInput, InputStream destInput, RequestHeaders requestHeaders,
-                                 ResponseHeaders responseHeaders, String url,
-                                 @Nullable MessageListener messageListener) {
-        int version = Strings.toInt(Strings.nullToEmpty(requestHeaders.getFirst("Sec-WebSocket-Version")), -1);
-        //TODO: server may not support the version. in this case server will send supported versions, client should
-
-        Thread thread = new Thread(() -> {
-            try {
-                readWebSocket(destInput, url, messageListener, false);
-            } catch (Throwable t) {
-                log.warn("Read webSocket error", t);
-            }
-        });
-        thread.start();
-
-        readWebSocket(srcInput, url, messageListener, true);
-        thread.join();
-    }
-
-    private void readWebSocket(InputStream inputStream, String url,
-                               @Nullable MessageListener messageListener, boolean isRequest)
-            throws IOException {
-        WebSocketInputStream srcWSInput = new WebSocketInputStream(inputStream);
-
-        while (true) {
-            int type = srcWSInput.readMessage();
-            if (type == -1) {
-                break;
-            }
-            String id = Digests.md5().update(url + System.currentTimeMillis()).toHexLower();
-            @Nullable OutputStream outputStream;
-            if (messageListener != null) {
-                outputStream = messageListener.onWebSocket(id, url, type, isRequest);
-            } else {
-                outputStream = null;
-            }
-            try {
-                srcWSInput.readMessageBody(outputStream);
-            } finally {
-                Closeables.closeQuietly(outputStream);
-            }
-        }
-    }
-
-    private void tunnel(InputStream input1, InputStream input2) throws InterruptedException {
-        Thread thread = new Thread(() -> {
-            try {
-                IOUtils.consumeAll(input1);
-            } catch (Throwable t) {
-                log.warn("tunnel traffic failed", t);
-            }
-        });
-        thread.start();
-        IOUtils.consumeAll(input2);
-        thread.join();
-    }
 
     private InputStream getResponseBodyInput(HttpInputStream destInput, ResponseHeaders responseHeaders,
                                              String method) {

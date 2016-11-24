@@ -15,20 +15,13 @@ import java.io.OutputStream;
  * @author Liu Dong
  */
 @Log4j2
-public class WebSocketInputStream extends InputStream {
+public class WebSocketInputStream extends DataInputStream {
 
     private final InputStream inputStream;
 
     public WebSocketInputStream(InputStream inputStream) {
         this.inputStream = inputStream;
     }
-
-    private static final int FRAME_CONTINUATION = 0;
-    private static final int FRAME_TEXT = 1;
-    private static final int FRAME_BINARY = 2;
-    private static final int FRAME_CONNECTION_CLOSE = 8;
-    private static final int FRAME_PING = 9;
-    private static final int FRAME_PONG = 10;
 
     private Frame lastFrame;
 
@@ -103,26 +96,19 @@ public class WebSocketInputStream extends InputStream {
             return null;
         }
         int second = inputStream.read();
-        boolean fin = ((first >> 7) & 1) != 0;
-        boolean rsv1 = ((first >> 6) & 1) != 0;
-        boolean rsv2 = ((first >> 5) & 1) != 0;
-        boolean rsv3 = ((first >> 4) & 1) != 0;
+        boolean fin = BitUtils.getBit(first, 7) != 0;
+        boolean rsv1 = BitUtils.getBit(first, 6) != 0;
+        boolean rsv2 = BitUtils.getBit(first, 5) != 0;
+        boolean rsv3 = BitUtils.getBit(first, 4) != 0;
         int opcode = first & 0xf;
-        boolean mask = ((second >> 7) & 1) != 0;
+        boolean mask = BitUtils.getBit(first, 7) != 0;
         long payloadLen = second & 0x7f;
         if (payloadLen <= 125) {
 
         } else if (payloadLen == 126) {
-            payloadLen = (inputStream.read() << 8) + inputStream.read();
+            payloadLen = readUnsigned2();
         } else if (payloadLen == 127) {
-            payloadLen = ((long) inputStream.read() << 56)
-                    + ((long) inputStream.read() << 48)
-                    + ((long) inputStream.read() << 40)
-                    + ((long) inputStream.read() << 32)
-                    + ((long) inputStream.read() << 24)
-                    + ((long) inputStream.read() << 16)
-                    + ((long) inputStream.read() << 8)
-                    + ((long) inputStream.read());
+            payloadLen = readUnsigned8();
         }
         byte[] maskData = null;
         if (mask) {
@@ -179,6 +165,13 @@ public class WebSocketInputStream extends InputStream {
     }
 
     private class Frame {
+        private static final int FRAME_CONTINUATION = 0;
+        private static final int FRAME_TEXT = 1;
+        private static final int FRAME_BINARY = 2;
+        private static final int FRAME_CONNECTION_CLOSE = 8;
+        private static final int FRAME_PING = 9;
+        private static final int FRAME_PONG = 10;
+
         private final boolean fin;
         private final int opcode;
         private final long payloadLen;

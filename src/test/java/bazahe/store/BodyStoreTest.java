@@ -15,7 +15,7 @@ public class BodyStoreTest {
     @Test
     @Ignore
     public void write() throws Exception {
-        BodyStore bodyStore = new BodyStore(null, null);
+        BodyStore bodyStore = new BodyStore(null, null, null);
         byte[] data = new byte[1024];
         for (int i = 0; i < data.length; i++) {
             data[i] = (byte) i;

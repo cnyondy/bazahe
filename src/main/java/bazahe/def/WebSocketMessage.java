@@ -20,14 +20,14 @@ public class WebSocketMessage extends Message {
     @Setter
     private volatile BodyStore bodyStore;
 
-    public WebSocketMessage(String id, String url, int type, boolean request) {
-        super(id, url);
+    public WebSocketMessage(String id, String host, String url, int type, boolean request) {
+        super(id, host, url);
         this.type = type;
         this.request = request;
     }
 
     @Override
     public String getDisplay() {
-        return "WebSocket: " + getUrl();
+        return getUrl();
     }
 }

@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -71,7 +72,7 @@ public class CommonProxyHandler implements ProxyHandler {
 
         @Nullable OutputStream requestOutput = null;
         if (messageListener != null) {
-            requestOutput = messageListener.onHttpRequest(id, url, requestHeaders);
+            requestOutput = messageListener.onHttpRequest(id, new URL(url).getHost(), url, requestHeaders);
         }
 
         boolean shouldClose = requestHeaders.shouldClose();

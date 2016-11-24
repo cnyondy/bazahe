@@ -20,14 +20,14 @@ public class HttpMessage extends Message {
     private volatile ResponseHeaders responseHeaders;
     private volatile BodyStore responseBody;
 
-    public HttpMessage(String id, String url, RequestHeaders requestHeaders, BodyStore requestBody) {
-        super(id, url);
+    public HttpMessage(String id, String host, String url, RequestHeaders requestHeaders, BodyStore requestBody) {
+        super(id, host, url);
         this.requestHeaders = requestHeaders;
         this.requestBody = requestBody;
     }
 
     @Override
     public String getDisplay() {
-        return requestHeaders.getRequestLine().getMethod() + " " + getUrl();
+        return getUrl();
     }
 }

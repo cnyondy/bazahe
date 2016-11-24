@@ -11,11 +11,13 @@ public abstract class Message {
     @Getter
     private final String id;
     @Getter
+    private final String host;
+    @Getter
     private final String url;
-    private String display;
 
-    protected Message(String id, String url) {
+    protected Message(String id, String host, String url) {
         this.id = id;
+        this.host = host;
         this.url = url;
     }
 

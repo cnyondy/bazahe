@@ -16,7 +16,7 @@ public interface MessageListener {
      *
      * @return a output stream for body to write
      */
-    OutputStream onHttpRequest(String id, String url, RequestHeaders requestHeaders);
+    OutputStream onHttpRequest(String id, String host, String url, RequestHeaders requestHeaders);
 
     /**
      * On response received
@@ -28,5 +28,5 @@ public interface MessageListener {
     /**
      * One receive a websocket message
      */
-    OutputStream onWebSocket(String id, String url, int type, boolean request);
+    OutputStream onWebSocket(String id, String host, String url, int type, boolean request);
 }

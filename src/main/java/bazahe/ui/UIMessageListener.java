@@ -3,11 +3,11 @@ package bazahe.ui;
 import bazahe.def.HttpMessage;
 import bazahe.def.Message;
 import bazahe.def.WebSocketMessage;
-import bazahe.httpparse.ContentType;
 import bazahe.httpparse.RequestHeaders;
 import bazahe.httpparse.ResponseHeaders;
 import bazahe.httpproxy.MessageListener;
 import bazahe.store.BodyStore;
+import bazahe.store.BodyStoreType;
 import javafx.application.Platform;
 import lombok.extern.log4j.Log4j2;
 
@@ -33,9 +33,9 @@ public class UIMessageListener implements MessageListener {
     }
 
     @Override
-    public OutputStream onHttpRequest(String id, String url, RequestHeaders requestHeaders) {
-        BodyStore bodyStore = new BodyStore(requestHeaders.contentType(), requestHeaders.contentEncoding());
-        HttpMessage item = new HttpMessage(id, url, requestHeaders, bodyStore);
+    public OutputStream onHttpRequest(String id, String host, String url, RequestHeaders requestHeaders) {
+        BodyStore bodyStore = BodyStore.of(requestHeaders.contentType(), requestHeaders.contentEncoding());
+        HttpMessage item = new HttpMessage(id, host, url, requestHeaders, bodyStore);
         this.httpMap.put(id, item);
         Platform.runLater(() -> consumer.accept(item));
         return bodyStore;
@@ -49,17 +49,17 @@ public class UIMessageListener implements MessageListener {
             return null;
         }
         item.setResponseHeaders(responseHeaders);
-        BodyStore bodyStore = new BodyStore(responseHeaders.contentType(), responseHeaders.contentEncoding());
+        BodyStore bodyStore = BodyStore.of(responseHeaders.contentType(), responseHeaders.contentEncoding());
         item.setResponseBody(bodyStore);
         return bodyStore;
     }
 
     @Override
-    public OutputStream onWebSocket(String id, String url, int type, boolean request) {
+    public OutputStream onWebSocket(String id, String host, String url, int type, boolean request) {
         // TODO: currently the hacker way to use bodyStore
-        BodyStore bodyStore = new BodyStore(new ContentType(type == 1 ? "text/plain" : "application/binary",
-                StandardCharsets.UTF_8), null);
-        WebSocketMessage message = new WebSocketMessage(id, url, type, request);
+        BodyStore bodyStore = new BodyStore(type == 1 ? BodyStoreType.plainText : BodyStoreType.binary,
+                StandardCharsets.UTF_8, null);
+        WebSocketMessage message = new WebSocketMessage(id, host, url, type, request);
         message.setBodyStore(bodyStore);
         consumer.accept(message);
         return bodyStore;
