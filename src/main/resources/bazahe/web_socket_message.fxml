@@ -10,7 +10,7 @@
     <top>
         <HBox spacing="4" alignment="CENTER_LEFT">
             <Text fx:id="description"/>
-            <Button onAction="#exportBody">Export Body</Button>
+            <Button onAction="#exportBody">Save Body</Button>
         </HBox>
     </top>
     <center>

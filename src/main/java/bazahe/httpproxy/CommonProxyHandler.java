@@ -1,6 +1,5 @@
 package bazahe.httpproxy;
 
-import bazahe.exception.HttpParserException;
 import bazahe.httpparse.*;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
@@ -68,7 +67,7 @@ public class CommonProxyHandler implements ProxyHandler {
         RequestLine requestLine = requestHeaders.getRequestLine();
         String method = requestLine.getMethod();
         List<Header> newRequestHeaders = filterRequestHeaders(requestHeaders);
-        String url = requestLine.getUrl();
+        String url = requestLine.getPath();
 
         @Nullable OutputStream requestOutput = null;
         if (messageListener != null) {
@@ -154,7 +153,8 @@ public class CommonProxyHandler implements ProxyHandler {
         } else if (!requestHeaders.hasBody()) {
             requestBody = null;
         } else {
-            throw new HttpParserException("Where is body");
+            requestBody = null;
+//            throw new HttpParserException("Where is body");
         }
 
         if (requestOutput != null) {

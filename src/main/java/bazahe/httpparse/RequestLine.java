@@ -15,12 +15,12 @@ import lombok.Getter;
 @EqualsAndHashCode
 public class RequestLine {
     private final String method;
-    private final String url;
+    private final String path;
     private final String version;
 
     @Override
     public String toString() {
-        return String.format("RequestLine(%s %s %s)", method, url, version);
+        return String.format("RequestLine(%s %s %s)", method, path, version);
     }
 
     public static RequestLine parse(String str) {

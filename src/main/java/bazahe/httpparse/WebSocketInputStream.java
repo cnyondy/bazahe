@@ -6,6 +6,7 @@ import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.SocketException;
 
 /**
  * InputStream for websocket
@@ -88,7 +89,16 @@ public class WebSocketInputStream extends DataInputStream {
      */
     @Nullable
     private Frame readFrameHeader() throws IOException {
-        int first = in.read();
+        int first;
+        try {
+            first = in.read();
+        } catch (SocketException e) {
+            // special hack for socket close. because we did not use control frames
+            if (e.getMessage() != null && e.getMessage().contains("closed")) {
+                return null;
+            }
+            throw e;
+        }
         if (first == -1) {
             return null;
         }

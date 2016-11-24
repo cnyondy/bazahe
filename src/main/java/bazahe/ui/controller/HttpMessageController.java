@@ -5,13 +5,17 @@ import bazahe.httpparse.ContentType;
 import bazahe.httpparse.Headers;
 import bazahe.httpparse.ResponseHeaders;
 import bazahe.store.BodyStore;
+import bazahe.store.BodyStoreType;
 import bazahe.ui.TextMessageConverter;
 import bazahe.ui.UIUtils;
 import bazahe.ui.pane.HttpMessagePane;
 import javafx.beans.property.ObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Control;
+import javafx.scene.control.TextArea;
+import javafx.scene.control.Toggle;
+import javafx.scene.control.ToggleGroup;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
@@ -139,32 +143,64 @@ public class HttpMessageController {
     @FXML
     @SneakyThrows
     void exportBody(ActionEvent e) {
-        ObjectProperty<HttpMessage> httpMessageProperty = root.httpMessageProperty();
+        HttpMessage httpMessage = root.httpMessageProperty().get();
         Toggle toggle = selectBody.selectedToggleProperty().get();
+        String fileName = "";
         BodyStore bodyStore;
         if ("RequestBody".equals(toggle.getUserData())) {
-            bodyStore = httpMessageProperty.get().getRequestBody();
+            bodyStore = httpMessage.getRequestBody();
         } else if ("ResponseBody".equals(toggle.getUserData())) {
-            bodyStore = httpMessageProperty.get().getResponseBody();
+            bodyStore = httpMessage.getResponseBody();
+            fileName = getFileName(httpMessage.getUrl());
+            if (!fileName.contains(".")) {
+                // no extension
+                fileName = addExtension(fileName, bodyStore.getBodyStoreType());
+            }
         } else {
             throw new RuntimeException();
         }
         if (bodyStore == null) {
-            Alert alert = new Alert(Alert.AlertType.INFORMATION);
-            alert.setContentText("This http message has nobody");
-            alert.setHeaderText("");
-            alert.showAndWait();
+            UIUtils.showMessageDialog("This http message has nobody");
             return;
         }
 
         FileChooser fileChooser = new FileChooser();
+        fileChooser.setInitialFileName(fileName);
         File file = fileChooser.showSaveDialog(requestsHeaderText.getScene().getWindow());
         try (OutputStream out = new FileOutputStream(file)) {
             InputOutputs.copy(bodyStore.getInputStream(), out);
         }
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setContentText("Export Finished!");
-        alert.setHeaderText("");
-        alert.showAndWait();
+        UIUtils.showMessageDialog("Export Finished!");
+    }
+
+    private String addExtension(String suggestFileName, BodyStoreType bodyStoreType) {
+        switch (bodyStoreType) {
+            case html:
+                return suggestFileName + ".html";
+            case xml:
+                return suggestFileName + ".xml";
+            case json:
+                return suggestFileName + ".json";
+            case plainText:
+            case formEncoded:
+                return suggestFileName + ".txt";
+            case jpeg:
+                return suggestFileName + ".jpeg";
+            case png:
+                return suggestFileName + ".png";
+            case gif:
+                return suggestFileName + ".gif";
+            case bmp:
+                return suggestFileName + ".bmp";
+            default:
+                return suggestFileName;
+
+        }
+    }
+
+    private String getFileName(String url) {
+        String s = Strings.afterLast(url, "/");
+        s = Strings.before(s, "?");
+        return s;
     }
 }

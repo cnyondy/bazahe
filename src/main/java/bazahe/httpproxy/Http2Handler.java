@@ -16,7 +16,7 @@ import java.io.InputStream;
 public class Http2Handler {
 
     @SneakyThrows
-    public void handle(HttpInputStream srcInput, HttpInputStream destInput, String protocol, String target,
+    public void handle(HttpInputStream srcInput, HttpInputStream destInput, boolean ssl, String target,
                        @Nullable MessageListener messageListener) {
 
         // header compression http://httpwg.org/specs/rfc7541.html

@@ -1,6 +1,7 @@
 package bazahe.ui;
 
 import javafx.beans.binding.Bindings;
+import javafx.scene.control.Alert;
 import javafx.scene.control.Control;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
@@ -32,5 +33,12 @@ public class UIUtils {
         scrollPane.setContent(stackPane);
         scrollPane.setStyle("-fx-background-color:transparent");
         return scrollPane;
+    }
+
+    public static void showMessageDialog(String message) {
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setContentText(message);
+        alert.setHeaderText("");
+        alert.showAndWait();
     }
 }

@@ -17,12 +17,8 @@
         <VBox SplitPane.resizableWithParent="false">
             <HBox spacing="4" alignment="CENTER_LEFT">
                 <Button text="Clear" onAction="#clearAll"/>
-                <CheckBox text="Grouped" onAction="#group" fx:id="groupedCheckBox" selected="true"/>
             </HBox>
-            <StackPane fx:id="contentPane" VBox.vgrow="ALWAYS" maxWidth="Infinity" maxHeight="Infinity">
-                <ListView fx:id="messageListView"/>
-                <TreeView fx:id="messageTree"/>
-            </StackPane>
+            <TreeView fx:id="messageTree" VBox.vgrow="ALWAYS" maxWidth="Infinity" maxHeight="Infinity"/>
         </VBox>
         <StackPane>
             <HttpMessagePane fx:id="httpMessagePane" visible="false"/>

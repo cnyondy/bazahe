@@ -54,11 +54,21 @@ public class BodyStore extends OutputStream {
             return new BodyStore(null, null, contentEncoding);
         } else {
             BodyStoreType bodyStoreType;
+            String type = contentType.getMimeType().getType();
+            String subType = contentType.getMimeType().getSubType();
             if (contentType.isImage()) {
-                bodyStoreType = BodyStoreType.image;
+                if ("png".equals(subType)) {
+                    bodyStoreType = BodyStoreType.png;
+                } else if ("jpeg".equals(subType)) {
+                    bodyStoreType = BodyStoreType.jpeg;
+                } else if ("gif".equals(subType)) {
+                    bodyStoreType = BodyStoreType.gif;
+                } else if ("bmp".equals(subType)) {
+                    bodyStoreType = BodyStoreType.bmp;
+                } else {
+                    bodyStoreType = BodyStoreType.image;
+                }
             } else if (contentType.isText()) {
-                String type = contentType.getMimeType().getType();
-                String subType = contentType.getMimeType().getSubType();
                 if ("json".equals(subType)) {
                     bodyStoreType = BodyStoreType.json;
                 } else if ("html".equals(subType)) {

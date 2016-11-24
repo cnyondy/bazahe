@@ -38,10 +38,10 @@ public class ConnectProxyHandler implements ProxyHandler {
             return;
         }
         RequestLine requestLine = headers.getRequestLine();
-        String target = requestLine.getUrl();
+        String target = requestLine.getPath();
         log.debug("Receive connect request to {}", target);
-        String host = Strings.before(target, ":");
-        int port = Integer.parseInt(Strings.after(target, ":"));
+        String host = AddressUtils.getHostFromTarget(target);
+        int port = AddressUtils.getPortFromTarget(target);
         // just tell client ok..
         HttpOutputStream output = new HttpOutputStream(serverSocket.getOutputStream());
         output.writeLine("HTTP/1.1 200 OK\r\n");
@@ -127,14 +127,14 @@ public class ConnectProxyHandler implements ProxyHandler {
         String id = Digests.md5().update(rawRequestLine).toHexLower() + System.nanoTime();
         RequestLine requestLine = requestHeaders.getRequestLine();
         String upgrade = requestHeaders.getFirst("Upgrade");
-        String protocol;
-        if ("websocket".equals(upgrade)) {
-            protocol = ssl ? "wss" : "ws";
-        } else {
-            protocol = ssl ? "https" : "http";
+        String host = requestHeaders.getFirst("Host");
+        if (host == null) {
+            host = AddressUtils.getHostFromTarget(target);
         }
-        String url = protocol + "://" + target + requestLine.getUrl();
-        String host = AddressUtils.getHostFromTarget(target);
+        int port = AddressUtils.getPortFromTarget(target);
+
+        String url = AddressUtils.getUrl(ssl, upgrade, host, port, requestLine.getPath());
+
 
         @Nullable OutputStream requestStore = null;
         if (messageListener != null) {
@@ -193,7 +193,7 @@ public class ConnectProxyHandler implements ProxyHandler {
             log.info("{} upgrade to http2", url);
             String http2Settings = requestHeaders.getFirst("HTTP2-Settings");
             Http2Handler handler = new Http2Handler();
-            handler.handle(srcInput, destInput, protocol, target, messageListener);
+            handler.handle(srcInput, destInput, ssl, target, messageListener);
             shouldClose = true;
         }
 

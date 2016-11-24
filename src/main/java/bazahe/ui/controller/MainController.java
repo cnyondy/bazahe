@@ -15,11 +15,15 @@ import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
-import javafx.scene.control.*;
-import javafx.scene.layout.StackPane;
+import javafx.scene.control.Button;
+import javafx.scene.control.SplitPane;
+import javafx.scene.control.TreeItem;
+import javafx.scene.control.TreeView;
 import javafx.scene.layout.VBox;
 import lombok.SneakyThrows;
+import lombok.val;
 import net.dongliu.commons.Marshaller;
+import net.dongliu.commons.Strings;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,10 +38,6 @@ public class MainController {
     @FXML
     private TreeView<RTreeItem> messageTree;
     @FXML
-    private StackPane contentPane;
-    @FXML
-    private ListView<Message> messageListView;
-    @FXML
     private VBox root;
     @FXML
     private SplitPane splitPane;
@@ -49,8 +49,6 @@ public class MainController {
     private HttpMessagePane httpMessagePane;
     @FXML
     private WebSocketMessagePane webSocketMessagePane;
-    @FXML
-    private CheckBox groupedCheckBox;
 
     private boolean proxyStart;
 
@@ -86,7 +84,6 @@ public class MainController {
         proxyControlButton.setDisable(true);
         proxyServer = new ProxyServer(config);
         proxyServer.setMessageListener(new UIMessageListener(item -> Platform.runLater(() -> {
-            messageListView.getItems().add(item);
             manifestTree(item);
         })));
         new Thread(() -> {
@@ -126,54 +123,14 @@ public class MainController {
             config = ProxyConfig.getDefault();
         }
 
-
         splitPane.setDividerPositions(0.2, 0.6);
-        messageListView.setCellFactory(param -> new ListCell<Message>() {
-            @Override
-            protected void updateItem(Message item, boolean empty) {
-                super.updateItem(item, empty);
-
-                if (empty) {
-                    setText(null);
-                } else {
-                    setText(item.getDisplay());
-                }
-            }
-        });
-        messageListView.getSelectionModel().selectedItemProperty().addListener((ov, oldValue, newValue) -> {
-            if (newValue == null) {
-                hideContent();
-            } else {
-                showMessage(newValue);
-            }
-        });
-
 
         TreeItem<RTreeItem> root = new TreeItem<>(new RTreeItem.Node(""));
         root.setExpanded(true);
         messageTree.setRoot(root);
         messageTree.setShowRoot(false);
-        messageTree.setCellFactory(param -> new TreeCell<RTreeItem>() {
-            @Override
-            protected void updateItem(RTreeItem item, boolean empty) {
-                super.updateItem(item, empty);
-
-                if (empty) {
-                    setText(null);
-                } else {
-                    String text;
-                    if (item instanceof RTreeItem.Node) {
-                        text = ((RTreeItem.Node) item).getPattern() + "(" + ((RTreeItem.Node) item).getCount() + ")";
-                    } else if (item instanceof RTreeItem.Leaf) {
-                        Message message = ((RTreeItem.Leaf) item).getMessage();
-                        text = message.getDisplay();
-                    } else {
-                        text = "BUG..";
-                    }
-                    setText(text);
-                }
-            }
-        });
+        messageTree.setCellFactory(new TreeCellFactory());
+        messageTree.setOnMouseClicked(new TreeViewMouseHandler());
         messageTree.getSelectionModel().selectedItemProperty().addListener((ov, o, n) -> {
             if (n == null || n.getValue() instanceof RTreeItem.Node) {
                 hideContent();
@@ -205,29 +162,17 @@ public class MainController {
 
     @FXML
     private void clearAll(ActionEvent actionEvent) {
-        messageListView.getItems().clear();
         messageTree.setRoot(new TreeItem<>(new RTreeItem.Node("")));
-    }
-
-    @FXML
-    private void group(ActionEvent actionEvent) {
-        ObservableList<Node> children = contentPane.getChildren();
-        if (groupedCheckBox.isSelected()) {
-            children.remove(messageTree);
-            children.add(messageTree);
-        } else {
-            children.remove(messageListView);
-            children.add(messageListView);
-        }
     }
 
     @SneakyThrows
     private void manifestTree(Message message) {
-        TreeItem<RTreeItem> root = messageTree.getRoot();
-        String host = message.getHost();
+        val root = messageTree.getRoot();
+        String host = genericMultiCDNS(message.getHost());
 
-        for (TreeItem<RTreeItem> item : root.getChildren()) {
-            RTreeItem.Node node = (RTreeItem.Node) item.getValue();
+
+        for (val item : root.getChildren()) {
+            val node = (RTreeItem.Node) item.getValue();
             if (node.getPattern().equals(host)) {
                 item.getChildren().add(new TreeItem<>(new RTreeItem.Leaf(message)));
                 node.increaseChildren();
@@ -235,10 +180,30 @@ public class MainController {
             }
         }
 
-        RTreeItem.Node node = new RTreeItem.Node(host);
-        TreeItem<RTreeItem> nodeItem = new TreeItem<>(node);
+        val node = new RTreeItem.Node(host);
+        val nodeItem = new TreeItem<RTreeItem>(node);
         root.getChildren().add(nodeItem);
         nodeItem.getChildren().add(new TreeItem<>(new RTreeItem.Leaf(message)));
         node.increaseChildren();
     }
+
+    private String genericMultiCDNS(String host) {
+        String first = Strings.before(host, ".");
+        if (first.length() < 2) {
+            return host;
+        }
+        if (!Strings.isAsciiLetter(first.charAt(0))) {
+            return host;
+        }
+        char c = first.charAt(first.length() - 1);
+        if (!Strings.isDigit(c)) {
+            return host;
+        }
+        int idx = first.length() - 2;
+        while (Strings.isDigit(first.charAt(idx))) {
+            idx--;
+        }
+        return first.substring(0, idx + 1) + "*." + Strings.after(host, ".");
+    }
+
 }
