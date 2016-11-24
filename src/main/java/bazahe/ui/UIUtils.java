@@ -16,7 +16,7 @@ import java.io.InputStream;
 public class UIUtils {
 
     /**
-     * Get a Pane show image, in center
+     * Get a Pane show otherImage, in center
      */
     public static Control getImagePane(InputStream inputStream) {
         Image image = new Image(inputStream);

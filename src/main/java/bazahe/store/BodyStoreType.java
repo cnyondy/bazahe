@@ -7,7 +7,7 @@ import lombok.Getter;
  */
 public enum BodyStoreType {
     plainText(true), html(true), xml(true), json(true), formEncoded(true),
-    jpeg(false), png(false), bmp(false), gif(false), image(false),
+    jpeg(false), png(false), bmp(false), gif(false), otherImage(false),
     binary(false), unknown(false);
 
     @Getter

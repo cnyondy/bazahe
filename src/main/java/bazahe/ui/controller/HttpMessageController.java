@@ -1,41 +1,40 @@
 package bazahe.ui.controller;
 
 import bazahe.def.HttpMessage;
-import bazahe.httpparse.ContentType;
-import bazahe.httpparse.Headers;
 import bazahe.httpparse.ResponseHeaders;
 import bazahe.store.BodyStore;
 import bazahe.store.BodyStoreType;
-import bazahe.ui.TextMessageConverter;
 import bazahe.ui.UIUtils;
 import bazahe.ui.pane.HttpMessagePane;
 import javafx.beans.property.ObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Control;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.Toggle;
-import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import lombok.SneakyThrows;
 import net.dongliu.commons.Joiner;
-import net.dongliu.commons.RefValues;
 import net.dongliu.commons.Strings;
-import net.dongliu.commons.collection.Lists;
 import net.dongliu.commons.io.InputOutputs;
+import net.dongliu.commons.io.ReaderWriters;
 
 import javax.annotation.Nullable;
 import java.io.File;
 import java.io.FileOutputStream;
+import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.util.List;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 
 /**
  * @author Liu Dong
  */
 public class HttpMessageController {
+    @FXML
+    private ComboBox<BodyStoreType> bodyTypeBox;
+    @FXML
+    private ComboBox<Charset> charsetBox;
     @FXML
     private HttpMessagePane root;
     @FXML
@@ -60,70 +59,68 @@ public class HttpMessageController {
             if (responseHeaders != null) {
                 responseHeaderText.setText(joiner.join(responseHeaders.toRawLines()));
             }
-
-            Toggle toggle = selectBody.selectedToggleProperty().get();
-            setSelectBody(toggle);
+            setSelectBody();
         });
 
-        selectBody.selectedToggleProperty().addListener((o, old, newValue) -> {
-            setSelectBody(newValue);
-        });
+        selectBody.selectedToggleProperty().addListener((o, old, newValue) -> setSelectBody());
+
+        charsetBox.getItems().addAll(StandardCharsets.UTF_8, StandardCharsets.UTF_16, StandardCharsets.US_ASCII,
+                StandardCharsets.ISO_8859_1,
+                Charset.forName("GB18030"), Charset.forName("GBK"), Charset.forName("GB2312"),
+                Charset.forName("BIG5"));
+        bodyTypeBox.getItems().addAll(BodyStoreType.values());
     }
 
-    private void setSelectBody(Toggle toggle) {
+    private void setSelectBody() {
+        BodyStore bodyStore = currentBodyStore();
+        setBody(bodyStore);
+    }
+
+    private BodyStore currentBodyStore() {
+        Toggle toggle = selectBody.selectedToggleProperty().get();
+        BodyStore bodyStore;
         ObjectProperty<HttpMessage> httpMessageProperty = root.httpMessageProperty();
         Object userData = toggle.getUserData();
-        Headers headers;
-        BodyStore bodyStore;
         if ("RequestBody".equals(userData)) {
-            headers = httpMessageProperty.get().getRequestHeaders();
             bodyStore = httpMessageProperty.get().getRequestBody();
         } else if ("ResponseBody".equals(userData)) {
-            headers = httpMessageProperty.get().getResponseHeaders();
             bodyStore = httpMessageProperty.get().getResponseBody();
         } else {
             throw new RuntimeException();
         }
+        return bodyStore;
+    }
 
-        if (headers == null || bodyStore == null) {
+    @SneakyThrows
+    private void setBody(@Nullable BodyStore bodyStore) {
+        if (bodyStore == null) {
             bodyPane.setCenter(new Text());
             return;
         }
+        charsetBox.setValue(bodyStore.getCharset());
+        bodyTypeBox.setValue(bodyStore.getType());
+
         if (!bodyStore.isClosed()) {
             bodyPane.setCenter(new Text("Still reading..."));
             return;
         }
+
         if (bodyStore.getSize() == 0) {
             bodyPane.setCenter(new Text());
             return;
         }
-        setBody(headers, bodyStore);
-    }
 
-    @SneakyThrows
-    private void setBody(@Nullable Headers headers, @Nullable BodyStore bodyStore) {
-        if (headers == null || bodyStore == null) {
-            return;
-        }
-        if (!bodyStore.isClosed()) {
-            bodyPane.setCenter(new Text("Still reading..."));
-            return;
-        }
-
-        ContentType contentType = RefValues.ifNullThen(headers.contentType(), ContentType.UNKNOWN);
         // handle images
-        if (contentType.isImage() && Strings.equalsAny(contentType.getMimeType().getSubType(),
-                "bmp", "gif", "png", "jpeg", "ico")) {
+        if (bodyStore.isImage()) {
             Control imagePane = UIUtils.getImagePane(bodyStore.getInputStream());
             bodyPane.setCenter(imagePane);
             return;
         }
 
         // textual body
-        List<TextMessageConverter> messageConverters = root.getMessageConverters();
-        TextMessageConverter converter = Lists.findFirst(messageConverters, c -> c.accept(contentType));
-        if (converter != null) {
-            String text = converter.convert(bodyStore.getInputStream(), contentType);
+        if (bodyStore.isText()) {
+            String text = ReaderWriters.readAll(new InputStreamReader(bodyStore.getInputStream(),
+                    bodyStore.getCharset()));
             TextArea textArea = new TextArea();
             textArea.setText(text);
             textArea.setEditable(false);
@@ -154,7 +151,7 @@ public class HttpMessageController {
             fileName = getFileName(httpMessage.getUrl());
             if (!fileName.contains(".")) {
                 // no extension
-                fileName = addExtension(fileName, bodyStore.getBodyStoreType());
+                fileName = addExtension(fileName, bodyStore.getType());
             }
         } else {
             throw new RuntimeException();
@@ -167,6 +164,9 @@ public class HttpMessageController {
         FileChooser fileChooser = new FileChooser();
         fileChooser.setInitialFileName(fileName);
         File file = fileChooser.showSaveDialog(requestsHeaderText.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
         try (OutputStream out = new FileOutputStream(file)) {
             InputOutputs.copy(bodyStore.getInputStream(), out);
         }
@@ -203,4 +203,31 @@ public class HttpMessageController {
         s = Strings.before(s, "?");
         return s;
     }
+
+    @FXML
+    @SneakyThrows
+    void setMimeType(ActionEvent e) {
+        BodyStore bodyStore = currentBodyStore();
+        if (bodyStore == null) {
+            return;
+        }
+        bodyStore.setType(bodyTypeBox.getSelectionModel().getSelectedItem());
+        if (bodyStore.isClosed() && bodyStore.getSize() != 0) {
+            setBody(bodyStore);
+        }
+    }
+
+    @FXML
+    @SneakyThrows
+    void setCharset(ActionEvent e) {
+        BodyStore bodyStore = currentBodyStore();
+        if (bodyStore == null) {
+            return;
+        }
+        bodyStore.setCharset(charsetBox.getSelectionModel().getSelectedItem());
+        if (bodyStore.isClosed() && bodyStore.getSize() != 0 && bodyStore.isText()) {
+            setBody(bodyStore);
+        }
+    }
+
 }

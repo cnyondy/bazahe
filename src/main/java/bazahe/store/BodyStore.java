@@ -2,6 +2,7 @@ package bazahe.store;
 
 import bazahe.httpparse.ContentType;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import net.dongliu.commons.BinarySize;
 import net.dongliu.commons.RefValues;
@@ -33,16 +34,18 @@ public class BodyStore extends OutputStream {
     private static final int MAX_BUFFER_SIZE = (int) BinarySize.kilobyte(512);
 
     @Getter
-    private final BodyStoreType bodyStoreType;
+    @Setter
+    private volatile BodyStoreType type;
     @Getter
-    private final Charset charset;
+    @Setter
+    private volatile Charset charset;
     @Nullable
     @Getter
     private final String contentEncoding;
 
-    public BodyStore(@Nullable BodyStoreType bodyStoreType, @Nullable Charset charset,
+    public BodyStore(@Nullable BodyStoreType type, @Nullable Charset charset,
                      @Nullable String contentEncoding) {
-        this.bodyStoreType = RefValues.ifNullThen(bodyStoreType, BodyStoreType.unknown);
+        this.type = RefValues.ifNullThen(type, BodyStoreType.unknown);
         this.charset = RefValues.ifNullThen(charset, StandardCharsets.UTF_8);
         this.contentEncoding = contentEncoding;
         this.bos = new ByteArrayOutputStreamEx();
@@ -66,7 +69,7 @@ public class BodyStore extends OutputStream {
                 } else if ("bmp".equals(subType)) {
                     bodyStoreType = BodyStoreType.bmp;
                 } else {
-                    bodyStoreType = BodyStoreType.image;
+                    bodyStoreType = BodyStoreType.otherImage;
                 }
             } else if (contentType.isText()) {
                 if ("json".equals(subType)) {
@@ -190,5 +193,17 @@ public class BodyStore extends OutputStream {
             return input;
         }
         return input;
+    }
+
+    /**
+     * If is otherImage javafx supported
+     */
+    public boolean isImage() {
+        return type == BodyStoreType.png || type == BodyStoreType.bmp
+                || type == BodyStoreType.jpeg || type == BodyStoreType.gif;
+    }
+
+    public boolean isText() {
+        return type.isText();
     }
 }

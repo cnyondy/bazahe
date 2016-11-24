@@ -21,8 +21,10 @@
                 <fx:define>
                     <ToggleGroup fx:id="selectBody"/>
                 </fx:define>
-                <RadioButton text="RequestBody" toggleGroup="$selectBody" userData="RequestBody"/>
-                <RadioButton text="ResponseBody" toggleGroup="$selectBody" userData="ResponseBody" selected="true"/>
+                <RadioButton text="Request" toggleGroup="$selectBody" userData="RequestBody"/>
+                <RadioButton text="Response" toggleGroup="$selectBody" userData="ResponseBody" selected="true"/>
+                <ComboBox onAction="#setMimeType" fx:id="bodyTypeBox"/>
+                <ComboBox onAction="#setCharset" fx:id="charsetBox"/>
                 <Button onAction="#exportBody">Save Body</Button>
             </HBox>
         </top>
