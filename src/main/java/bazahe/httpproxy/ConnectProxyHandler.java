@@ -5,6 +5,7 @@ import bazahe.httpparse.*;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
+import lombok.val;
 import net.dongliu.commons.Strings;
 import net.dongliu.commons.codec.Digests;
 import net.dongliu.commons.io.Closeables;
@@ -27,9 +28,9 @@ import java.net.Socket;
 public class ConnectProxyHandler implements ProxyHandler {
 
     @Override
-    public void handle(Socket socket, String rawRequestLine, @Nullable MessageListener messageListener)
+    public void handle(Socket serverSocket, String rawRequestLine, @Nullable MessageListener messageListener)
             throws IOException {
-        HttpInputStream input = new HttpInputStream(socket.getInputStream());
+        HttpInputStream input = new HttpInputStream(serverSocket.getInputStream());
         input.putBackLine(rawRequestLine);
         RequestHeaders headers = input.readRequestHeaders();
         if (headers == null) {
@@ -42,49 +43,46 @@ public class ConnectProxyHandler implements ProxyHandler {
         String host = Strings.before(target, ":");
         int port = Integer.parseInt(Strings.after(target, ":"));
         // just tell client ok..
-        HttpOutputStream output = new HttpOutputStream(socket.getOutputStream());
+        HttpOutputStream output = new HttpOutputStream(serverSocket.getOutputStream());
         output.writeLine("HTTP/1.1 200 OK\r\n");
         output.flush();
 
         // read first two byte to see if is ssl/tls connection
-        ByteArrayOutputStream bos = new ByteArrayOutputStream();
-        TLSInputStream tlsIn = new TLSInputStream(new ObservableInputStream(socket.getInputStream(), bos));
-        TLSInputStream.TLSPlaintextHeader tlsPlaintextHeader = tlsIn.readPlaintextHeader();
+        val bos = new ByteArrayOutputStream();
+        TLSInputStream tlsIn = new TLSInputStream(new ObservableInputStream(serverSocket.getInputStream(), bos));
+        val tlsPlaintextHeader = tlsIn.readPlaintextHeader();
 
         boolean ssl;
-        Socket serverSocket;
+        Socket wrappedServerSocket;
         Socket clientSocket;
         if (tlsPlaintextHeader.isValidHandShake()) {
-            // read entire ssl client hello message, to serach ALPN extension. Java8 not support ALPN now
-            // see https://tools.ietf.org/html/rfc5246
-//            int length = tlsPlaintextHeader.getLength();
-//            byte[] data = new byte[length];
-//            int read2 = InputOutputs.readExact(input, data);
-//            TLSInputStream.HandShakeMessage<?> message = TLSInputStream.readHandShakeMessage(new
-// ByteArrayInputStream(data));
+            //TODO: Java8 not support alpn now, it is hard to know if target server support http2 by tls. Wait java9
+            val handShakeMessage = tlsIn.readHandShakeMessage();
+            val clientHello = (TLSInputStream.ClientHello) handShakeMessage.getMessage();
+            if (clientHello.alpnHas("h2")) {
+                // connect to sever, and check sever protocol
+            }
 
-
-            Socket wrappedSocket = new WrappedSocket(socket, bos.toByteArray());
-            SSLContext sslContext = SSLContextManager.getInstance().createSSlContext(host);
-            SSLSocketFactory sslSocketFactory = sslContext.getSocketFactory();
-            SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(wrappedSocket, null, socket.getPort(),
+            Socket wrappedSocket = new WrappedSocket(serverSocket, bos.toByteArray());
+            SSLContext serverSslContext = SSLContextManager.getInstance().createSSlContext(host);
+            SSLSocketFactory sslSocketFactory = serverSslContext.getSocketFactory();
+            SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(wrappedSocket, null, serverSocket.getPort(),
                     false);
             sslSocket.setUseClientMode(false);
-            serverSocket = sslSocket;
+            wrappedServerSocket = sslSocket;
             ssl = true;
+
             SSLContext clientSSlContext = SSLUtils.createClientSSlContext();
             SSLSocketFactory factory = clientSSlContext.getSocketFactory();
             clientSocket = factory.createSocket(host, port);
-            //TODO: http2 established by  ALPN https://tools.ietf.org/html/rfc7301, by send protocol "h2"
-//            handleHttp2();
         } else {
-            serverSocket = new WrappedSocket(socket, bos.toByteArray());
+            wrappedServerSocket = new WrappedSocket(serverSocket, bos.toByteArray());
             ssl = false;
             clientSocket = new Socket(host, port);
         }
 
         try {
-            handle(serverSocket, clientSocket, ssl, target, messageListener);
+            handle(wrappedServerSocket, clientSocket, ssl, target, messageListener);
         } finally {
             Closeables.closeQuietly(clientSocket);
         }

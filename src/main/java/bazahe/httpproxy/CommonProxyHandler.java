@@ -32,11 +32,11 @@ import java.util.Map;
 public class CommonProxyHandler implements ProxyHandler {
 
     @Override
-    public void handle(Socket socket, String rawRequestLine,
+    public void handle(Socket serverSocket, String rawRequestLine,
                        @Nullable MessageListener messageListener) throws IOException {
-        HttpInputStream inputStream = new HttpInputStream(new BufferedInputStream(socket.getInputStream()));
+        HttpInputStream inputStream = new HttpInputStream(new BufferedInputStream(serverSocket.getInputStream()));
         inputStream.putBackLine(rawRequestLine);
-        HttpOutputStream outputStream = new HttpOutputStream(socket.getOutputStream());
+        HttpOutputStream outputStream = new HttpOutputStream(serverSocket.getOutputStream());
 
         while (true) {
             boolean shouldBreak = handleOneRequest(inputStream, outputStream, messageListener);

@@ -20,20 +20,20 @@ import java.net.SocketTimeoutException;
  */
 @Log4j2
 public class ProxyWorker implements Runnable {
-    private final Socket socket;
+    private final Socket serverSocket;
     @Nullable
     private final MessageListener messageListener;
 
-    public ProxyWorker(Socket socket, @Nullable MessageListener messageListener)
+    public ProxyWorker(Socket serverSocket, @Nullable MessageListener messageListener)
             throws IOException {
-        this.socket = socket;
+        this.serverSocket = serverSocket;
         this.messageListener = messageListener;
     }
 
     @Override
     public void run() {
         try {
-            HttpInputStream input = new HttpInputStream(socket.getInputStream());
+            HttpInputStream input = new HttpInputStream(serverSocket.getInputStream());
             String rawRequestLine = input.readLine();
             if (rawRequestLine == null) {
                 //error
@@ -52,7 +52,7 @@ public class ProxyWorker implements Runnable {
             } else {
                 handler = new CommonProxyHandler();
             }
-            handler.handle(socket, rawRequestLine, messageListener);
+            handler.handle(serverSocket, rawRequestLine, messageListener);
         } catch (HttpParserException e) {
             log.error("Illegal http data", e);
         } catch (SocketTimeoutException e) {
@@ -66,7 +66,7 @@ public class ProxyWorker implements Runnable {
         } catch (Throwable e) {
             log.error("", e);
         } finally {
-            Closeables.closeQuietly(socket);
+            Closeables.closeQuietly(serverSocket);
         }
     }
 }

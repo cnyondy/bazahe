@@ -1,9 +1,7 @@
 
-Read Http/Https data via Http Proxy
+Watch Http/Https/WebSocket data via Http Proxy
 
 This project now is still under development, it lack features, and may have unexpected bugs.
-Current support Http1.x/Https1.x/WebSocket.
-
 
 ## Build
 Bazahe use [javafx maven plugin](https://github.com/javafx-maven-plugin/javafx-maven-plugin) to build.

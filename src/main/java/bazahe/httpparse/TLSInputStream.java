@@ -1,11 +1,11 @@
 package bazahe.httpparse;
 
 import lombok.Getter;
-import net.dongliu.commons.io.InputOutputs;
+import net.dongliu.commons.collection.Lists;
 
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -50,15 +50,21 @@ public class TLSInputStream extends DataInputStream {
         throw new UnsupportedOperationException();
     }
 
-    private ServerHello readServerHello(int length) {
-        return new ServerHello();
-    }
-
-    private HelloRequest readHelloRequest(int length) {
+    private HelloRequest readHelloRequest(int length) throws IOException {
         return new HelloRequest();
     }
 
+    private ServerHello readServerHello(int length) throws IOException {
+        List<String> alpnNames = readHello(length);
+        return new ServerHello(alpnNames);
+    }
+
     private ClientHello readClientHello(int length) throws IOException {
+        List<String> alpnNames = readHello(length);
+        return new ClientHello(alpnNames);
+    }
+
+    private List<String> readHello(int length) throws IOException {
         int majorVersion = in.read();
         int minorVersion = in.read();
         byte[] random = readExact(32);
@@ -69,18 +75,25 @@ public class TLSInputStream extends DataInputStream {
         int compressionMethodsLen = in.read();
         byte[] compressionMethods = readExact(compressionMethodsLen);
 
+        List<String> alpnNames = Lists.of();
         int readed = 2 + 32 + 1 + sessionIdLen + 2 + cipherSuiteLen + 1 + compressionMethodsLen;
         if (readed < length) {
             //read extensions
-            int extensionsNum = readUnsigned2();
-            for (int i = 0; i < extensionsNum; i++) {
+            int extensionsLen = readUnsigned2();
+            int count = 0;
+            while (true) {
                 Extension extension = readExtension();
                 if (extension.isALPN()) {
-                    List<String> alpnNames = extension.ALPNNames();
+                    alpnNames = extension.ALPNNames();
+                }
+                int size = extension.size();
+                count += size;
+                if (count >= extensionsLen) {
+                    break;
                 }
             }
         }
-        return new ClientHello();
+        return alpnNames;
     }
 
     private Extension readExtension() throws IOException {
@@ -147,13 +160,32 @@ public class TLSInputStream extends DataInputStream {
         }
     }
 
-    public static class ClientHello {
+    public static class Hello {
+        // we just want to get alpn protocol names
+        @Getter
+        private final List<String> alpnNames;
 
+        public Hello(List<String> alpnNames) {
+            this.alpnNames = alpnNames;
+        }
 
+        public boolean alpnHas(String protocol) {
+            return alpnNames.contains(protocol);
+        }
     }
 
-    public static class ServerHello {
+    public static class ClientHello extends Hello {
 
+        public ClientHello(List<String> alpnNames) {
+            super(alpnNames);
+        }
+    }
+
+    public static class ServerHello extends Hello {
+
+        public ServerHello(List<String> alpnNames) {
+            super(alpnNames);
+        }
     }
 
     public static class Extension {
@@ -167,19 +199,29 @@ public class TLSInputStream extends DataInputStream {
             this.data = data;
         }
 
+        public int size() {
+            return 4 + data.length;
+        }
+
         public boolean isALPN() {
             return type == application_layer_protocol_negotiation;
         }
 
         public List<String> ALPNNames() throws IOException {
-            InputStream input = new ByteArrayInputStream(data);
-            int protocolNamesLen = (input.read() << 8) + input.read();
+            ByteBuffer buffer = ByteBuffer.wrap(data);
+            int protocolNamesLen = Short.toUnsignedInt(buffer.getShort());
             List<String> protocolNameList = new ArrayList<>(protocolNamesLen);
-            for (int i = 0; i < protocolNamesLen; i++) {
-                int protocolNameLen = input.read();
+            int total = 0;
+            while (true) {
+                int protocolNameLen = Byte.toUnsignedInt(buffer.get());
                 byte[] protocolName = new byte[protocolNameLen];
-                InputOutputs.readExact(input, protocolName);
-                protocolNameList.add(new String(protocolName));
+                buffer.get(protocolName);
+                String protocol = new String(protocolName);
+                protocolNameList.add(protocol);
+                total += 2 + protocolNameLen;
+                if (total > protocolNamesLen) {
+                    break;
+                }
             }
             return protocolNameList;
         }

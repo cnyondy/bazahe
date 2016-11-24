@@ -14,5 +14,5 @@ import java.net.Socket;
  */
 public interface ProxyHandler {
 
-    void handle(Socket socket, String rawRequestLine, @Nullable MessageListener messageListener) throws IOException;
+    void handle(Socket serverSocket, String rawRequestLine, @Nullable MessageListener messageListener) throws IOException;
 }

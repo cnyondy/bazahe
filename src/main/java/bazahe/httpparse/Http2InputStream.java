@@ -1,5 +1,6 @@
 package bazahe.httpparse;
 
+import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 
 import javax.annotation.Nullable;
@@ -8,19 +9,16 @@ import java.io.InputStream;
 
 /**
  * InputStream for websocket
- * //TODO extensions support
  *
  * @author Liu Dong
  */
 @Log4j2
-public class Http2InputStream extends InputStream {
+public class Http2InputStream extends DataInputStream {
 
     private CompressionContext compressionContext;
 
-    private final InputStream inputStream;
-
     public Http2InputStream(InputStream inputStream) {
-        this.inputStream = inputStream;
+        super(inputStream);
     }
 
     /**
@@ -28,65 +26,26 @@ public class Http2InputStream extends InputStream {
      */
     @Nullable
     private Frame readFrameHeader() throws IOException {
-        int payloadLen = (inputStream.read() << 16)
-                + (inputStream.read() << 8)
-                + (inputStream.read());
-        int type = inputStream.read();
-        int fllag = inputStream.read();
-        int streamIdentifier = ((inputStream.read() & 0x7fffffff) << 24)
-                + (inputStream.read() << 16)
-                + (inputStream.read() << 8)
-                + (inputStream.read());
-        return null;
+        int payloadLen = readUnsigned3();
+        int type = read();
+        int flag = read();
+        int streamIdentifier = ((read() & 0x7fffffff) << 24) + readUnsigned3();
+        return new Frame(payloadLen, type, flag, streamIdentifier);
     }
 
-    @Override
-    public int read() throws IOException {
-        return inputStream.read();
-    }
-
-    @Override
-    public int read(byte[] b) throws IOException {
-        return inputStream.read(b);
-    }
-
-    @Override
-    public int read(byte[] b, int off, int len) throws IOException {
-        return inputStream.read(b, off, len);
-    }
-
-    @Override
-    public long skip(long n) throws IOException {
-        return inputStream.skip(n);
-    }
-
-    @Override
-    public int available() throws IOException {
-        return inputStream.available();
-    }
-
-    @Override
-    public void close() throws IOException {
-        inputStream.close();
-    }
-
-    @Override
-    public void mark(int readlimit) {
-        inputStream.mark(readlimit);
-    }
-
-    @Override
-    public void reset() throws IOException {
-        inputStream.reset();
-    }
-
-    @Override
-    public boolean markSupported() {
-        return inputStream.markSupported();
-    }
-
+    @Getter
     private class Frame {
+        private final int payloadLen;
+        private final int type;
+        private final int flag;
+        private final int streamIdentifier;
 
+        public Frame(int payloadLen, int type, int flag, int streamIdentifier) {
+            this.payloadLen = payloadLen;
+            this.type = type;
+            this.flag = flag;
+            this.streamIdentifier = streamIdentifier;
+        }
     }
 
     private static class CompressionContext {
