@@ -16,7 +16,7 @@
 
 运营程序，点击【Start】启动 HTTP 代理，点击【Setting】设置代理的端口。程序界面如下所示:
 
-![mac_trust_cert](https://github.com/clearthesky/bazahe/blob/master/docs/image/mac_trust_cert.png)
+![mac_trust_cert](https://github.com/clearthesky/bazahe/blob/master/docs/image/bazahe_start_s.png)
 
 ## 安装根证书
 
@@ -44,11 +44,11 @@
 
 打开下载的.cer 文件，iOS会提示是否安装，按照提示一步步进行，选择安装。
 
-![ios_install_cert](https://github.com/clearthesky/bazahe/blob/master/docs/image/ios_install_cert.jpeg)
+![ios_install_cert](https://github.com/clearthesky/bazahe/blob/master/docs/image/ios_install_cert_s.jpeg)
 
 点击安装
 
-![ios_install_cert](https://github.com/clearthesky/bazahe/blob/master/docs/image/ios_install_cert_2.jpeg)
+![ios_install_cert](https://github.com/clearthesky/bazahe/blob/master/docs/image/ios_install_cert_2_s.jpeg)
 
 会出现警告，继续点击安装
 
@@ -61,6 +61,6 @@
 iOS 可以针对某个网络设置使用的 HTTP 代理。
 打开 设置 - 无线局域网， 点击使用的网络，在 HTTP 代理下选择手动，填入电脑的本地IP和代理的端口:
 
-![ios_set_proxy](https://github.com/clearthesky/bazahe/blob/master/docs/image/ios_set_proxy.jpeg)
+![ios_set_proxy](https://github.com/clearthesky/bazahe/blob/master/docs/image/ios_set_proxy_s.jpeg)
 
 即可。
