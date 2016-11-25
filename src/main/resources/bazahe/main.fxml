@@ -4,22 +4,33 @@
 <?import bazahe.ui.pane.WebSocketMessagePane?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 <VBox xmlns:fx="http://javafx.com/fxml" fx:id="root" fx:controller="bazahe.ui.controller.MainController">
     <padding>
         <Insets/>
     </padding>
     <ToolBar>
-        <Button onAction="#configureProxy" fx:id="proxyConfigureButton">Configure</Button>
-        <Button onAction="#proxyControl" fx:id="proxyControlButton">Start</Button>
+        <Button onAction="#configureProxy" fx:id="proxyConfigureButton" text="Setting">
+            <tooltip>
+                <Tooltip text="Configure HTTP Proxy"/>
+            </tooltip>
+        </Button>
+        <Button onAction="#proxyControl" fx:id="proxyControlButton" text="Start">
+            <tooltip>
+                <Tooltip text="Start/Stop HTTP Proxy"/>
+            </tooltip>
+        </Button>
+        <Separator/>
+        <Button text=" Clear All" onAction="#clearAll">
+            <tooltip>
+                <Tooltip text="Remove all captured messages"/>
+            </tooltip>
+        </Button>
     </ToolBar>
+
     <SplitPane prefHeight="${root.height}" fx:id="splitPane">
-        <VBox SplitPane.resizableWithParent="false">
-            <HBox spacing="4" alignment="CENTER_LEFT">
-                <Button text="Clear" onAction="#clearAll"/>
-            </HBox>
-            <TreeView fx:id="messageTree" VBox.vgrow="ALWAYS" maxWidth="Infinity" maxHeight="Infinity"/>
-        </VBox>
+        <TreeView fx:id="messageTree" VBox.vgrow="ALWAYS" maxWidth="Infinity" maxHeight="Infinity"/>
         <StackPane>
             <HttpMessagePane fx:id="httpMessagePane" visible="false"/>
             <WebSocketMessagePane fx:id="webSocketMessagePane" visible="false"/>
