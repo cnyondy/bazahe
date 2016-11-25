@@ -1,5 +1,6 @@
 package bazahe.httpproxy;
 
+import bazahe.ui.Constants;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import net.dongliu.commons.codec.Base64s;
@@ -138,7 +139,7 @@ public class CAKeyStoreGenerator {
     @SneakyThrows
     public static void main(String[] args) {
         CAKeyStoreGenerator generator = new CAKeyStoreGenerator();
-        generator.generate("123456".toCharArray(), 3650);
+        generator.generate(Constants.keyStorePassword, Constants.rootCertificateValidates);
         Path write = Files.write(Paths.get("root_ca.p12"), generator.getKeyStoreData());
         System.out.println(write);
     }

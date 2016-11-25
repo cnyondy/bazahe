@@ -1,6 +1,7 @@
 package bazahe.ui;
 
 import bazahe.store.BodyStoreType;
+import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
@@ -46,9 +47,11 @@ public class UIUtils {
     }
 
     public static void showMessageDialog(String message) {
-        Alert alert = new Alert(Alert.AlertType.INFORMATION);
-        alert.setContentText(message);
-        alert.setHeaderText("");
-        alert.showAndWait();
+        Platform.runLater(() -> {
+            Alert alert = new Alert(Alert.AlertType.INFORMATION);
+            alert.setContentText(message);
+            alert.setHeaderText("");
+            alert.showAndWait();
+        });
     }
 }

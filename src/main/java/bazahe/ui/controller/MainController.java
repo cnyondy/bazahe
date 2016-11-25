@@ -8,7 +8,9 @@ import bazahe.httpproxy.ProxyServer;
 import bazahe.httpproxy.SSLContextManager;
 import bazahe.ui.AppResources;
 import bazahe.ui.UIMessageListener;
+import bazahe.ui.UIUtils;
 import bazahe.ui.pane.HttpMessagePane;
+import bazahe.ui.pane.ProgressDialog;
 import bazahe.ui.pane.ProxyConfigDialog;
 import bazahe.ui.pane.WebSocketMessagePane;
 import javafx.application.Platform;
@@ -24,10 +26,10 @@ import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import net.dongliu.commons.Marshaller;
 import net.dongliu.commons.Strings;
+import net.dongliu.commons.collection.Pair;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Optional;
 
 /**
@@ -54,24 +56,19 @@ public class MainController {
     private boolean proxyStart;
 
     private volatile ProxyServer proxyServer;
-    private ProxyConfig config;
-    private Path configPath = Paths.get(System.getProperty("user.home"), ".bazahe_config");
+    private volatile ProxyConfig config;
+    private volatile SSLContextManager sslContextManager;
 
     @FXML
     @SneakyThrows
     void configureProxy(ActionEvent e) {
-        showConfigureDialog("");
-    }
-
-    @SneakyThrows
-    private void showConfigureDialog(String message) {
         ProxyConfigDialog dialog = new ProxyConfigDialog();
         dialog.proxyConfigProperty().setValue(config);
-        dialog.messageProperty().setValue(message);
         Optional<ProxyConfig> newConfig = dialog.showAndWait();
         if (newConfig.isPresent()) {
             config = newConfig.get();
             byte[] data = Marshaller.marshal(config);
+            Path configPath = ProxyConfig.getConfigPath();
             Files.write(configPath, data);
         }
     }
@@ -89,39 +86,18 @@ public class MainController {
         proxyStart = true;
         proxyConfigureButton.setDisable(true);
         proxyControlButton.setDisable(true);
-        proxyServer = new ProxyServer(config);
-        proxyServer.setMessageListener(new UIMessageListener(item -> Platform.runLater(() -> manifestTree(item))));
-        doStartBackground();
-    }
-
-    private void doStartBackground() {
-        new Thread(() -> {
-            String keyStorePath = config.getKeyStore();
-            if (keyStorePath.isEmpty() || !Files.exists(Paths.get(keyStorePath))) {
-                showKeyStoreGenerator();
-                return;
-            }
-            SSLContextManager sslContextManager = SSLContextManager.getInstance();
-            try {
-                sslContextManager.init(keyStorePath, config.getKeyStorePassword());
-            } catch (Throwable e) {
-                log.error("", e);
-                showKeyStoreGenerator();
-                return;
-            }
-
+        try {
+            proxyServer = new ProxyServer(config);
+            proxyServer.setMessageListener(new UIMessageListener(item -> Platform.runLater(() -> manifestTree(item))));
             proxyServer.start();
-            Platform.runLater(() -> {
-                proxyControlButton.setText("Stop");
-                proxyControlButton.setDisable(false);
-            });
-        }).start();
-    }
-
-    private void showKeyStoreGenerator() {
+        } catch (Throwable t) {
+            log.error("Start proxy failed", t);
+            UIUtils.showMessageDialog("Start proxy failed!");
+            return;
+        }
         Platform.runLater(() -> {
-            showConfigureDialog("You need to choose one root keyStore, or generate new one, to enable mitm.");
-            doStartBackground();
+            proxyControlButton.setText("Stop");
+            proxyControlButton.setDisable(false);
         });
     }
 
@@ -147,14 +123,6 @@ public class MainController {
             }
         });
 
-        if (Files.exists(configPath)) {
-            config = (ProxyConfig) Marshaller.unmarshal(Files.readAllBytes(configPath));
-        } else {
-            config = ProxyConfig.getDefault();
-        }
-
-        splitPane.setDividerPositions(0.2, 0.6);
-
         TreeItem<RTreeItem> root = new TreeItem<>(new RTreeItem.Node(""));
         root.setExpanded(true);
         messageTree.setRoot(root);
@@ -170,7 +138,35 @@ public class MainController {
             }
         });
 
+        loadConfigAndKeyStore();
+    }
 
+    private void loadConfigAndKeyStore() {
+        val task = new InitTask();
+
+        ProgressDialog progressDialog = new ProgressDialog();
+        progressDialog.bindTask(task);
+
+        task.setOnSucceeded(e -> {
+            Platform.runLater(progressDialog::close);
+            try {
+                Pair<ProxyConfig, SSLContextManager> result = task.get();
+                config = result.first();
+                sslContextManager = result.second();
+            } catch (Exception e1) {
+                log.error("", e1);
+            }
+        });
+        task.setOnFailed(e -> {
+            Platform.runLater(progressDialog::close);
+            Throwable throwable = task.getException();
+            log.error("Init failed", throwable);
+            UIUtils.showMessageDialog("Init config failed!");
+        });
+
+        Thread thread = new Thread(task);
+        thread.start();
+        progressDialog.show();
     }
 
     private void showMessage(Message message) {

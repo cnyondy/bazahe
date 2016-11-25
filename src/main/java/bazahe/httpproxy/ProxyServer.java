@@ -11,6 +11,7 @@ import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.SocketException;
+import java.util.Objects;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -34,7 +35,7 @@ public class ProxyServer {
     private final AtomicInteger threadCounter = new AtomicInteger();
 
     public ProxyServer(ProxyConfig config) {
-        this.proxyConfig = config;
+        this.proxyConfig = Objects.requireNonNull(config);
     }
 
     /**

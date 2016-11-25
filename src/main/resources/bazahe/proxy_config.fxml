@@ -3,7 +3,6 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<?import javafx.scene.text.Text?>
 <GridPane xmlns:fx="http://javafx.com/fxml" fx:controller="bazahe.ui.controller.ProxyConfigController" hgap="6"
           vgap="4">
     <padding>
@@ -19,16 +18,16 @@
     <Label text="Timeout Mills" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
     <TextField fx:id="timeoutField" GridPane.columnIndex="1" GridPane.rowIndex="3" maxWidth="80"/>
 
-    <Text fx:id="message" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="4" fill="darkred"/>
+    <!--<Text fx:id="message" GridPane.columnIndex="0" GridPane.columnSpan="2" GridPane.rowIndex="4" fill="darkred"/>-->
 
-    <Label text="CA KeyStore" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
-    <TextField fx:id="keyStoreField" GridPane.columnIndex="1" GridPane.rowIndex="5" prefWidth="400"/>
-    <Label text="KeyStorePassword" GridPane.columnIndex="0" GridPane.rowIndex="6"/>
-    <TextField fx:id="keyStorePasswordField" GridPane.columnIndex="1" GridPane.rowIndex="6" prefWidth="250"/>
+    <!--<Label text="CA KeyStore" GridPane.columnIndex="0" GridPane.rowIndex="5"/>-->
+    <!--<TextField fx:id="keyStoreField" GridPane.columnIndex="1" GridPane.rowIndex="5" prefWidth="400"/>-->
+    <!--<Label text="KeyStorePassword" GridPane.columnIndex="0" GridPane.rowIndex="6"/>-->
+    <!--<TextField fx:id="keyStorePasswordField" GridPane.columnIndex="1" GridPane.rowIndex="6" prefWidth="250"/>-->
 
-    <Button text="Choose KeyStore File" GridPane.columnIndex="0" GridPane.rowIndex="7" onAction="#choseFile"/>
-    <Button text="Generate New KeyStore File" GridPane.columnIndex="1" GridPane.rowIndex="7"
-            onAction="#generateNewKeyStore"/>
+    <!--<Button text="Choose KeyStore File" GridPane.columnIndex="0" GridPane.rowIndex="7" onAction="#choseFile"/>-->
+    <!--<Button text="Generate New KeyStore File" GridPane.columnIndex="1" GridPane.rowIndex="7"-->
+            <!--onAction="#generateNewKeyStore"/>-->
 
 
 </GridPane>
