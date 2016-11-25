@@ -110,6 +110,8 @@ public class AppKeyStoreGenerator {
         PublicKey publicKey = keypair.getPublic();
 
         Calendar calendar = Calendar.getInstance();
+        // in case client time behind server time
+        calendar.add(Calendar.DAY_OF_YEAR, -100);
         Date startDate = calendar.getTime();
         calendar.add(Calendar.DAY_OF_YEAR, validityDays);
         Date expireDate = calendar.getTime();

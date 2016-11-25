@@ -60,6 +60,8 @@ public class CAKeyStoreGenerator {
         X500Name issuerName = new X500Name(appDName);
         X500Name subjectName = new X500Name(appDName);
         Calendar calendar = Calendar.getInstance();
+        // in case client time behind server time
+        calendar.add(Calendar.DAY_OF_YEAR, -100);
         Date startDate = calendar.getTime();
         calendar.add(Calendar.DAY_OF_YEAR, validityDays);
         Date endDate = calendar.getTime();

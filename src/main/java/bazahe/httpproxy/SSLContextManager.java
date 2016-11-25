@@ -50,13 +50,13 @@ public class SSLContextManager {
 
     @SneakyThrows
     public SSLContext createSSlContext(String host) {
-        if (SocketsUtils.isDomain(host)) {
-            String[] items = host.split("\\.");
-            if (items.length >= 3) {
-                items[0] = "*";
-                host = String.join(".", (CharSequence[]) items);
-            }
-        }
+//        if (SocketsUtils.isDomain(host)) {
+//            String[] items = host.split("\\.");
+//            if (items.length >= 3) {
+//                items[0] = "*";
+//                host = String.join(".", (CharSequence[]) items);
+//            }
+//        }
         lock.readLock().lock();
         try {
             return sslContextCache.computeIfAbsent(host, this::getSslContextInner);
@@ -69,7 +69,7 @@ public class SSLContextManager {
     private SSLContext getSslContextInner(String host) {
         char[] appKeyStorePassword = "123456".toCharArray();
         StopWatch stopWatch = StopWatch.create().start();
-        KeyStore keyStore = appKeyStoreGenerator.generateKeyStore(host, 10, appKeyStorePassword);
+        KeyStore keyStore = appKeyStoreGenerator.generateKeyStore(host, 100, appKeyStorePassword);
         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
         keyManagerFactory.init(keyStore, appKeyStorePassword);
         KeyManager[] keyManagers = keyManagerFactory.getKeyManagers();

@@ -13,6 +13,7 @@ import net.dongliu.commons.io.InputOutputs;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
@@ -89,6 +90,9 @@ public class ConnectProxyHandler implements ProxyHandler {
 
         try {
             handle(wrappedServerSocket, clientSocket, ssl, target, messageListener);
+        } catch (SSLHandshakeException e) {
+            // something wrong with ssl
+            log.error("SSL connection error for {}.", target, e);
         } finally {
             Closeables.closeQuietly(clientSocket);
         }
