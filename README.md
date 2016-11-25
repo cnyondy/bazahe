@@ -1,11 +1,10 @@
 
 Watch Http/Https/WebSocket data via Http Proxy
 
-This project now is still under development, it lack features, and may have unexpected bugs.
-
 ## Build
-Bazahe use [javafx maven plugin](https://github.com/javafx-maven-plugin/javafx-maven-plugin) to build.
-To build this project, Java8u40+ required.
+Java8u40+ required To build this project.
+
+Bazahe use [javafx maven plugin](https://github.com/javafx-maven-plugin/javafx-maven-plugin) to distribute.
 
 Create executable java jar:
 
