@@ -3,7 +3,6 @@ package bazahe.httpproxy;
 import bazahe.ui.Constants;
 import lombok.Getter;
 import lombok.SneakyThrows;
-import net.dongliu.commons.codec.Base64s;
 import org.bouncycastle.asn1.ASN1EncodableVector;
 import org.bouncycastle.asn1.ASN1InputStream;
 import org.bouncycastle.asn1.ASN1Sequence;
@@ -22,7 +21,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -43,11 +41,6 @@ public class CAKeyStoreGenerator {
     @Getter
     private byte[] keyStoreData;
     // X.509 Certificate in der format
-    @Getter
-    private byte[] derCertData;
-    // X.509 Certificate in pem format
-    @Getter
-    private byte[] pemCertData;
 
     @SneakyThrows
     public void generate(char[] password, int validityDays) {
@@ -97,8 +90,6 @@ public class CAKeyStoreGenerator {
         cert.checkValidity(new Date());
         cert.verify(publicKey);
 
-        export(cert);
-
         X509Certificate[] chain = new X509Certificate[]{cert};
 
         keyStore.setEntry("bazahe", new KeyStore.PrivateKeyEntry(privateKey, chain),
@@ -107,15 +98,6 @@ public class CAKeyStoreGenerator {
             keyStore.store(bos, password);
             this.keyStoreData = bos.toByteArray();
         }
-    }
-
-    @SneakyThrows
-    private void export(X509Certificate cert) {
-        byte[] data = cert.getEncoded();
-        this.derCertData = data;
-        this.pemCertData = ("-----BEGIN CERTIFICATE-----\n" +
-                Base64s.mime().encode(data).toBase64String() +
-                "\n-----END CERTIFICATE-----\n").getBytes(StandardCharsets.US_ASCII);
     }
 
     private static SubjectKeyIdentifier createSubjectKeyIdentifier(Key key) throws IOException {

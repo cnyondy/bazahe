@@ -26,6 +26,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class ProxyServer {
 
     private final ProxyConfig proxyConfig;
+    private final SSLContextManager sslContextManager;
     private volatile ServerSocket serverSocket;
     @Setter
     private volatile MessageListener messageListener;
@@ -34,8 +35,9 @@ public class ProxyServer {
     private volatile Thread masterThread;
     private final AtomicInteger threadCounter = new AtomicInteger();
 
-    public ProxyServer(ProxyConfig config) {
+    public ProxyServer(ProxyConfig config, SSLContextManager sslContextManager) {
         this.proxyConfig = Objects.requireNonNull(config);
+        this.sslContextManager = sslContextManager;
     }
 
     /**
@@ -90,7 +92,7 @@ public class ProxyServer {
             ProxyWorker worker;
             try {
                 socket.setSoTimeout(proxyConfig.getTimeout());
-                worker = new ProxyWorker(socket, messageListener);
+                worker = new ProxyWorker(socket, sslContextManager, messageListener);
             } catch (Exception e) {
                 Closeables.closeQuietly(socket);
                 log.error("Create new proxy worker failed.", e);

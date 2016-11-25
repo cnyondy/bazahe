@@ -21,12 +21,15 @@ import java.net.SocketTimeoutException;
 @Log4j2
 public class ProxyWorker implements Runnable {
     private final Socket serverSocket;
+    private final SSLContextManager sslContextManager;
     @Nullable
     private final MessageListener messageListener;
 
-    public ProxyWorker(Socket serverSocket, @Nullable MessageListener messageListener)
+    public ProxyWorker(Socket serverSocket, SSLContextManager sslContextManager,
+                       @Nullable MessageListener messageListener)
             throws IOException {
         this.serverSocket = serverSocket;
+        this.sslContextManager = sslContextManager;
         this.messageListener = messageListener;
     }
 
@@ -47,8 +50,12 @@ public class ProxyWorker implements Runnable {
                 return;
             }
             ProxyHandler handler;
-            if (requestLine.getMethod().equalsIgnoreCase("CONNECT")) {
-                handler = new ConnectProxyHandler();
+            String method = requestLine.getMethod();
+            String path = requestLine.getPath();
+            if (method.equalsIgnoreCase("CONNECT")) {
+                handler = new ConnectProxyHandler(sslContextManager);
+            } else if (path.startsWith("/")) {
+                handler = new HttpHandler(sslContextManager);
             } else {
                 handler = new CommonProxyHandler();
             }

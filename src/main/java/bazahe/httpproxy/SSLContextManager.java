@@ -1,5 +1,6 @@
 package bazahe.httpproxy;
 
+import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import net.dongliu.commons.StopWatch;
@@ -20,22 +21,14 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 @Log4j2
 public class SSLContextManager {
 
+    @Getter
     private AppKeyStoreGenerator appKeyStoreGenerator;
     private BigInteger lastCaCertSerialNumber;
     // ssl context cache
     private final ConcurrentHashMap<String, SSLContext> sslContextCache = new ConcurrentHashMap<>();
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
-    private SSLContextManager() {
-    }
-
-    private static SSLContextManager instance = new SSLContextManager();
-
-    public static SSLContextManager getInstance() {
-        return instance;
-    }
-
-    public void init(String keyStorePath, char[] keyStorePassword) {
+    public SSLContextManager(String keyStorePath, char[] keyStorePassword) {
         StopWatch stopWatch = StopWatch.create().start();
         AppKeyStoreGenerator appKeyStoreGenerator = new AppKeyStoreGenerator(keyStorePath, keyStorePassword);
         log.info("Initialize AppKeyStoreGenerator cost {} ms", stopWatch.stop().toMillis());

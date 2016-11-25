@@ -87,7 +87,7 @@ public class MainController {
         proxyConfigureButton.setDisable(true);
         proxyControlButton.setDisable(true);
         try {
-            proxyServer = new ProxyServer(config);
+            proxyServer = new ProxyServer(config, sslContextManager);
             proxyServer.setMessageListener(new UIMessageListener(item -> Platform.runLater(() -> manifestTree(item))));
             proxyServer.start();
         } catch (Throwable t) {

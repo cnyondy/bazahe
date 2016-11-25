@@ -3,6 +3,7 @@ package bazahe.httpproxy;
 
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
+import net.dongliu.commons.codec.Base64s;
 import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -14,6 +15,7 @@ import org.bouncycastle.jce.provider.X509CertificateObject;
 
 import java.io.*;
 import java.math.BigInteger;
+import java.nio.charset.StandardCharsets;
 import java.security.*;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.X509Certificate;
@@ -75,6 +77,17 @@ public class AppKeyStoreGenerator {
 
     public BigInteger getCACertSerialNumber() {
         return caCertificate.getSerialNumber();
+    }
+
+    @SneakyThrows
+    public byte[] exportCACertificate(boolean pem) {
+        byte[] data = caCertificate.getEncoded();
+        if (!pem) {
+            return data;
+        }
+        return ("-----BEGIN CERTIFICATE-----\n" +
+                Base64s.mime().encode(data).toBase64String() +
+                "\n-----END CERTIFICATE-----\n").getBytes(StandardCharsets.US_ASCII);
     }
 
     private RSAPrivateCrtKeyParameters getPrivateKeyParameters(RSAPrivateCrtKey privateCrtKey) {

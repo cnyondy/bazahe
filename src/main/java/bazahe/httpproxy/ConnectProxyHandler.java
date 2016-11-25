@@ -27,6 +27,12 @@ import java.net.Socket;
 @Log4j2
 public class ConnectProxyHandler implements ProxyHandler {
 
+    private final SSLContextManager sslContextManager;
+
+    public ConnectProxyHandler(SSLContextManager sslContextManager) {
+        this.sslContextManager = sslContextManager;
+    }
+
     @Override
     public void handle(Socket serverSocket, String rawRequestLine, @Nullable MessageListener messageListener)
             throws IOException {
@@ -64,7 +70,7 @@ public class ConnectProxyHandler implements ProxyHandler {
             }
 
             Socket wrappedSocket = new WrappedSocket(serverSocket, bos.toByteArray());
-            SSLContext serverSslContext = SSLContextManager.getInstance().createSSlContext(host);
+            SSLContext serverSslContext = sslContextManager.createSSlContext(host);
             SSLSocketFactory sslSocketFactory = serverSslContext.getSocketFactory();
             SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(wrappedSocket, null, serverSocket.getPort(),
                     false);

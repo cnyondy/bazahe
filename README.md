@@ -24,14 +24,10 @@ Also, you can use `mvn jfx:native` to create platform-dependent native routine(a
 
 ## Https Traffics
 Bazahe use mitm to capture https traffics, This need a self signed certificate installed.
+When Bazahe start at the first time,it will create a new CA Root Certificate and private key, save to $HOME/.bazahe/bazahe.p12.
 
-You can select one if you already have a ca root key store, or you could generate new one.
+Then you need to import the CA Root Certificate into you operation system.
+Open you browser, and enter the address you proxy listened on, you will see a certificate export page. Download the certificate and import.
 
-To generate a new keystore file, ist, you need go to Configure-Generate New KeyStore File, to generate new ca keyStore and certificate files.
-After doing this, three files are generated:
-
-* root_ca.p12  the keyStore file, used by bazehe
-* root_ca.crt  the root certificate in der format, used to install into macOS/iOS/Windows(For Windows may need to rename the file name to root_ca.cer)
-* root_ca.pem  the root certificate in pem format, used to install into Linux/Android(For some Android may need to rename the file name to root_ca.cer)
-
-Then install the ca certificate into you operation system.
+Different system may required different certificate format, some os accept them all.
+Usually,  use crt for macOS/iOS, pem for Linux/Android.

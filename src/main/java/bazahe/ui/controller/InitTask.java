@@ -51,8 +51,7 @@ public class InitTask extends Task<Pair<ProxyConfig, SSLContextManager>> {
         }
 
         updateMessage("Loading key store file...");
-        SSLContextManager sslContextManager = SSLContextManager.getInstance();
-        sslContextManager.init(keyStorePath.toString(), keyStorePassword);
+        SSLContextManager sslContextManager = new SSLContextManager(keyStorePath.toString(), keyStorePassword);
         updateProgress(10, 10);
         return Pair.of(config, sslContextManager);
     }
