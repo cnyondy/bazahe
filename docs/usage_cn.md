@@ -1,12 +1,22 @@
 ## 下载安装
 
-### 安装Java
-巴扎黑需要 Java8u40 及以上的版本运行，如果系统中没有满足条件的Java版本，首先需要下载最新的 JRE 或 JDK安装。
+### 下载安装Java
+巴扎黑需要 Java8u40 及以上的版本运行，如果系统中没有满足条件的Java版本，首先需要下载最新的 JRE 或 JDK安装，如果只是运行不做开发的话下载 JRE 即可。
+
+在 macOS 上，打开终端输入 java，则会引导去下载最新的 JRE。
+
+[到这里下载](http://www.oracle.com/technetwork/java/javase/downloads/jre8-downloads-2133155.html) JRE，
+[到这里下载](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) JDK.
 
 ### 下载巴扎黑
-* Jar 包文件。 打成的Java jar包，需要使用命令java -jar bazahe.jar 来运行，适用于所有操作系统
-* Mac 镜像文件。 适用于 macOS
-* Linux/Windows 待添加
+当前提供了 jar 包文件 和 macOS 镜像文件下载，[点击这里去下载](https://github.com/clearthesky/bazahe/releases)。
+
+* bazahe_jar.zip。 Jar 包文件，解压缩后需要使用命令java -jar app/bazahe.jar 来运行，适用于所有操作系统
+* bazahe_mac.zip。 Mac 镜像文件。 适用于 macOS
+
+运营程序，点击【Start】启动 HTTP 代理，点击【Setting】设置代理的端口。程序界面如下所示:
+
+![mac_trust_cert](https://github.com/clearthesky/bazahe/blob/master/docs/image/mac_trust_cert.png)
 
 ## 安装根证书
 
@@ -40,15 +50,16 @@
 
 ![ios_install_cert](https://github.com/clearthesky/bazahe/blob/master/docs/image/ios_install_cert_2.jpeg)
 
-再点击安装
+会出现警告，继续点击安装
 
 ## 抓包, 设置代理
-讲需要抓包的浏览器，或者程序，或者系统代理设置为程序所启动的 HTTP 代理，即可抓包
+讲需要抓包的浏览器，或者程序，或者系统代理设置为程序所启动的 HTTP 代理，即可抓包。代理的默认端口是1024, IP则使用电脑分配的本地IP。
+如果是抓移动设备上的数据，需要移动设备和电脑在同一个内网网段。 
 
 ### ios 设置代理
 
 iOS 可以针对某个网络设置使用的 HTTP 代理。
-打开 设置 - 无线局域网， 点击使用的网络，在 HTTP 代理下选择手动，填入电脑的本地IP和代理的端口(默认1024):
+打开 设置 - 无线局域网， 点击使用的网络，在 HTTP 代理下选择手动，填入电脑的本地IP和代理的端口:
 
 ![ios_set_proxy](https://github.com/clearthesky/bazahe/blob/master/docs/image/ios_set_proxy.jpeg)
 
