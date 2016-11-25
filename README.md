@@ -20,7 +20,7 @@ java -jar target/app/bazahe.jar
 ```
 to run the program.
 
-Also, you can use `mvn jfx:native` to create platform-dependent native routine(and installer), in target/native.
+Also, you can use `mvn jfx:native` to create platform-dependent native routine(and installer), you will find them under path target/native.
 
 ## Https Traffics
 Bazahe use mitm to capture https traffics, This need a self signed certificate installed.
