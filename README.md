@@ -1,11 +1,10 @@
 
 Watch Http/Https/WebSocket data via Http Proxy
 
-This project now is still under development, it lack features, and may have unexpected bugs.
-
 ## Build
-Bazahe use [javafx maven plugin](https://github.com/javafx-maven-plugin/javafx-maven-plugin) to build.
-To build this project, Java8u40+ required.
+Java8u40+ required To build this project.
+
+Bazahe use [javafx maven plugin](https://github.com/javafx-maven-plugin/javafx-maven-plugin) to distribute.
 
 Create executable java jar:
 
@@ -20,7 +19,7 @@ java -jar target/app/bazahe.jar
 ```
 to run the program.
 
-Also, you can use `mvn jfx:native` to create platform-dependent native routine(and installer), in target/native.
+Also, you can use `mvn jfx:native` to create platform-dependent native routine(and installer), you will find them under path target/native.
 
 ## Https Traffics
 Bazahe use mitm to capture https traffics, This need a self signed certificate installed.
