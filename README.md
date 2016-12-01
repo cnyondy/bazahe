@@ -1,6 +1,9 @@
 
 Watch Http/Https/WebSocket data via Http Proxy
 
+
+[中文使用说明文档](https://github.com/clearthesky/bazahe/blob/master/docs/usage_cn.md)
+
 ## Build
 Java8u40+ required To build this project.
 

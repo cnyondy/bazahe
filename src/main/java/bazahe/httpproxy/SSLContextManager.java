@@ -69,7 +69,7 @@ public class SSLContextManager {
     private SSLContext getSslContextInner(String host) {
         char[] appKeyStorePassword = "123456".toCharArray();
         StopWatch stopWatch = StopWatch.create().start();
-        KeyStore keyStore = appKeyStoreGenerator.generateKeyStore(host, 100, appKeyStorePassword);
+        KeyStore keyStore = appKeyStoreGenerator.generateKeyStore(host, 365, appKeyStorePassword);
         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
         keyManagerFactory.init(keyStore, appKeyStorePassword);
         KeyManager[] keyManagers = keyManagerFactory.getKeyManagers();

@@ -101,14 +101,15 @@ public class ConnectProxyHandler implements ProxyHandler {
 
     private void handle(Socket serverSocket, Socket clientSocket, Boolean ssl, String target,
                         @Nullable MessageListener messageListener) throws IOException {
-        HttpInputStream srcInput = new HttpInputStream(new BufferedInputStream(
-                new ObservableInputStream(serverSocket.getInputStream(), clientSocket.getOutputStream())));
-        HttpInputStream destInput = new HttpInputStream(new BufferedInputStream(
+        OutputStream srcOut = clientSocket.getOutputStream();
+        HttpInputStream srcIn = new HttpInputStream(new BufferedInputStream(
+                new ObservableInputStream(serverSocket.getInputStream(), srcOut)));
+        HttpInputStream dstIn = new HttpInputStream(new BufferedInputStream(
                 new ObservableInputStream(clientSocket.getInputStream(), serverSocket.getOutputStream())));
 
 
         while (true) {
-            boolean finish = handleOneRequest(srcInput, destInput, ssl, target, messageListener);
+            boolean finish = handleOneRequest(srcIn, srcOut, dstIn, ssl, target, messageListener);
             if (finish) {
                 break;
             }
@@ -117,10 +118,10 @@ public class ConnectProxyHandler implements ProxyHandler {
     }
 
     @SneakyThrows
-    private boolean handleOneRequest(HttpInputStream srcInput, HttpInputStream destInput,
+    private boolean handleOneRequest(HttpInputStream srcIn, OutputStream srcOut, HttpInputStream dstIn,
                                      boolean ssl, String target,
                                      @Nullable MessageListener messageListener) {
-        @Nullable RequestHeaders requestHeaders = srcInput.readRequestHeaders();
+        @Nullable RequestHeaders requestHeaders = srcIn.readRequestHeaders();
         // client close connection
         if (requestHeaders == null) {
             log.debug("Client close connection");
@@ -130,8 +131,11 @@ public class ConnectProxyHandler implements ProxyHandler {
         log.debug("Accept new request: {}", rawRequestLine);
 
         // expect-100
+        boolean expect100 = false;
         if ("100-continue".equalsIgnoreCase(requestHeaders.getFirst("Expect"))) {
-            // TODO: show read external server header, if have one
+            HttpOutputStream srcHttpOut = new HttpOutputStream(srcOut);
+            srcHttpOut.writeLine("HTTP/1.1 100 Continue\r\n");
+            expect100 = true;
         }
 
         String id = Digests.md5().update(rawRequestLine).toHexLower() + System.nanoTime();
@@ -152,7 +156,7 @@ public class ConnectProxyHandler implements ProxyHandler {
         }
 
         boolean shouldClose = requestHeaders.shouldClose();
-        @Cleanup @Nullable InputStream requestBody = getRequestBodyInputStream(srcInput, requestHeaders);
+        @Cleanup @Nullable InputStream requestBody = getRequestBodyInputStream(srcIn, requestHeaders);
         try {
             if (requestBody != null) {
                 if (requestStore != null) {
@@ -165,17 +169,34 @@ public class ConnectProxyHandler implements ProxyHandler {
             Closeables.closeQuietly(requestStore);
         }
 
-        ResponseHeaders responseHeaders = destInput.readResponseHeaders();
+        ResponseHeaders responseHeaders = dstIn.readResponseHeaders();
         if (responseHeaders == null) {
             log.debug("Target server  close connection");
             return true;
+        }
+        int code = responseHeaders.getStatusLine().getCode();
+
+        if (expect100) {
+            // server respond expect-100-continue request
+            if (code == 100) {
+                // ignore this header, read next
+                responseHeaders = dstIn.readResponseHeaders();
+                if (responseHeaders == null) {
+                    log.debug("Target server  close connection");
+                    return true;
+                }
+            } else if (code == 417) {
+                // hope this not happen
+                log.debug("Server return 417 for expect 100");
+                return true;
+            }
         }
 
         @Nullable OutputStream responseStore = null;
         if (messageListener != null) {
             responseStore = messageListener.onHttpResponse(id, responseHeaders);
         }
-        @Cleanup InputStream responseBody = getResponseBodyInput(destInput, responseHeaders, requestLine.getMethod());
+        @Cleanup InputStream responseBody = getResponseBodyInput(dstIn, responseHeaders, requestLine.getMethod());
         try {
             if (responseBody != null) {
                 if (responseStore != null) {
@@ -188,7 +209,6 @@ public class ConnectProxyHandler implements ProxyHandler {
             Closeables.closeQuietly(responseStore);
         }
 
-        int code = responseHeaders.getStatusLine().getCode();
 
         if ("websocket".equals(upgrade) && code == 101) {
             // upgrade to websocket
@@ -196,14 +216,14 @@ public class ConnectProxyHandler implements ProxyHandler {
             int version = Strings.toInt(Strings.nullToEmpty(requestHeaders.getFirst("Sec-WebSocket-Version")), -1);
             //TODO: server may not support the version. in this case server will send supported versions, client should
             WebSocketHandler webSocketHandler = new WebSocketHandler();
-            webSocketHandler.handle(srcInput, destInput, host, url, messageListener);
+            webSocketHandler.handle(srcIn, dstIn, host, url, messageListener);
             shouldClose = true;
         } else if ("h2c".equals(upgrade) && code == 101) {
             // http2 from http1 upgrade
             log.info("{} upgrade to http2", url);
             String http2Settings = requestHeaders.getFirst("HTTP2-Settings");
             Http2Handler handler = new Http2Handler();
-            handler.handle(srcInput, destInput, ssl, target, messageListener);
+            handler.handle(srcIn, dstIn, ssl, target, messageListener);
             shouldClose = true;
         }
 

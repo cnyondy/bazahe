@@ -31,7 +31,7 @@ public class BodyStore extends OutputStream {
     private File file;
     private boolean closed;
 
-    private static final int MAX_BUFFER_SIZE = (int) BinarySize.kilobyte(512);
+    private static final int MAX_BUFFER_SIZE = (int) BinarySize.megabyte(1);
 
     @Getter
     @Setter

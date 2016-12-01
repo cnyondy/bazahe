@@ -113,7 +113,7 @@ public class AppKeyStoreGenerator {
         // in case client time behind server time
         calendar.add(Calendar.DAY_OF_YEAR, -100);
         Date startDate = calendar.getTime();
-        calendar.add(Calendar.DAY_OF_YEAR, validityDays);
+        calendar.add(Calendar.DAY_OF_YEAR, validityDays + 100);
         Date expireDate = calendar.getTime();
 
         String appDName = "CN=ClearTheSky, OU=TianCao, O=TianCao, L=Beijing, ST=Beijing, C=CN";
