@@ -201,16 +201,4 @@ public class BodyStore extends OutputStream {
         return input;
     }
 
-    /**
-     * If is image javafx supported
-     */
-    public boolean isImage() {
-        return type.getType() == 1;
-//        return type == BodyStoreType.png || type == BodyStoreType.bmp
-//                || type == BodyStoreType.jpeg || type == BodyStoreType.gif;
-    }
-
-    public boolean isText() {
-        return type.getType() == 0;
-    }
 }

@@ -101,8 +101,12 @@ public class HttpMessageController {
             bodyPane.setCenter(new Text());
             return;
         }
+
+        BodyStoreType storeType = bodyStore.getType();
         charsetBox.setValue(bodyStore.getCharset());
-        bodyTypeBox.setValue(bodyStore.getType());
+        charsetBox.setManaged(storeType.isText());
+        charsetBox.setVisible(storeType.isText());
+        bodyTypeBox.setValue(storeType);
 
         if (!bodyStore.isClosed()) {
             bodyPane.setCenter(new Text("Still reading..."));
@@ -115,14 +119,14 @@ public class HttpMessageController {
         }
 
         // handle images
-        if (bodyStore.isImage()) {
-            Node imagePane = UIUtils.getImagePane(bodyStore.getInputStream(), bodyStore.getType());
+        if (storeType.isImage()) {
+            Node imagePane = UIUtils.getImagePane(bodyStore.getInputStream(), storeType);
             bodyPane.setCenter(imagePane);
             return;
         }
 
         // textual body
-        if (bodyStore.isText()) {
+        if (storeType.isText()) {
             String text = ReaderWriters.readAll(new InputStreamReader(bodyStore.getInputStream(),
                     bodyStore.getCharset()));
             TextArea textArea = new TextArea();
@@ -232,7 +236,7 @@ public class HttpMessageController {
             return;
         }
         bodyStore.setCharset(charsetBox.getSelectionModel().getSelectedItem());
-        if (bodyStore.isClosed() && bodyStore.getSize() != 0 && bodyStore.isText()) {
+        if (bodyStore.isClosed() && bodyStore.getSize() != 0 && bodyStore.getType().isText()) {
             setBody(bodyStore);
         }
     }
