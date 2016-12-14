@@ -91,7 +91,7 @@
                     <nativeOutputDir>${project.build.directory}/native</nativeOutputDir>
                     <jfxMainAppJarName>${project.artifactId}.jar</jfxMainAppJarName>
                     <nativeReleaseVersion>${project.version}</nativeReleaseVersion>
-                    <appName>${project.artifactId}</appName>
+                    <appName>Bazahe</appName>
                     <vendor>net.dongliu.bazahe</vendor>
                     <needMenu>true</needMenu>
                     <bundleArguments>
