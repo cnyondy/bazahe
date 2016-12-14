@@ -22,7 +22,7 @@
  *
  *
  */
-package bazahe.ui.pane;
+package bazahe.ui.component;
 
 import bazahe.def.ProxyConfig;
 import bazahe.ui.controller.ProxyConfigController;

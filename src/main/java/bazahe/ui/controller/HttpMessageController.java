@@ -5,7 +5,7 @@ import bazahe.httpparse.ResponseHeaders;
 import bazahe.store.BodyStore;
 import bazahe.store.BodyStoreType;
 import bazahe.ui.UIUtils;
-import bazahe.ui.pane.HttpMessagePane;
+import bazahe.ui.component.HttpMessagePane;
 import javafx.beans.property.ObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -152,7 +152,7 @@ public class HttpMessageController {
             bodyStore = httpMessage.getRequestBody();
         } else if ("ResponseBody".equals(toggle.getUserData())) {
             bodyStore = httpMessage.getResponseBody();
-            fileName = getFileName(httpMessage.getUrl());
+            fileName = getFileName(httpMessage.getUrl(), httpMessage.getHost());
             if (!fileName.contains(".")) {
                 // no extension
                 fileName = addExtension(fileName, bodyStore.getType());
@@ -160,7 +160,7 @@ public class HttpMessageController {
         } else {
             throw new RuntimeException();
         }
-        if (bodyStore == null) {
+        if (bodyStore == null || bodyStore.getSize() == 0) {
             UIUtils.showMessageDialog("This http message has nobody");
             return;
         }
@@ -202,9 +202,12 @@ public class HttpMessageController {
         }
     }
 
-    private String getFileName(String url) {
+    private String getFileName(String url, String host) {
         String s = Strings.afterLast(url, "/");
         s = Strings.before(s, "?");
+        if (s.isEmpty()) {
+            s = host;
+        }
         return s;
     }
 

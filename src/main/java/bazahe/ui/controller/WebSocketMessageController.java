@@ -2,7 +2,7 @@ package bazahe.ui.controller;
 
 import bazahe.def.WebSocketMessage;
 import bazahe.store.BodyStore;
-import bazahe.ui.pane.WebSocketMessagePane;
+import bazahe.ui.component.WebSocketMessagePane;
 import javafx.beans.property.ObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -69,7 +69,7 @@ public class WebSocketMessageController {
     private void exportBody(ActionEvent e) {
         ObjectProperty<WebSocketMessage> messageObjectProperty = root.messageProperty();
         BodyStore bodyStore = messageObjectProperty.get().getBodyStore();
-        if (bodyStore == null) {
+        if (bodyStore == null || bodyStore.getSize() == 0) {
             Alert alert = new Alert(Alert.AlertType.INFORMATION);
             alert.setContentText("This WebSocket message has nobody");
             alert.setHeaderText("");

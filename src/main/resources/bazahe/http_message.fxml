@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import bazahe.ui.pane.HttpMessagePane?>
+<?import bazahe.ui.component.HttpMessagePane?>
+<?import bazahe.ui.component.MyButton?>
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
-<fx:root type="bazahe.ui.pane.HttpMessagePane" xmlns:fx="http://javafx.com/fxml"
+<fx:root type="bazahe.ui.component.HttpMessagePane" xmlns:fx="http://javafx.com/fxml"
          fx:controller="bazahe.ui.controller.HttpMessageController"
          fx:id="root">
     <SplitPane dividerPositions="0.5" orientation="VERTICAL" SplitPane.resizableWithParent="false">
@@ -25,7 +26,10 @@
                 <RadioButton text="Response" toggleGroup="$selectBody" userData="ResponseBody" selected="true"/>
                 <ComboBox onAction="#setMimeType" fx:id="bodyTypeBox"/>
                 <ComboBox onAction="#setCharset" fx:id="charsetBox"/>
-                <Button onAction="#exportBody">Save Body</Button>
+                <MyButton onAction="#exportBody">
+                    <tooltipText>Save Content To File</tooltipText>
+                    <iconPath>/images/ic_save_black_24dp_1x.png</iconPath>
+                </MyButton>
             </HBox>
         </top>
         <center>

@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import bazahe.ui.pane.WebSocketMessagePane?>
-<?import javafx.scene.control.Button?>
+<?import bazahe.ui.component.MyButton?>
+<?import bazahe.ui.component.WebSocketMessagePane?>
+<?import javafx.geometry.Insets?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.text.Text?>
-<?import javafx.geometry.Insets?>
-<fx:root type="bazahe.ui.pane.WebSocketMessagePane" xmlns:fx="http://javafx.com/fxml"
+<fx:root type="bazahe.ui.component.WebSocketMessagePane" xmlns:fx="http://javafx.com/fxml"
          fx:controller="bazahe.ui.controller.WebSocketMessageController"
          fx:id="root">
     <top>
@@ -14,7 +14,10 @@
                 <Insets top="4" bottom="2" left="4" right="4"/>
             </padding>
             <Text fx:id="description"/>
-            <Button onAction="#exportBody">Save Body</Button>
+            <MyButton onAction="#exportBody">
+                <tooltipText>Save Content To File</tooltipText>
+                <iconPath>/images/ic_save_black_24dp_1x.png</iconPath>
+            </MyButton>
         </HBox>
     </top>
     <center>

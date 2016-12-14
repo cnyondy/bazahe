@@ -1,4 +1,4 @@
-package bazahe.ui.pane;
+package bazahe.ui.component;
 
 import javafx.concurrent.Task;
 import javafx.geometry.Pos;

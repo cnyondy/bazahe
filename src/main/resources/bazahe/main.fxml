@@ -1,28 +1,27 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<?import bazahe.ui.pane.HttpMessagePane?>
-<?import bazahe.ui.pane.WebSocketMessagePane?>
-<?import javafx.scene.control.*?>
+<?import bazahe.ui.component.*?>
+<?import javafx.scene.control.Separator?>
+<?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.ToolBar?>
+<?import javafx.scene.control.TreeView?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <VBox xmlns:fx="http://javafx.com/fxml" fx:id="root" fx:controller="bazahe.ui.controller.MainController">
     <ToolBar>
-        <Button onAction="#configureProxy" fx:id="proxyConfigureButton" text="Setting">
-            <tooltip>
-                <Tooltip text="Configure HTTP Proxy"/>
-            </tooltip>
-        </Button>
+        <MyButton onAction="#configureProxy" fx:id="proxyConfigureButton">
+            <iconPath>/images/ic_settings_black_24dp_1x.png</iconPath>
+            <tooltipText>Configure HTTP Proxy</tooltipText>
+        </MyButton>
         <Separator/>
-        <Button onAction="#proxyControl" fx:id="proxyControlButton" text="Start">
-            <tooltip>
-                <Tooltip text="Start/Stop HTTP Proxy"/>
-            </tooltip>
-        </Button>
-        <Button text=" Clear All" onAction="#clearAll">
-            <tooltip>
-                <Tooltip text="Remove all captured messages"/>
-            </tooltip>
-        </Button>
+        <MyButton onAction="#proxyControl" fx:id="proxyControlButton">
+            <iconPath>/images/ic_play_circle_outline_black_24dp_1x.png</iconPath>
+            <tooltipText>Start/Stop HTTP Proxy</tooltipText>
+        </MyButton>
+        <MyButton onAction="#clearAll">
+            <iconPath>/images/ic_clear_all_black_24dp_1x.png</iconPath>
+            <tooltipText>Remove all captured messages</tooltipText>
+        </MyButton>
     </ToolBar>
 
     <SplitPane prefHeight="${root.height}" fx:id="splitPane" dividerPositions="0.2">

@@ -1,4 +1,4 @@
-package bazahe.ui.pane;
+package bazahe.ui.component;
 
 import bazahe.def.WebSocketMessage;
 import bazahe.ui.controller.WebSocketMessageController;

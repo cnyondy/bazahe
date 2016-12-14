@@ -9,14 +9,10 @@ import bazahe.httpproxy.SSLContextManager;
 import bazahe.ui.AppResources;
 import bazahe.ui.UIMessageListener;
 import bazahe.ui.UIUtils;
-import bazahe.ui.pane.HttpMessagePane;
-import bazahe.ui.pane.ProgressDialog;
-import bazahe.ui.pane.ProxyConfigDialog;
-import bazahe.ui.pane.WebSocketMessagePane;
+import bazahe.ui.component.*;
 import javafx.application.Platform;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Button;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -45,9 +41,9 @@ public class MainController {
     @FXML
     private SplitPane splitPane;
     @FXML
-    private Button proxyConfigureButton;
+    private MyButton proxyConfigureButton;
     @FXML
-    private Button proxyControlButton;
+    private MyButton proxyControlButton;
     @FXML
     private HttpMessagePane httpMessagePane;
     @FXML
@@ -96,7 +92,7 @@ public class MainController {
             return;
         }
         Platform.runLater(() -> {
-            proxyControlButton.setText("Stop");
+            proxyControlButton.setIconPath("/images/ic_stop_black_24dp_1x.png");
             proxyControlButton.setDisable(false);
         });
     }
@@ -107,7 +103,7 @@ public class MainController {
         new Thread(() -> {
             proxyServer.stop();
             Platform.runLater(() -> {
-                proxyControlButton.setText("Start");
+                proxyControlButton.setIconPath("/images/ic_play_circle_outline_black_24dp_1x.png");
                 proxyControlButton.setDisable(false);
                 proxyConfigureButton.setDisable(false);
             });
