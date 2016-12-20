@@ -1,7 +1,12 @@
 package bazahe.httpparse;
 
+import jdk.nashorn.internal.ir.annotations.Immutable;
 import lombok.Getter;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -9,9 +14,10 @@ import java.util.List;
  * @author Liu Dong
  */
 @Getter
-public class ResponseHeaders extends Headers {
-    private final String rawStatusLine;
-    private final StatusLine statusLine;
+@Immutable
+public class ResponseHeaders extends Headers implements Serializable {
+    private String rawStatusLine;
+    private StatusLine statusLine;
 
     public ResponseHeaders(String rawStatusLine, List<String> rawHeaders) {
         super(rawHeaders);
@@ -43,5 +49,14 @@ public class ResponseHeaders extends Headers {
          */
         int code = statusLine.getCode();
         return !(code >= 100 && code < 200 || code == 204 || code == 304);
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.writeUTF(rawStatusLine);
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        rawStatusLine = in.readUTF();
+        statusLine = StatusLine.parse(rawStatusLine);
     }
 }

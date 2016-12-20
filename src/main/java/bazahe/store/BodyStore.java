@@ -6,6 +6,7 @@ import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
 import net.dongliu.commons.BinarySize;
 import net.dongliu.commons.RefValues;
+import net.dongliu.commons.Strings;
 import net.dongliu.commons.io.ByteArrayOutputStreamEx;
 import net.dongliu.commons.io.Closeables;
 import net.dongliu.commons.io.InputOutputs;
@@ -25,7 +26,7 @@ import java.util.zip.GZIPInputStream;
  */
 @ThreadSafe
 @Log4j2
-public class BodyStore extends OutputStream {
+public class BodyStore extends OutputStream implements Serializable {
     private ByteArrayOutputStreamEx bos;
     private OutputStream fos;
     private File file;
@@ -39,15 +40,14 @@ public class BodyStore extends OutputStream {
     @Getter
     @Setter
     private volatile Charset charset;
-    @Nullable
     @Getter
-    private final String contentEncoding;
+    private String contentEncoding;
 
     public BodyStore(@Nullable BodyStoreType type, @Nullable Charset charset,
                      @Nullable String contentEncoding) {
         this.type = RefValues.ifNullThen(type, BodyStoreType.unknown);
         this.charset = RefValues.ifNullThen(charset, StandardCharsets.UTF_8);
-        this.contentEncoding = contentEncoding;
+        this.contentEncoding = Strings.nullToEmpty(contentEncoding);
         this.bos = new ByteArrayOutputStreamEx();
     }
 
@@ -136,10 +136,7 @@ public class BodyStore extends OutputStream {
         }
         if (bos.size() > MAX_BUFFER_SIZE) {
             try {
-                file = File.createTempFile("bazahe_tmp", ".tmp");
-                file.deleteOnExit();
-                fos = new BufferedOutputStream(new FileOutputStream(file));
-                bos.close();
+                newTempFile();
                 InputOutputs.copy(bos.asInputStream(), fos);
             } catch (IOException e) {
                 log.error("Create tmp file for http body failed", e);
@@ -151,6 +148,13 @@ public class BodyStore extends OutputStream {
         return bos;
     }
 
+    private void newTempFile() throws IOException {
+        file = File.createTempFile("bazahe_tmp", ".tmp");
+        file.deleteOnExit();
+        fos = new BufferedOutputStream(new FileOutputStream(file));
+        bos.close();
+    }
+
     /**
      * The len of data
      */
@@ -159,7 +163,7 @@ public class BodyStore extends OutputStream {
             throw new IllegalStateException("Still writing");
         }
         if (bos != null) {
-            return bos.toByteArray().length;
+            return bos.size();
         } else if (file != null) {
             return file.length();
         } else {
@@ -182,6 +186,12 @@ public class BodyStore extends OutputStream {
         }
     }
 
+    /**
+     * Get content as input stream
+     *
+     * @return
+     * @throws IOException
+     */
     public synchronized InputStream getInputStream() throws IOException {
         InputStream input = inputStream();
         if (getSize() == 0) {
@@ -201,4 +211,68 @@ public class BodyStore extends OutputStream {
         return input;
     }
 
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.writeBoolean(closed);
+        out.writeObject(type);
+        out.writeUTF(charset.name());
+        out.writeUTF(contentEncoding);
+
+        if (closed) {
+            synchronized (this) {
+                if (bos != null) {
+                    out.writeInt(1);
+                    out.writeLong(getSize());
+                    InputOutputs.copy(bos.asInputStream(), out);
+                } else if (file != null) {
+                    out.writeInt(2);
+                    out.writeLong(getSize());
+                    InputOutputs.copy(new BufferedInputStream(new FileInputStream(file)), out);
+                } else {
+                    throw new IllegalStateException();
+                }
+            }
+        }
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        closed = in.readBoolean();
+        type = (BodyStoreType) in.readObject();
+        charset = Charset.forName(in.readUTF());
+        contentEncoding = in.readUTF();
+
+        if (closed) {
+            int store = in.readInt();
+            long size = in.readLong();
+            OutputStream out;
+            if (store == 1) {
+                bos = new ByteArrayOutputStreamEx();
+                out = bos;
+            } else if (store == 2) {
+                newTempFile();
+                out = fos;
+            } else {
+                throw new IllegalStateException();
+            }
+            copyWithSize(in, out, size);
+        }
+    }
+
+
+    /**
+     * Copy input stream to output stream, and close input
+     */
+    private static void copyWithSize(InputStream input, OutputStream output, long size) throws IOException {
+        byte[] buffer = new byte[1024 * 4];
+        long remain = size;
+        int toCopy = (int) Math.min(buffer.length, remain);
+        int read;
+        while ((read = input.read(buffer, 0, toCopy)) != -1) {
+            output.write(buffer, 0, read);
+            remain -= read;
+            if (remain <= 0) {
+                break;
+            }
+            toCopy = (int) Math.min(buffer.length, remain);
+        }
+    }
 }

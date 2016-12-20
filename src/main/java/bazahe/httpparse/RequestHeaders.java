@@ -2,6 +2,10 @@ package bazahe.httpparse;
 
 import lombok.Getter;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -11,9 +15,9 @@ import java.util.List;
  * @author Liu Dong
  */
 @Getter
-public class RequestHeaders extends Headers {
-    private final String rawRequestLine;
-    private final RequestLine requestLine;
+public class RequestHeaders extends Headers implements Serializable {
+    private String rawRequestLine;
+    private RequestLine requestLine;
 
     public RequestHeaders(String rawRequestLine, List<String> rawHeaders) {
         super(rawHeaders);
@@ -43,4 +47,13 @@ public class RequestHeaders extends Headers {
                 && !"OPTIONS".equalsIgnoreCase(requestLine.getMethod());
     }
 
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.writeUTF(rawRequestLine);
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        rawRequestLine = in.readUTF();
+        this.requestLine = RequestLine.parse(rawRequestLine);
+    }
 }

@@ -11,12 +11,14 @@ import bazahe.ui.UIMessageListener;
 import bazahe.ui.UIUtils;
 import bazahe.ui.component.*;
 import javafx.application.Platform;
+import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
 import javafx.scene.layout.VBox;
+import javafx.stage.FileChooser;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
@@ -24,6 +26,8 @@ import net.dongliu.commons.Marshaller;
 import net.dongliu.commons.Strings;
 import net.dongliu.commons.collection.Pair;
 
+import java.io.File;
+import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Optional;
@@ -35,7 +39,7 @@ import java.util.Optional;
 public class MainController {
 
     @FXML
-    private TreeView<RTreeItem> messageTree;
+    private TreeView<RTreeItemValue> messageTree;
     @FXML
     private VBox root;
     @FXML
@@ -84,7 +88,8 @@ public class MainController {
         proxyControlButton.setDisable(true);
         try {
             proxyServer = new ProxyServer(config, sslContextManager);
-            proxyServer.setMessageListener(new UIMessageListener(item -> Platform.runLater(() -> manifestTree(item))));
+            proxyServer.setMessageListener(new UIMessageListener(item -> Platform.runLater(() -> addTreeItemMessage
+                    (item))));
             proxyServer.start();
         } catch (Throwable t) {
             log.error("Start proxy failed", t);
@@ -119,17 +124,17 @@ public class MainController {
             }
         });
 
-        TreeItem<RTreeItem> root = new TreeItem<>(new RTreeItem.Node(""));
+        TreeItem<RTreeItemValue> root = new TreeItem<>(new RTreeItemValue.NodeValue(""));
         root.setExpanded(true);
         messageTree.setRoot(root);
         messageTree.setShowRoot(false);
         messageTree.setCellFactory(new TreeCellFactory());
         messageTree.setOnMouseClicked(new TreeViewMouseHandler());
         messageTree.getSelectionModel().selectedItemProperty().addListener((ov, o, n) -> {
-            if (n == null || n.getValue() instanceof RTreeItem.Node) {
+            if (n == null || n.getValue() instanceof RTreeItemValue.NodeValue) {
                 hideContent();
             } else {
-                RTreeItem.Leaf value = (RTreeItem.Leaf) n.getValue();
+                RTreeItemValue.LeafValue value = (RTreeItemValue.LeafValue) n.getValue();
                 showMessage(value.getMessage());
             }
         });
@@ -184,28 +189,28 @@ public class MainController {
 
     @FXML
     private void clearAll(ActionEvent actionEvent) {
-        messageTree.setRoot(new TreeItem<>(new RTreeItem.Node("")));
+        messageTree.setRoot(new TreeItem<>(new RTreeItemValue.NodeValue("")));
     }
 
     @SneakyThrows
-    private void manifestTree(Message message) {
+    private void addTreeItemMessage(Message message) {
         val root = messageTree.getRoot();
         String host = genericMultiCDNS(message.getHost());
 
 
         for (val item : root.getChildren()) {
-            val node = (RTreeItem.Node) item.getValue();
+            val node = (RTreeItemValue.NodeValue) item.getValue();
             if (node.getPattern().equals(host)) {
-                item.getChildren().add(new TreeItem<>(new RTreeItem.Leaf(message)));
+                item.getChildren().add(new TreeItem<>(new RTreeItemValue.LeafValue(message)));
                 node.increaseChildren();
                 return;
             }
         }
 
-        val node = new RTreeItem.Node(host);
-        val nodeItem = new TreeItem<RTreeItem>(node);
+        val node = new RTreeItemValue.NodeValue(host);
+        val nodeItem = new TreeItem<RTreeItemValue>(node);
         root.getChildren().add(nodeItem);
-        nodeItem.getChildren().add(new TreeItem<>(new RTreeItem.Leaf(message)));
+        nodeItem.getChildren().add(new TreeItem<>(new RTreeItemValue.LeafValue(message)));
         node.increaseChildren();
     }
 
@@ -228,4 +233,65 @@ public class MainController {
         return first.substring(0, idx + 1) + "*." + Strings.after(host, ".");
     }
 
+    @FXML
+    void open(ActionEvent event) {
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Bazahe archive data", "*.baza"));
+        File file = fileChooser.showOpenDialog(this.root.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+
+        TreeItem<RTreeItemValue> root = messageTree.getRoot();
+        root.getChildren().clear();
+        ProgressDialog progressDialog = new ProgressDialog();
+        Task<Void> saveTask = new LoadTask(file.getPath(), this::addTreeItemMessage);
+
+        progressDialog.bindTask(saveTask);
+        saveTask.setOnSucceeded(e -> {
+            Platform.runLater(progressDialog::close);
+        });
+        saveTask.setOnFailed(e -> {
+            Platform.runLater(progressDialog::close);
+            Throwable throwable = saveTask.getException();
+            log.error("Load data failed", throwable);
+            UIUtils.showMessageDialog("Loading data failed!");
+        });
+
+        Thread thread = new Thread(saveTask);
+        thread.start();
+        progressDialog.show();
+    }
+
+    // save captured data to file
+    @FXML
+    void save(ActionEvent event) throws IOException {
+
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Bazahe archive data", "*.baza"));
+        fileChooser.setInitialFileName("bazahe.baza");
+        File file = fileChooser.showSaveDialog(this.root.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+        TreeItem<RTreeItemValue> root = messageTree.getRoot();
+        ProgressDialog progressDialog = new ProgressDialog();
+        Task<Void> saveTask = new SaveTask(file.getPath(), root);
+
+        progressDialog.bindTask(saveTask);
+        saveTask.setOnSucceeded(e -> {
+            Platform.runLater(progressDialog::close);
+            UIUtils.showMessageDialog("Save finished!");
+        });
+        saveTask.setOnFailed(e -> {
+            Platform.runLater(progressDialog::close);
+            Throwable throwable = saveTask.getException();
+            log.error("Save data failed", throwable);
+            UIUtils.showMessageDialog("Save data failed!");
+        });
+
+        Thread thread = new Thread(saveTask);
+        thread.start();
+        progressDialog.show();
+    }
 }

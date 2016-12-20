@@ -5,6 +5,11 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+
 /**
  * The http request line
  *
@@ -13,10 +18,10 @@ import lombok.Getter;
 @Getter
 @AllArgsConstructor
 @EqualsAndHashCode
-public class RequestLine {
-    private final String method;
-    private final String path;
-    private final String version;
+public class RequestLine implements Serializable {
+    private String method;
+    private String path;
+    private String version;
 
     @Override
     public String toString() {
@@ -37,5 +42,17 @@ public class RequestLine {
 
     public boolean isHttp11() {
         return "HTTP/1.1".equalsIgnoreCase(version);
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.writeUTF(method);
+        out.writeUTF(path);
+        out.writeUTF(version);
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        method = in.readUTF();
+        path = in.readUTF();
+        version = in.readUTF();
     }
 }

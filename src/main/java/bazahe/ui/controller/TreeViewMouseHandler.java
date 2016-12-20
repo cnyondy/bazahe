@@ -22,13 +22,13 @@ class TreeViewMouseHandler implements EventHandler<MouseEvent> {
             return;
         }
         
-        TreeView<RTreeItem> treeView = (TreeView<RTreeItem>) event.getSource();
-        RTreeItem treeItem = treeView.getSelectionModel().getSelectedItem().getValue();
-        if (!(treeItem instanceof RTreeItem.Leaf)) {
+        TreeView<RTreeItemValue> treeView = (TreeView<RTreeItemValue>) event.getSource();
+        RTreeItemValue treeItem = treeView.getSelectionModel().getSelectedItem().getValue();
+        if (!(treeItem instanceof RTreeItemValue.LeafValue)) {
             return;
         }
 
-        val leaf = (RTreeItem.Leaf) treeItem;
+        val leaf = (RTreeItemValue.LeafValue) treeItem;
         ContextMenu contextMenu = new ContextMenu();
         MenuItem menuItem = new MenuItem("Copy URL");
         menuItem.setOnAction(event1 -> {

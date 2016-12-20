@@ -4,18 +4,23 @@ import bazahe.store.BodyStore;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+
 /**
  * WebSocket message
  *
  * @author Liu Dong
  */
-public class WebSocketMessage extends Message {
+public class WebSocketMessage extends Message implements Serializable {
     // type: 1 txt
     // type: 2 binary
     @Getter
-    private final int type;
+    private int type;
     @Getter
-    private final boolean request;
+    private boolean request;
     @Getter
     @Setter
     private volatile BodyStore bodyStore;
@@ -29,5 +34,17 @@ public class WebSocketMessage extends Message {
     @Override
     public String getDisplay() {
         return getUrl();
+    }
+
+    private void writeObject(ObjectOutputStream out) throws IOException {
+        out.writeInt(type);
+        out.writeBoolean(request);
+        out.writeObject(bodyStore);
+    }
+
+    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+        type = in.readInt();
+        request = in.readBoolean();
+        bodyStore = (BodyStore) in.readObject();
     }
 }

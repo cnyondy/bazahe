@@ -6,25 +6,25 @@ import lombok.Getter;
 /**
  * @author Liu Dong
  */
-abstract class RTreeItem {
+abstract class RTreeItemValue {
 
-    static class Leaf extends RTreeItem {
+    static class LeafValue extends RTreeItemValue {
 
         @Getter
         private final Message message;
 
-        Leaf(Message message) {
+        LeafValue(Message message) {
             this.message = message;
         }
     }
 
-    static class Node extends RTreeItem {
+    static class NodeValue extends RTreeItemValue {
         @Getter
         private final String pattern;
         @Getter
         private int count;
 
-        Node(String pattern) {
+        NodeValue(String pattern) {
             this.pattern = pattern;
         }
 

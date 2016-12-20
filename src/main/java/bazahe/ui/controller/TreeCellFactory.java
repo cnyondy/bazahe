@@ -8,23 +8,23 @@ import javafx.util.Callback;
 /**
  * @author Liu Dong
  */
-class TreeCellFactory implements Callback<TreeView<RTreeItem>, TreeCell<RTreeItem>> {
+class TreeCellFactory implements Callback<TreeView<RTreeItemValue>, TreeCell<RTreeItemValue>> {
 
     @Override
-    public TreeCell<RTreeItem> call(TreeView<RTreeItem> treeView) {
-        TreeCell<RTreeItem> treeCell = new TreeCell<RTreeItem>() {
+    public TreeCell<RTreeItemValue> call(TreeView<RTreeItemValue> treeView) {
+        TreeCell<RTreeItemValue> treeCell = new TreeCell<RTreeItemValue>() {
             @Override
-            protected void updateItem(RTreeItem item, boolean empty) {
+            protected void updateItem(RTreeItemValue item, boolean empty) {
                 super.updateItem(item, empty);
 
                 if (empty) {
                     setText(null);
                 } else {
                     String text;
-                    if (item instanceof RTreeItem.Node) {
-                        text = ((RTreeItem.Node) item).getPattern() + "(" + ((RTreeItem.Node) item).getCount() + ")";
-                    } else if (item instanceof RTreeItem.Leaf) {
-                        Message message = ((RTreeItem.Leaf) item).getMessage();
+                    if (item instanceof RTreeItemValue.NodeValue) {
+                        text = ((RTreeItemValue.NodeValue) item).getPattern() + "(" + ((RTreeItemValue.NodeValue) item).getCount() + ")";
+                    } else if (item instanceof RTreeItemValue.LeafValue) {
+                        Message message = ((RTreeItemValue.LeafValue) item).getMessage();
                         text = message.getDisplay();
                     } else {
                         text = "BUG..";
