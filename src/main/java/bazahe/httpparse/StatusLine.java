@@ -14,6 +14,7 @@ import lombok.Getter;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class StatusLine {
+    private static final long serialVersionUID = 1L;
     private final String version;
     private final int code;
     private final String status;

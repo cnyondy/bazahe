@@ -57,7 +57,7 @@ public class UIMessageListener implements MessageListener {
     @Override
     public OutputStream onWebSocket(String id, String host, String url, int type, boolean request) {
         // TODO: currently the hacker way to use bodyStore
-        BodyStore bodyStore = new BodyStore(type == 1 ? BodyStoreType.plainText : BodyStoreType.binary,
+        BodyStore bodyStore = new BodyStore(type == 1 ? BodyStoreType.text : BodyStoreType.binary,
                 StandardCharsets.UTF_8, null);
         WebSocketMessage message = new WebSocketMessage(id, host, url, type, request);
         message.setBodyStore(bodyStore);

@@ -27,6 +27,8 @@ import java.util.zip.GZIPInputStream;
 @ThreadSafe
 @Log4j2
 public class BodyStore extends OutputStream implements Serializable {
+    private static final long serialVersionUID = 1L;
+
     private ByteArrayOutputStreamEx bos;
     private OutputStream fos;
     private File file;
@@ -42,6 +44,10 @@ public class BodyStore extends OutputStream implements Serializable {
     private volatile Charset charset;
     @Getter
     private String contentEncoding;
+
+    @Getter
+    @Setter
+    private transient boolean beaufify;
 
     public BodyStore(@Nullable BodyStoreType type, @Nullable Charset charset,
                      @Nullable String contentEncoding) {
@@ -80,14 +86,14 @@ public class BodyStore extends OutputStream implements Serializable {
                     bodyStoreType = BodyStoreType.html;
                 } else if ("xml".equals(subType)) {
                     bodyStoreType = BodyStoreType.xml;
-                } else if ("www-form-encoded".equals(subType)) {
-                    bodyStoreType = BodyStoreType.formEncoded;
+                } else if ("x-www-form-urlencoded".equals(subType)) {
+                    bodyStoreType = BodyStoreType.www_form;
                 } else if ("css".equals(subType)) {
                     bodyStoreType = BodyStoreType.css;
                 } else if ("javascript".equals(subType)) {
                     bodyStoreType = BodyStoreType.javascript;
                 } else {
-                    bodyStoreType = BodyStoreType.plainText;
+                    bodyStoreType = BodyStoreType.text;
                 }
             } else {
                 bodyStoreType = BodyStoreType.binary;

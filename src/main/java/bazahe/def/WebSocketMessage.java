@@ -15,6 +15,7 @@ import java.io.Serializable;
  * @author Liu Dong
  */
 public class WebSocketMessage extends Message implements Serializable {
+    private static final long serialVersionUID = 1L;
     // type: 1 txt
     // type: 2 binary
     @Getter

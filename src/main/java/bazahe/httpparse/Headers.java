@@ -21,6 +21,7 @@ import java.util.List;
 @Getter
 @Immutable
 public abstract class Headers implements Serializable {
+    private static final long serialVersionUID = 1L;
     private List<Header> headers;
     private List<String> rawHeaders;
 

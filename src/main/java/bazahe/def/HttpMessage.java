@@ -17,6 +17,7 @@ import java.io.Serializable;
  */
 @Getter
 public class HttpMessage extends Message implements Serializable {
+    private static final long serialVersionUID = 1L;
     private RequestHeaders requestHeaders;
     private BodyStore requestBody;
     @Nullable

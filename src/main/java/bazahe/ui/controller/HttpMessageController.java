@@ -6,14 +6,14 @@ import bazahe.store.BodyStore;
 import bazahe.store.BodyStoreType;
 import bazahe.ui.UIUtils;
 import bazahe.ui.component.HttpMessagePane;
+import bazahe.ui.formater.FormURLEncodedFormatter;
+import bazahe.ui.formater.JSONFormatter;
+import bazahe.ui.formater.XMLFormatter;
 import javafx.beans.property.ObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Node;
-import javafx.scene.control.ComboBox;
-import javafx.scene.control.TextArea;
-import javafx.scene.control.Toggle;
-import javafx.scene.control.ToggleGroup;
+import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
@@ -30,15 +30,13 @@ import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.util.function.Function;
 
 /**
  * @author Liu Dong
  */
 public class HttpMessageController {
-    @FXML
-    private ComboBox<BodyStoreType> bodyTypeBox;
-    @FXML
-    private ComboBox<Charset> charsetBox;
+
     @FXML
     private HttpMessagePane root;
     @FXML
@@ -49,6 +47,12 @@ public class HttpMessageController {
     private BorderPane bodyPane;
     @FXML
     private ToggleGroup selectBody;
+    @FXML
+    private ComboBox<BodyStoreType> bodyTypeBox;
+    @FXML
+    private ComboBox<Charset> charsetBox;
+    @FXML
+    private ToggleButton beautifyButton;
 
     @FXML
     void initialize() {
@@ -77,7 +81,7 @@ public class HttpMessageController {
 
     private void setSelectBody() {
         BodyStore bodyStore = currentBodyStore();
-        setBody(bodyStore);
+        refreshBody(bodyStore);
     }
 
     private BodyStore currentBodyStore() {
@@ -96,16 +100,24 @@ public class HttpMessageController {
     }
 
     @SneakyThrows
-    private void setBody(@Nullable BodyStore bodyStore) {
+    private void refreshBody(@Nullable BodyStore bodyStore) {
         if (bodyStore == null) {
             bodyPane.setCenter(new Text());
             return;
         }
 
         BodyStoreType storeType = bodyStore.getType();
+
         charsetBox.setValue(bodyStore.getCharset());
         charsetBox.setManaged(storeType.isText());
         charsetBox.setVisible(storeType.isText());
+
+        boolean showBeautify = storeType == BodyStoreType.json || storeType == BodyStoreType.www_form ||
+                storeType == BodyStoreType.xml;
+        beautifyButton.setSelected(bodyStore.isBeaufify());
+        beautifyButton.setManaged(showBeautify);
+        beautifyButton.setVisible(showBeautify);
+
         bodyTypeBox.setValue(storeType);
 
         if (!bodyStore.isClosed()) {
@@ -129,6 +141,13 @@ public class HttpMessageController {
         if (storeType.isText()) {
             String text = ReaderWriters.readAll(new InputStreamReader(bodyStore.getInputStream(),
                     bodyStore.getCharset()));
+
+            // beautify
+            if (bodyStore.isBeaufify()) {
+                Function<String, String> formatter = getFormatter(bodyStore.getCharset(), storeType);
+                text = formatter.apply(text);
+            }
+
             TextArea textArea = new TextArea();
             textArea.setText(text);
             textArea.setEditable(false);
@@ -143,6 +162,20 @@ public class HttpMessageController {
             t.setText("Binary Body");
         }
         bodyPane.setCenter(t);
+    }
+
+    private Function<String, String> getFormatter(Charset charset, BodyStoreType storeType) {
+        Function<String, String> formatter;
+        if (storeType == BodyStoreType.json) {
+            formatter = new JSONFormatter(4);
+        } else if (storeType == BodyStoreType.xml) {
+            formatter = new XMLFormatter(4);
+        } else if (storeType == BodyStoreType.www_form) {
+            formatter = new FormURLEncodedFormatter(charset);
+        } else {
+            formatter = s -> s;
+        }
+        return formatter;
     }
 
     @FXML
@@ -189,8 +222,8 @@ public class HttpMessageController {
                 return suggestFileName + ".xml";
             case json:
                 return suggestFileName + ".json";
-            case plainText:
-            case formEncoded:
+            case text:
+            case www_form:
                 return suggestFileName + ".txt";
             case jpeg:
                 return suggestFileName + ".jpeg";
@@ -224,7 +257,7 @@ public class HttpMessageController {
         }
         bodyStore.setType(bodyTypeBox.getSelectionModel().getSelectedItem());
         if (bodyStore.isClosed() && bodyStore.getSize() != 0) {
-            setBody(bodyStore);
+            refreshBody(bodyStore);
         }
     }
 
@@ -237,8 +270,20 @@ public class HttpMessageController {
         }
         bodyStore.setCharset(charsetBox.getSelectionModel().getSelectedItem());
         if (bodyStore.isClosed() && bodyStore.getSize() != 0 && bodyStore.getType().isText()) {
-            setBody(bodyStore);
+            refreshBody(bodyStore);
         }
     }
 
+    @FXML
+    @SneakyThrows
+    void beautify(ActionEvent e) {
+        BodyStore bodyStore = currentBodyStore();
+        if (bodyStore == null) {
+            return;
+        }
+        bodyStore.setBeaufify(beautifyButton.isSelected());
+        if (bodyStore.isClosed() && bodyStore.getSize() != 0 && bodyStore.getType().isText()) {
+            refreshBody(bodyStore);
+        }
+    }
 }

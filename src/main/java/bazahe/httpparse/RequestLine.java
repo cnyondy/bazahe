@@ -19,6 +19,7 @@ import java.io.Serializable;
 @AllArgsConstructor
 @EqualsAndHashCode
 public class RequestLine implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String method;
     private String path;
     private String version;

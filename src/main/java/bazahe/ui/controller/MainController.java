@@ -281,7 +281,6 @@ public class MainController {
         progressDialog.bindTask(saveTask);
         saveTask.setOnSucceeded(e -> {
             Platform.runLater(progressDialog::close);
-            UIUtils.showMessageDialog("Save finished!");
         });
         saveTask.setOnFailed(e -> {
             Platform.runLater(progressDialog::close);

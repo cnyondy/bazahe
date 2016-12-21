@@ -24,11 +24,19 @@
                 </fx:define>
                 <RadioButton text="Request" toggleGroup="$selectBody" userData="RequestBody"/>
                 <RadioButton text="Response" toggleGroup="$selectBody" userData="ResponseBody" selected="true"/>
+
                 <ComboBox onAction="#setMimeType" fx:id="bodyTypeBox"/>
                 <ComboBox onAction="#setCharset" fx:id="charsetBox"/>
+
+                <ToggleButton onAction="#beautify" fx:id="beautifyButton" text="Beautify">
+                    <tooltip>
+                        <Tooltip text="Beautify Text"/>
+                    </tooltip>
+                </ToggleButton>
+
                 <MyButton onAction="#exportBody">
                     <tooltipText>Save Content To File</tooltipText>
-                    <iconPath>/images/ic_save_black_24dp_1x.png</iconPath>
+                    <iconPath>/images/ic_file_download_black_18dp.png</iconPath>
                 </MyButton>
             </HBox>
         </top>

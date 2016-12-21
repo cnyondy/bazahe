@@ -16,6 +16,7 @@ import java.util.List;
  */
 @Getter
 public class RequestHeaders extends Headers implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String rawRequestLine;
     private RequestLine requestLine;
 

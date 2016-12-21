@@ -12,7 +12,7 @@ import javax.annotation.concurrent.Immutable;
 @Immutable
 @Getter
 public class MimeType {
-
+    
     private final String type;
     private final String subType;
 

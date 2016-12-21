@@ -16,6 +16,7 @@ import java.util.List;
 @Getter
 @Immutable
 public class ResponseHeaders extends Headers implements Serializable {
+    private static final long serialVersionUID = 1L;
     private String rawStatusLine;
     private StatusLine statusLine;
 
