@@ -38,7 +38,7 @@ public class InitTask extends Task<Pair<ProxyConfig, SSLContextManager>> {
         Path keyStorePath = ProxyConfig.getDefaultKeyStorePath();
         char[] keyStorePassword = Constants.keyStorePassword;
         if (!Files.exists(keyStorePath)) {
-            log.info("Generate new key store file");
+            logger.info("Generate new key store file");
             updateMessage("Generating new key store...");
             // generate one key store
             CAKeyStoreGenerator generator = new CAKeyStoreGenerator();

@@ -40,13 +40,13 @@ public class ProxyWorker implements Runnable {
             String rawRequestLine = input.readLine();
             if (rawRequestLine == null) {
                 //error
-                log.error("empty client request");
+                logger.error("empty client request");
                 return;
             }
             RequestLine requestLine = RequestLine.parse(rawRequestLine);
             if (requestLine.isHttp10()) {
                 //TODO: now just forbidden http 1.0
-                log.error("Http 1.0 not supported");
+                logger.error("Http 1.0 not supported");
                 return;
             }
             ProxyHandler handler;
@@ -61,17 +61,17 @@ public class ProxyWorker implements Runnable {
             }
             handler.handle(serverSocket, rawRequestLine, messageListener);
         } catch (HttpParserException e) {
-            log.error("Illegal http data", e);
+            logger.error("Illegal http data", e);
         } catch (SocketTimeoutException e) {
-            log.debug("Socket Timeout", e);
+            logger.debug("Socket Timeout", e);
         } catch (SocketException e) {
-            log.debug("Socket reset or closed?", e);
+            logger.debug("Socket reset or closed?", e);
         } catch (IOException | UncheckedIOException e) {
-            log.error("IO error", e);
+            logger.error("IO error", e);
         } catch (Exception e) {
-            log.error("Error while handle http traffic", e);
+            logger.error("Error while handle http traffic", e);
         } catch (Throwable e) {
-            log.error("", e);
+            logger.error("", e);
         } finally {
             Closeables.closeQuietly(serverSocket);
         }

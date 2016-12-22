@@ -92,7 +92,7 @@ public class MainController {
                     (item))));
             proxyServer.start();
         } catch (Throwable t) {
-            log.error("Start proxy failed", t);
+            logger.error("Start proxy failed", t);
             UIUtils.showMessageDialog("Start proxy failed!");
             return;
         }
@@ -155,13 +155,13 @@ public class MainController {
                 config = result.first();
                 sslContextManager = result.second();
             } catch (Exception e1) {
-                log.error("", e1);
+                logger.error("", e1);
             }
         });
         task.setOnFailed(e -> {
             Platform.runLater(progressDialog::close);
             Throwable throwable = task.getException();
-            log.error("Init failed", throwable);
+            logger.error("Init failed", throwable);
             UIUtils.showMessageDialog("Init config failed!");
         });
 
@@ -254,7 +254,7 @@ public class MainController {
         saveTask.setOnFailed(e -> {
             Platform.runLater(progressDialog::close);
             Throwable throwable = saveTask.getException();
-            log.error("Load data failed", throwable);
+            logger.error("Load data failed", throwable);
             UIUtils.showMessageDialog("Loading data failed!");
         });
 
@@ -285,7 +285,7 @@ public class MainController {
         saveTask.setOnFailed(e -> {
             Platform.runLater(progressDialog::close);
             Throwable throwable = saveTask.getException();
-            log.error("Save data failed", throwable);
+            logger.error("Save data failed", throwable);
             UIUtils.showMessageDialog("Save data failed!");
         });
 

@@ -145,7 +145,7 @@ public class BodyStore extends OutputStream implements Serializable {
                 newTempFile();
                 InputOutputs.copy(bos.asInputStream(), fos);
             } catch (IOException e) {
-                log.error("Create tmp file for http body failed", e);
+                logger.error("Create tmp file for http body failed", e);
                 //TODO: deal with this...
             }
             bos = null;
@@ -211,7 +211,7 @@ public class BodyStore extends OutputStream implements Serializable {
                 input = new DeflaterInputStream(input);
             }
         } catch (Throwable t) {
-            log.error("Decode stream failed, encoding: {}", contentEncoding, t);
+            logger.error("Decode stream failed, encoding: {}", contentEncoding, t);
             return input;
         }
         return input;

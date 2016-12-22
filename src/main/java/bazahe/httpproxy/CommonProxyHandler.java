@@ -40,7 +40,7 @@ public class CommonProxyHandler implements ProxyHandler {
         while (true) {
             boolean shouldBreak = handleOneRequest(inputStream, outputStream, messageListener);
             if (shouldBreak) {
-                log.debug("Server close connection");
+                logger.debug("Server close connection");
                 break;
             }
         }
@@ -52,11 +52,11 @@ public class CommonProxyHandler implements ProxyHandler {
         @Nullable RequestHeaders requestHeaders = input.readRequestHeaders();
         // client close connection
         if (requestHeaders == null) {
-            log.debug("Client close connection");
+            logger.debug("Client close connection");
             return true;
         }
         String rawRequestLine = requestHeaders.getRawRequestLine();
-        log.debug("Accept new request: {}", rawRequestLine);
+        logger.debug("Accept new request: {}", rawRequestLine);
 
         // expect-100. just tell client continue to send http body
         if ("100-continue".equalsIgnoreCase(requestHeaders.getFirst("Expect"))) {
@@ -110,7 +110,7 @@ public class CommonProxyHandler implements ProxyHandler {
             try {
                 responseBody = new ObservableInputStream(responseBody, responseOutput);
             } catch (Throwable e) {
-                log.error("", e);
+                logger.error("", e);
             }
         }
         return responseBody;
@@ -164,7 +164,7 @@ public class CommonProxyHandler implements ProxyHandler {
                 try {
                     requestBody = new ObservableInputStream(requestBody, requestOutput);
                 } catch (Throwable e) {
-                    log.error("", e);
+                    logger.error("", e);
                 }
             }
         }

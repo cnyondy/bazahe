@@ -46,7 +46,7 @@ public class ConnectProxyHandler implements ProxyHandler {
         }
         RequestLine requestLine = headers.getRequestLine();
         String target = requestLine.getPath();
-        log.debug("Receive connect request to {}", target);
+        logger.debug("Receive connect request to {}", target);
         String host = AddressUtils.getHostFromTarget(target);
         int port = AddressUtils.getPortFromTarget(target);
         // just tell client ok..
@@ -92,7 +92,7 @@ public class ConnectProxyHandler implements ProxyHandler {
             handle(wrappedServerSocket, clientSocket, ssl, target, messageListener);
         } catch (SSLHandshakeException e) {
             // something wrong with ssl
-            log.error("SSL connection error for {}.", target, e);
+            logger.error("SSL connection error for {}.", target, e);
         } finally {
             Closeables.closeQuietly(clientSocket);
         }
@@ -124,11 +124,11 @@ public class ConnectProxyHandler implements ProxyHandler {
         @Nullable RequestHeaders requestHeaders = srcIn.readRequestHeaders();
         // client close connection
         if (requestHeaders == null) {
-            log.debug("Client close connection");
+            logger.debug("Client close connection");
             return true;
         }
         String rawRequestLine = requestHeaders.getRawRequestLine();
-        log.debug("Accept new request: {}", rawRequestLine);
+        logger.debug("Accept new request: {}", rawRequestLine);
 
         // expect-100
         boolean expect100 = false;
@@ -171,7 +171,7 @@ public class ConnectProxyHandler implements ProxyHandler {
 
         ResponseHeaders responseHeaders = dstIn.readResponseHeaders();
         if (responseHeaders == null) {
-            log.debug("Target server  close connection");
+            logger.debug("Target server  close connection");
             return true;
         }
         int code = responseHeaders.getStatusLine().getCode();
@@ -182,12 +182,12 @@ public class ConnectProxyHandler implements ProxyHandler {
                 // ignore this header, read next
                 responseHeaders = dstIn.readResponseHeaders();
                 if (responseHeaders == null) {
-                    log.debug("Target server  close connection");
+                    logger.debug("Target server  close connection");
                     return true;
                 }
             } else if (code == 417) {
                 // hope this not happen
-                log.debug("Server return 417 for expect 100");
+                logger.debug("Server return 417 for expect 100");
                 return true;
             }
         }
@@ -212,7 +212,7 @@ public class ConnectProxyHandler implements ProxyHandler {
 
         if ("websocket".equals(upgrade) && code == 101) {
             // upgrade to websocket
-            log.info("{} upgrade to websocket", url);
+            logger.info("{} upgrade to websocket", url);
             int version = Strings.toInt(Strings.nullToEmpty(requestHeaders.getFirst("Sec-WebSocket-Version")), -1);
             //TODO: server may not support the version. in this case server will send supported versions, client should
             WebSocketHandler webSocketHandler = new WebSocketHandler();
@@ -220,7 +220,7 @@ public class ConnectProxyHandler implements ProxyHandler {
             shouldClose = true;
         } else if ("h2c".equals(upgrade) && code == 101) {
             // http2 from http1 upgrade
-            log.info("{} upgrade to http2", url);
+            logger.info("{} upgrade to http2", url);
             String http2Settings = requestHeaders.getFirst("HTTP2-Settings");
             Http2Handler handler = new Http2Handler();
             handler.handle(srcIn, dstIn, ssl, target, messageListener);
@@ -258,7 +258,7 @@ public class ConnectProxyHandler implements ProxyHandler {
         } else if (!requestHeaders.hasBody()) {
             requestBody = null;
         } else {
-            log.error("Cannot find body info, headers:", requestHeaders);
+            logger.error("Cannot find body info, headers:", requestHeaders);
             throw new HttpParserException("Cannot find body info");
         }
         return requestBody;

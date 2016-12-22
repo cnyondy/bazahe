@@ -75,7 +75,7 @@ public class ProxyServer {
         } else {
             serverSocket = new ServerSocket(proxyConfig.getPort(), 128, InetAddress.getByName(proxyConfig.getHost()));
         }
-        log.info("proxy server run at {}:{}", proxyConfig.getHost(), proxyConfig.getPort());
+        logger.info("proxy server run at {}:{}", proxyConfig.getHost(), proxyConfig.getPort());
         while (true) {
             Socket socket;
             try {
@@ -85,7 +85,7 @@ public class ProxyServer {
                     // server be stopped
                     break;
                 } else {
-                    log.error("", e);
+                    logger.error("", e);
                 }
                 continue;
             }
@@ -95,10 +95,10 @@ public class ProxyServer {
                 worker = new ProxyWorker(socket, sslContextManager, messageListener);
             } catch (Exception e) {
                 Closeables.closeQuietly(socket);
-                log.error("Create new proxy worker failed.", e);
+                logger.error("Create new proxy worker failed.", e);
                 continue;
             }
-            log.debug("Accept new connection, from: {}", socket.getInetAddress());
+            logger.debug("Accept new connection, from: {}", socket.getInetAddress());
             executor.submit(worker);
             if (Thread.currentThread().isInterrupted()) {
                 break;
@@ -112,7 +112,7 @@ public class ProxyServer {
     @SneakyThrows
     public void stop() {
         if (!masterThread.isInterrupted()) {
-            log.info("Stopping proxy server...");
+            logger.info("Stopping proxy server...");
             masterThread.interrupt();
             Closeables.closeQuietly(serverSocket);
             executor.shutdownNow();

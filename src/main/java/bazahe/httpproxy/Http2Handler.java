@@ -33,7 +33,7 @@ public class Http2Handler {
             try {
                 IOUtils.consumeAll(input1);
             } catch (Throwable t) {
-                log.warn("tunnel traffic failed", t);
+                logger.warn("tunnel traffic failed", t);
             }
         });
         thread.start();

@@ -45,7 +45,7 @@ public class UIMessageListener implements MessageListener {
     public OutputStream onHttpResponse(String id, ResponseHeaders responseHeaders) {
         HttpMessage item = this.httpMap.get(id);
         if (item == null) {
-            log.error("Cannot found request item for id: {]", id);
+            logger.error("Cannot found request item for id: {]", id);
             return null;
         }
         item.setResponseHeaders(responseHeaders);

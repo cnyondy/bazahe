@@ -28,7 +28,7 @@ public class Main extends Application {
                 try {
                     task.run();
                 } catch (Throwable t) {
-                    log.error("", t);
+                    logger.error("", t);
                 }
             }
             Platform.exit();

@@ -25,7 +25,7 @@ public class WebSocketHandler {
             try {
                 readWebSocket(dstInput, host, url, messageListener, false);
             } catch (Throwable t) {
-                log.warn("WebSocket down stream read webSocket error", t);
+                logger.warn("WebSocket down stream read webSocket error", t);
             }
         });
         thread.start();

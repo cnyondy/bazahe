@@ -31,7 +31,7 @@ public class SSLContextManager {
     public SSLContextManager(String keyStorePath, char[] keyStorePassword) {
         StopWatch stopWatch = StopWatch.create().start();
         AppKeyStoreGenerator appKeyStoreGenerator = new AppKeyStoreGenerator(keyStorePath, keyStorePassword);
-        log.info("Initialize AppKeyStoreGenerator cost {} ms", stopWatch.stop().toMillis());
+        logger.info("Initialize AppKeyStoreGenerator cost {} ms", stopWatch.stop().toMillis());
         BigInteger caCertSerialNumber = appKeyStoreGenerator.getCACertSerialNumber();
 
         lock.writeLock().lock();
@@ -75,7 +75,7 @@ public class SSLContextManager {
         KeyManager[] keyManagers = keyManagerFactory.getKeyManagers();
         SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
         sslContext.init(keyManagers, null, new SecureRandom());
-        log.info("Create ssh context for {}, cost {} ms", host, stopWatch.stop().toMillis());
+        logger.info("Create ssh context for {}, cost {} ms", host, stopWatch.stop().toMillis());
         return sslContext;
     }
 

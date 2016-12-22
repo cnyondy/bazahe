@@ -1,6 +1,5 @@
 package bazahe.httpparse;
 
-import lombok.Cleanup;
 import net.dongliu.commons.io.InputOutputs;
 import org.junit.Test;
 
@@ -21,10 +20,11 @@ public class ChunkedInputStreamTest {
                 "12345\r\n" +
                 "0\r\n" +
                 "\r\n";
-        @Cleanup ByteArrayInputStream input = new ByteArrayInputStream(data.getBytes());
-        @Cleanup ChunkedInputStream stream = new ChunkedInputStream(input);
-        byte[] bytes = InputOutputs.readAll(stream);
-        assertEquals("0123456789012345", new String(bytes, StandardCharsets.UTF_8));
+        try (ByteArrayInputStream input = new ByteArrayInputStream(data.getBytes());
+             ChunkedInputStream stream = new ChunkedInputStream(input)) {
+            byte[] bytes = InputOutputs.readAll(stream);
+            assertEquals("0123456789012345", new String(bytes, StandardCharsets.UTF_8));
+        }
     }
 
     @Test

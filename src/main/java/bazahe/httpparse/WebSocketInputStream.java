@@ -121,7 +121,7 @@ public class WebSocketInputStream extends DataInputStream {
         if (mask) {
             maskData = readExact(4);
         }
-        log.debug("fin: {}, opcode: {}, mask: {}, payloadLen: {}", fin, opcode, mask, payloadLen);
+        logger.debug("fin: {}, opcode: {}, mask: {}, payloadLen: {}", fin, opcode, mask, payloadLen);
         return new Frame(fin, opcode, payloadLen, mask, maskData);
     }
 

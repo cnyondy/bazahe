@@ -48,7 +48,7 @@ public class AppKeyStoreGenerator {
     @SneakyThrows
     public AppKeyStoreGenerator(String caKeyStorePath, char[] caKeyStorePassword) {
 
-        log.debug("Loading CA certificate/private key from file {}", caKeyStorePath);
+        logger.debug("Loading CA certificate/private key from file {}", caKeyStorePath);
         KeyStore caKeyStore = KeyStore.getInstance("PKCS12");
         try (InputStream input = new FileInputStream(caKeyStorePath)) {
             caKeyStore.load(input, caKeyStorePassword);
@@ -56,7 +56,7 @@ public class AppKeyStoreGenerator {
 
         Enumeration<String> aliases = caKeyStore.aliases();
         String alias = aliases.nextElement();
-        log.debug("Loading CA certificate/private by alias {}", alias);
+        logger.debug("Loading CA certificate/private by alias {}", alias);
 
         Key key = caKeyStore.getKey(alias, caKeyStorePassword);
         Objects.requireNonNull(key, "Specified key of the KeyStore not found!");
@@ -66,9 +66,9 @@ public class AppKeyStoreGenerator {
 
         caCertificate = (X509Certificate) caKeyStore.getCertificate(alias);
         Objects.requireNonNull(caCertificate, "Specified certificate of the KeyStore not found!");
-        log.debug("Successfully loaded CA key and certificate. CA DN is {}", caCertificate.getSubjectDN().getName());
+        logger.debug("Successfully loaded CA key and certificate. CA DN is {}", caCertificate.getSubjectDN().getName());
         caCertificate.verify(caCertificate.getPublicKey());
-        log.debug("Successfully verified CA certificate with its own public key.");
+        logger.debug("Successfully verified CA certificate with its own public key.");
 
         secureRandom = new SecureRandom();
         random = new Random();
@@ -101,7 +101,7 @@ public class AppKeyStoreGenerator {
 
     @SneakyThrows
     public KeyStore generateKeyStore(String host, int validityDays, char[] password) {
-        log.debug("Generating certificate for host {}", host);
+        logger.debug("Generating certificate for host {}", host);
         // generate the key pair for the new certificate
         KeyPairGenerator keyGen = KeyPairGenerator.getInstance("RSA");
         keyGen.initialize(2048, secureRandom);
@@ -157,7 +157,7 @@ public class AppKeyStoreGenerator {
         DERSequence derSequence = new DERSequence(asn1EncodableVector);
         Certificate certificate = Certificate.getInstance(derSequence);
         X509CertificateObject clientCertificate = new X509CertificateObject(certificate);
-        log.debug("Verifying certificate for correct signature with CA public key");
+        logger.debug("Verifying certificate for correct signature with CA public key");
         clientCertificate.verify(caCertificate.getPublicKey());
         clientCertificate.setBagAttribute(pkcs_9_at_friendlyName, new DERBMPString("Certificate for Bazahe App"));
         clientCertificate.setBagAttribute(pkcs_9_at_localKeyId,
