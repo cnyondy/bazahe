@@ -22,7 +22,8 @@ class TreeCellFactory implements Callback<TreeView<RTreeItemValue>, TreeCell<RTr
                 } else {
                     String text;
                     if (item instanceof RTreeItemValue.NodeValue) {
-                        text = ((RTreeItemValue.NodeValue) item).getPattern() + "(" + ((RTreeItemValue.NodeValue) item).getCount() + ")";
+                        text = ((RTreeItemValue.NodeValue) item).getPattern() + "(" + ((RTreeItemValue.NodeValue) 
+                                item).getCount() + ")";
                     } else if (item instanceof RTreeItemValue.LeafValue) {
                         Message message = ((RTreeItemValue.LeafValue) item).getMessage();
                         text = message.getDisplay();

@@ -45,7 +45,7 @@ public class UIMessageListener implements MessageListener {
     public OutputStream onHttpResponse(String id, ResponseHeaders responseHeaders) {
         HttpMessage item = this.httpMap.get(id);
         if (item == null) {
-            logger.error("Cannot found request item for id: {]", id);
+            logger.error("Cannot found request item for id: {}", id);
             return null;
         }
         item.setResponseHeaders(responseHeaders);
@@ -61,7 +61,7 @@ public class UIMessageListener implements MessageListener {
                 StandardCharsets.UTF_8, null);
         WebSocketMessage message = new WebSocketMessage(id, host, url, type, request);
         message.setBodyStore(bodyStore);
-        consumer.accept(message);
+        Platform.runLater(() -> consumer.accept(message));
         return bodyStore;
     }
 }

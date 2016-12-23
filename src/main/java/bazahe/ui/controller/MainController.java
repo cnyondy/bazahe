@@ -95,8 +95,7 @@ public class MainController {
         proxyControlButton.setDisable(true);
         try {
             proxyServer = new ProxyServer(config, sslContextManager);
-            proxyServer.setMessageListener(new UIMessageListener(item -> Platform.runLater(() -> addTreeItemMessage
-                    (item))));
+            proxyServer.setMessageListener(new UIMessageListener(this::addTreeItemMessage));
             proxyServer.start();
         } catch (Throwable t) {
             logger.error("Start proxy failed", t);
