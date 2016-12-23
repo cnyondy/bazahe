@@ -91,7 +91,7 @@ public class ProxyServer {
             }
             ProxyWorker worker;
             try {
-                socket.setSoTimeout(proxyConfig.getTimeout());
+                socket.setSoTimeout(proxyConfig.getTimeout() * 1000);
                 worker = new ProxyWorker(socket, sslContextManager, messageListener);
             } catch (Exception e) {
                 Closeables.closeQuietly(socket);

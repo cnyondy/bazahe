@@ -105,6 +105,7 @@ public class MainController {
         Platform.runLater(() -> {
             proxyControlButton.setIconPath("/images/ic_stop_black_24dp_1x.png");
             proxyControlButton.setDisable(false);
+            updateListenedAddress();
         });
     }
 
@@ -117,6 +118,8 @@ public class MainController {
                 proxyControlButton.setIconPath("/images/ic_play_circle_outline_black_24dp_1x.png");
                 proxyControlButton.setDisable(false);
                 proxyConfigureButton.setDisable(false);
+                listenedAddressLabel.setText("");
+                listenedAddressLabel.setOnMouseClicked(event -> {});
             });
         }).start();
     }
@@ -163,7 +166,6 @@ public class MainController {
                 Pair<ProxyConfig, SSLContextManager> result = task.get();
                 config = result.first();
                 sslContextManager = result.second();
-                updateListenedAddress();
             } catch (Exception e1) {
                 logger.error("", e1);
             }

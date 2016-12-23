@@ -21,7 +21,7 @@ import java.nio.file.Paths;
 public class ProxyConfig implements Serializable {
     private String host;
     private int port;
-    // timeout in milliseconds
+    // timeout in seconds
     private int timeout;
     // path for keyStore file
 //    private String keyStore;
@@ -51,7 +51,7 @@ public class ProxyConfig implements Serializable {
         proxyConfig.setPort(1024);
 //        proxyConfig.setKeyStore("");
 //        proxyConfig.setKeyStorePassword(new char[0]);
-        proxyConfig.setTimeout(120000);
+        proxyConfig.setTimeout(120);
         return proxyConfig;
     }
 }
