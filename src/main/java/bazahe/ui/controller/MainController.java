@@ -10,10 +10,12 @@ import bazahe.ui.AppResources;
 import bazahe.ui.UIMessageListener;
 import bazahe.ui.UIUtils;
 import bazahe.ui.component.*;
+import bazahe.utils.NetUtils;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.control.Label;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TreeItem;
 import javafx.scene.control.TreeView;
@@ -23,14 +25,15 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import net.dongliu.commons.Marshaller;
-import net.dongliu.commons.Strings;
 import net.dongliu.commons.collection.Pair;
+import org.controlsfx.control.PopOver;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Optional;
+
+import static java.util.stream.Collectors.*;
 
 /**
  * @author Liu Dong
@@ -48,6 +51,10 @@ public class MainController {
     private MyButton proxyConfigureButton;
     @FXML
     private MyButton proxyControlButton;
+
+    @FXML
+    private Label listenedAddressLabel;
+
     @FXML
     private HttpMessagePane httpMessagePane;
     @FXML
@@ -62,9 +69,9 @@ public class MainController {
     @FXML
     @SneakyThrows
     void configureProxy(ActionEvent e) {
-        ProxyConfigDialog dialog = new ProxyConfigDialog();
+        val dialog = new ProxyConfigDialog();
         dialog.proxyConfigProperty().setValue(config);
-        Optional<ProxyConfig> newConfig = dialog.showAndWait();
+        val newConfig = dialog.showAndWait();
         if (newConfig.isPresent()) {
             config = newConfig.get();
             byte[] data = Marshaller.marshal(config);
@@ -124,7 +131,7 @@ public class MainController {
             }
         });
 
-        TreeItem<RTreeItemValue> root = new TreeItem<>(new RTreeItemValue.NodeValue(""));
+        val root = new TreeItem<RTreeItemValue>(new RTreeItemValue.NodeValue(""));
         root.setExpanded(true);
         messageTree.setRoot(root);
         messageTree.setShowRoot(false);
@@ -142,10 +149,13 @@ public class MainController {
         loadConfigAndKeyStore();
     }
 
+    /**
+     * Load app config, and keyStore contains private key/certs
+     */
     private void loadConfigAndKeyStore() {
         val task = new InitTask();
 
-        ProgressDialog progressDialog = new ProgressDialog();
+        val progressDialog = new ProgressDialog();
         progressDialog.bindTask(task);
 
         task.setOnSucceeded(e -> {
@@ -154,6 +164,7 @@ public class MainController {
                 Pair<ProxyConfig, SSLContextManager> result = task.get();
                 config = result.first();
                 sslContextManager = result.second();
+                updateListenedAddress();
             } catch (Exception e1) {
                 logger.error("", e1);
             }
@@ -170,6 +181,38 @@ public class MainController {
         progressDialog.show();
     }
 
+    /**
+     * Get listened addresses, show in toolbar
+     */
+    private void updateListenedAddress() {
+        String host = config.getHost().trim();
+        int port = config.getPort();
+        if (!host.isEmpty()) {
+            Platform.runLater(() -> listenedAddressLabel.setText("Listened " + host + ":" + port));
+            return;
+        }
+        Platform.runLater(() -> listenedAddressLabel.setText("Listened *" + ":" + port));
+        val addresses = NetUtils.getAddresses();
+        if (addresses.isEmpty()) {
+            // not found valid network interface
+            return;
+        }
+
+
+        String s = addresses.stream().map(p -> p.getKey() + " " + p.getValue() + ":" + port)
+                .collect(joining("\n"));
+        PopOver popOver = new PopOver();
+        popOver.setArrowLocation(PopOver.ArrowLocation.TOP_RIGHT);
+        Label label = new Label();
+        label.setText(s);
+        popOver.setContentNode(label);
+
+        listenedAddressLabel.setOnMouseClicked(e -> popOver.show(listenedAddressLabel));
+    }
+
+    /**
+     * Show message content in right area
+     */
     private void showMessage(Message message) {
         if (message instanceof HttpMessage) {
             httpMessagePane.httpMessageProperty().set((HttpMessage) message);
@@ -182,6 +225,9 @@ public class MainController {
         }
     }
 
+    /**
+     * hide right area
+     */
     private void hideContent() {
         httpMessagePane.setVisible(false);
         webSocketMessagePane.setVisible(false);
@@ -195,7 +241,7 @@ public class MainController {
     @SneakyThrows
     private void addTreeItemMessage(Message message) {
         val root = messageTree.getRoot();
-        String host = genericMultiCDNS(message.getHost());
+        String host = NetUtils.genericMultiCDNS(message.getHost());
 
 
         for (val item : root.getChildren()) {
@@ -214,24 +260,6 @@ public class MainController {
         node.increaseChildren();
     }
 
-    private String genericMultiCDNS(String host) {
-        String first = Strings.before(host, ".");
-        if (first.length() < 2) {
-            return host;
-        }
-        if (!Strings.isAsciiLetter(first.charAt(0))) {
-            return host;
-        }
-        char c = first.charAt(first.length() - 1);
-        if (!Strings.isDigit(c)) {
-            return host;
-        }
-        int idx = first.length() - 2;
-        while (Strings.isDigit(first.charAt(idx))) {
-            idx--;
-        }
-        return first.substring(0, idx + 1) + "*." + Strings.after(host, ".");
-    }
 
     @FXML
     void open(ActionEvent event) {
@@ -242,7 +270,7 @@ public class MainController {
             return;
         }
 
-        TreeItem<RTreeItemValue> root = messageTree.getRoot();
+        val root = messageTree.getRoot();
         root.getChildren().clear();
         ProgressDialog progressDialog = new ProgressDialog();
         Task<Void> saveTask = new LoadTask(file.getPath(), this::addTreeItemMessage);
@@ -274,9 +302,9 @@ public class MainController {
         if (file == null) {
             return;
         }
-        TreeItem<RTreeItemValue> root = messageTree.getRoot();
-        ProgressDialog progressDialog = new ProgressDialog();
-        Task<Void> saveTask = new SaveTask(file.getPath(), root);
+        val root = messageTree.getRoot();
+        val progressDialog = new ProgressDialog();
+        val saveTask = new SaveTask(file.getPath(), root);
 
         progressDialog.bindTask(saveTask);
         saveTask.setOnSucceeded(e -> {

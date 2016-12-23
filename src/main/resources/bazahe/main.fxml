@@ -1,12 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import bazahe.ui.component.*?>
-<?import javafx.scene.control.Separator?>
-<?import javafx.scene.control.SplitPane?>
-<?import javafx.scene.control.ToolBar?>
-<?import javafx.scene.control.TreeView?>
-<?import javafx.scene.layout.StackPane?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 <VBox xmlns:fx="http://javafx.com/fxml" fx:id="root" fx:controller="bazahe.ui.controller.MainController">
     <ToolBar>
         <MyButton onAction="#configureProxy" fx:id="proxyConfigureButton">
@@ -32,6 +28,9 @@
             <tooltipText>Remove All Messages</tooltipText>
         </MyButton>
 
+        <Pane HBox.hgrow="ALWAYS"/>
+
+        <Label fx:id="listenedAddressLabel"/>
     </ToolBar>
 
     <SplitPane prefHeight="${root.height}" fx:id="splitPane" dividerPositions="0.2">

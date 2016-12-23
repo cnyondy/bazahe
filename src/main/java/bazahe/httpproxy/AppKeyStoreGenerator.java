@@ -1,6 +1,7 @@
 package bazahe.httpproxy;
 
 
+import bazahe.utils.NetUtils;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import net.dongliu.commons.codec.Base64s;
@@ -134,8 +135,8 @@ public class AppKeyStoreGenerator {
         ExtensionsGenerator extensionsGenerator = new ExtensionsGenerator();
         extensionsGenerator.addExtension(Extension.subjectAlternativeName, false, () -> {
             ASN1EncodableVector nameVector = new ASN1EncodableVector();
-            int hostType = SocketsUtils.getHostType(host);
-            if (hostType == 0 || hostType == 1) {
+            int hostType = NetUtils.getHostType(host);
+            if (hostType == NetUtils.HOST_TYPE_IPV4 || hostType == NetUtils.HOST_TYPE_IPV6) {
                 nameVector.add(new GeneralName(GeneralName.iPAddress, host));
             } else {
                 nameVector.add(new GeneralName(GeneralName.dNSName, host));
