@@ -8,6 +8,7 @@ import lombok.extern.log4j.Log4j2;
 import lombok.val;
 import net.dongliu.commons.Strings;
 import net.dongliu.commons.codec.Digests;
+import net.dongliu.commons.collection.Sets;
 import net.dongliu.commons.io.Closeables;
 import net.dongliu.commons.io.InputOutputs;
 
@@ -18,6 +19,7 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.Socket;
+import java.util.Set;
 
 /**
  * Handle connect method.
@@ -117,10 +119,26 @@ public class ConnectProxyHandler implements ProxyHandler {
 
     }
 
+    private static final Set<String> methods = Sets.of("GET", "POST", "HEAD", "PUT", "TRACE", "DELETE", "PATCH",
+            "OPTIONS");
+
     @SneakyThrows
     private boolean handleOneRequest(HttpInputStream srcIn, OutputStream srcOut, HttpInputStream dstIn,
                                      boolean ssl, String target,
                                      @Nullable MessageListener messageListener) {
+        // If is http traffics
+        String firstLine = srcIn.readLine();
+        if (firstLine == null) {
+            return true;
+        }
+        String method = Strings.before(firstLine, " ");
+        if (!methods.contains(method)) {
+            // not http request
+            tunnel(srcIn, dstIn);
+            return true;
+        }
+
+        srcIn.putBackLine(firstLine);
         @Nullable RequestHeaders requestHeaders = srcIn.readRequestHeaders();
         // client close connection
         if (requestHeaders == null) {
@@ -265,4 +283,16 @@ public class ConnectProxyHandler implements ProxyHandler {
     }
 
 
+    private void tunnel(InputStream input1, InputStream input2) throws InterruptedException {
+        Thread thread = new Thread(() -> {
+            try {
+                IOUtils.consumeAll(input1);
+            } catch (Throwable t) {
+                logger.warn("tunnel traffic failed", t);
+            }
+        });
+        thread.start();
+        IOUtils.consumeAll(input2);
+        thread.join();
+    }
 }

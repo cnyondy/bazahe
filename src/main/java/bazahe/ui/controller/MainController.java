@@ -42,6 +42,10 @@ import static java.util.stream.Collectors.*;
 public class MainController {
 
     @FXML
+    private MyButton saveFileButton;
+    @FXML
+    private MyButton openFileButton;
+    @FXML
     private TreeView<RTreeItemValue> messageTree;
     @FXML
     private VBox root;
@@ -93,6 +97,8 @@ public class MainController {
         proxyStart = true;
         proxyConfigureButton.setDisable(true);
         proxyControlButton.setDisable(true);
+        openFileButton.setDisable(true);
+        saveFileButton.setDisable(true);
         try {
             proxyServer = new ProxyServer(config, sslContextManager);
             proxyServer.setMessageListener(new UIMessageListener(this::addTreeItemMessage));
@@ -118,6 +124,8 @@ public class MainController {
                 proxyControlButton.setIconPath("/images/ic_play_circle_outline_black_24dp_1x.png");
                 proxyControlButton.setDisable(false);
                 proxyConfigureButton.setDisable(false);
+                openFileButton.setDisable(false);
+                saveFileButton.setDisable(false);
                 listenedAddressLabel.setText("");
                 listenedAddressLabel.setOnMouseClicked(event -> {});
             });
@@ -235,7 +243,7 @@ public class MainController {
     }
 
     @FXML
-    private void clearAll(ActionEvent actionEvent) {
+    private void clearAll(ActionEvent event) {
         messageTree.setRoot(new TreeItem<>(new RTreeItemValue.NodeValue("")));
     }
 
@@ -277,9 +285,7 @@ public class MainController {
         Task<Void> saveTask = new LoadTask(file.getPath(), this::addTreeItemMessage);
 
         progressDialog.bindTask(saveTask);
-        saveTask.setOnSucceeded(e -> {
-            Platform.runLater(progressDialog::close);
-        });
+        saveTask.setOnSucceeded(e -> Platform.runLater(progressDialog::close));
         saveTask.setOnFailed(e -> {
             Platform.runLater(progressDialog::close);
             Throwable throwable = saveTask.getException();
@@ -308,9 +314,7 @@ public class MainController {
         val saveTask = new SaveTask(file.getPath(), root);
 
         progressDialog.bindTask(saveTask);
-        saveTask.setOnSucceeded(e -> {
-            Platform.runLater(progressDialog::close);
-        });
+        saveTask.setOnSucceeded(e -> Platform.runLater(progressDialog::close));
         saveTask.setOnFailed(e -> {
             Platform.runLater(progressDialog::close);
             Throwable throwable = saveTask.getException();

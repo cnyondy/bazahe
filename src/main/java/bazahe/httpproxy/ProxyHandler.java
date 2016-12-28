@@ -1,8 +1,5 @@
 package bazahe.httpproxy;
 
-import bazahe.httpparse.HttpInputStream;
-import bazahe.httpparse.HttpOutputStream;
-
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.Socket;
