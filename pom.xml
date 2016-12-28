@@ -103,7 +103,7 @@
                     <nativeReleaseVersion>${project.version}</nativeReleaseVersion>
                     <appName>Bazahe</appName>
                     <vendor>net.dongliu.bazahe</vendor>
-                    <needMenu>true</needMenu>
+                    <needMenu>false</needMenu>
                     <bundleArguments>
                         <runtime/>
                         <launcher-cfg-format>prop</launcher-cfg-format>

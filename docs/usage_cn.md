@@ -9,12 +9,9 @@
 [到这里下载](http://www.oracle.com/technetwork/java/javase/downloads/jdk8-downloads-2133151.html) JDK.
 
 ### 下载巴扎黑
-当前提供了 jar 包文件 和 macOS 镜像文件下载，[点击这里去下载](https://github.com/clearthesky/bazahe/releases)。
+[点击这里去下载](https://github.com/clearthesky/bazahe/releases) Bazahe 程序文件。
 
-* bazahe_jar.zip。 Jar 包文件，解压缩后需要使用命令java -jar app/bazahe.jar 来运行，适用于所有操作系统
-* bazahe_mac.zip。 Mac 镜像文件。 适用于 macOS
-
-运营程序，点击【Start】启动 HTTP 代理，点击【Setting】设置代理的端口，默认端口是1024。程序界面如下所示:
+运行程序，点击【Start】启动 HTTP 代理，点击【Setting】设置代理的端口，默认端口是1024。程序界面如下所示:
 
 ![mac_trust_cert](https://github.com/clearthesky/bazahe/blob/master/docs/image/bazahe_start_s.png)
 
