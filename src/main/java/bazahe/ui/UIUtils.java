@@ -1,8 +1,10 @@
 package bazahe.ui;
 
 import bazahe.store.BodyStoreType;
+import bazahe.ui.component.ProgressDialog;
 import javafx.application.Platform;
 import javafx.beans.binding.Bindings;
+import javafx.concurrent.Task;
 import javafx.scene.Node;
 import javafx.scene.control.Alert;
 import javafx.scene.control.ScrollPane;
@@ -11,12 +13,14 @@ import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.text.Text;
 import lombok.SneakyThrows;
+import lombok.extern.log4j.Log4j2;
 
 import java.io.InputStream;
 
 /**
  * @author Liu Dong
  */
+@Log4j2
 public class UIUtils {
 
     /**
@@ -41,8 +45,7 @@ public class UIUtils {
             scrollPane.setStyle("-fx-background-color:transparent");
             return scrollPane;
         } else {
-            Text text = new Text("Unsupported image format");
-            return text;
+            return new Text("Unsupported image format");
         }
     }
 
@@ -53,5 +56,23 @@ public class UIUtils {
             alert.setHeaderText("");
             alert.showAndWait();
         });
+    }
+
+
+    public static <T> void runBackground(Task<T> task, String failedMessage) {
+        ProgressDialog progressDialog = new ProgressDialog();
+        progressDialog.bindTask(task);
+
+        task.setOnSucceeded(e -> Platform.runLater(progressDialog::close));
+        task.setOnFailed(e -> {
+            Platform.runLater(progressDialog::close);
+            Throwable throwable = task.getException();
+            logger.error(failedMessage, throwable);
+            UIUtils.showMessageDialog(failedMessage + ": " + throwable.getMessage());
+        });
+
+        Thread thread = new Thread(task);
+        thread.start();
+        progressDialog.show();
     }
 }

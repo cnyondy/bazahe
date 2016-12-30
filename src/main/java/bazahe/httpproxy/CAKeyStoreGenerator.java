@@ -119,12 +119,4 @@ public class CAKeyStoreGenerator {
         return new JcaX509CertificateConverter().setProvider(BouncyCastleProvider.PROVIDER_NAME)
                 .getCertificate(certificateBuilder.build(signer));
     }
-
-    @SneakyThrows
-    public static void main(String[] args) {
-        CAKeyStoreGenerator generator = new CAKeyStoreGenerator();
-        generator.generate(Constants.keyStorePassword, Constants.rootCertificateValidates);
-        Path write = Files.write(Paths.get("root_ca.p12"), generator.getKeyStoreData());
-        System.out.println(write);
-    }
 }

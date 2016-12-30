@@ -22,6 +22,8 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 public class SSLContextManager {
 
     @Getter
+    private String keyStorePath;
+    @Getter
     private AppKeyStoreGenerator appKeyStoreGenerator;
     private BigInteger lastCaCertSerialNumber;
     // ssl context cache
@@ -29,6 +31,7 @@ public class SSLContextManager {
     private final ReadWriteLock lock = new ReentrantReadWriteLock();
 
     public SSLContextManager(String keyStorePath, char[] keyStorePassword) {
+        this.keyStorePath = keyStorePath;
         StopWatch stopWatch = StopWatch.create().start();
         AppKeyStoreGenerator appKeyStoreGenerator = new AppKeyStoreGenerator(keyStorePath, keyStorePassword);
         logger.info("Initialize AppKeyStoreGenerator cost {} ms", stopWatch.stop().toMillis());

@@ -1,15 +1,17 @@
 package bazahe.ui.controller;
 
+import bazahe.def.Context;
 import bazahe.def.HttpMessage;
 import bazahe.def.Message;
-import bazahe.def.ProxyConfig;
 import bazahe.def.WebSocketMessage;
 import bazahe.httpproxy.ProxyServer;
-import bazahe.httpproxy.SSLContextManager;
 import bazahe.ui.AppResources;
 import bazahe.ui.UIMessageListener;
 import bazahe.ui.UIUtils;
-import bazahe.ui.component.*;
+import bazahe.ui.component.HttpMessagePane;
+import bazahe.ui.component.MyButton;
+import bazahe.ui.component.ProxyConfigDialog;
+import bazahe.ui.component.WebSocketMessagePane;
 import bazahe.utils.NetUtils;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -24,14 +26,10 @@ import javafx.stage.FileChooser;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
-import net.dongliu.commons.Marshaller;
-import net.dongliu.commons.collection.Pair;
 import org.controlsfx.control.PopOver;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import static java.util.stream.Collectors.*;
 
@@ -67,20 +65,17 @@ public class MainController {
     private boolean proxyStart;
 
     private volatile ProxyServer proxyServer;
-    private volatile ProxyConfig config;
-    private volatile SSLContextManager sslContextManager;
+    private Context context = Context.getInstance();
 
     @FXML
     @SneakyThrows
     void configureProxy(ActionEvent e) {
         val dialog = new ProxyConfigDialog();
-        dialog.proxyConfigProperty().setValue(config);
+        dialog.proxyConfigProperty().setValue(context.getConfig());
         val newConfig = dialog.showAndWait();
         if (newConfig.isPresent()) {
-            config = newConfig.get();
-            byte[] data = Marshaller.marshal(config);
-            Path configPath = ProxyConfig.getConfigPath();
-            Files.write(configPath, data);
+            val task = new SaveConfigTask(newConfig.get(), context);
+            UIUtils.runBackground(task, "Set new config failed");
         }
     }
 
@@ -100,7 +95,7 @@ public class MainController {
         openFileButton.setDisable(true);
         saveFileButton.setDisable(true);
         try {
-            proxyServer = new ProxyServer(config, sslContextManager);
+            proxyServer = new ProxyServer(context.getConfig(), context.getSslContextManager());
             proxyServer.setMessageListener(new UIMessageListener(this::addTreeItemMessage));
             proxyServer.start();
         } catch (Throwable t) {
@@ -163,37 +158,15 @@ public class MainController {
      * Load app config, and keyStore contains private key/certs
      */
     private void loadConfigAndKeyStore() {
-        val task = new InitTask();
-
-        val progressDialog = new ProgressDialog();
-        progressDialog.bindTask(task);
-
-        task.setOnSucceeded(e -> {
-            Platform.runLater(progressDialog::close);
-            try {
-                Pair<ProxyConfig, SSLContextManager> result = task.get();
-                config = result.first();
-                sslContextManager = result.second();
-            } catch (Exception e1) {
-                logger.error("", e1);
-            }
-        });
-        task.setOnFailed(e -> {
-            Platform.runLater(progressDialog::close);
-            Throwable throwable = task.getException();
-            logger.error("Init failed", throwable);
-            UIUtils.showMessageDialog("Init config failed!");
-        });
-
-        Thread thread = new Thread(task);
-        thread.start();
-        progressDialog.show();
+        val task = new InitContextTask(context);
+        UIUtils.runBackground(task, "Init config failed");
     }
 
     /**
      * Get listened addresses, show in toolbar
      */
     private void updateListenedAddress() {
+        val config = context.getConfig();
         String host = config.getHost().trim();
         int port = config.getPort();
         if (!host.isEmpty()) {
@@ -281,21 +254,8 @@ public class MainController {
 
         val root = messageTree.getRoot();
         root.getChildren().clear();
-        ProgressDialog progressDialog = new ProgressDialog();
-        Task<Void> saveTask = new LoadTask(file.getPath(), this::addTreeItemMessage);
-
-        progressDialog.bindTask(saveTask);
-        saveTask.setOnSucceeded(e -> Platform.runLater(progressDialog::close));
-        saveTask.setOnFailed(e -> {
-            Platform.runLater(progressDialog::close);
-            Throwable throwable = saveTask.getException();
-            logger.error("Load data failed", throwable);
-            UIUtils.showMessageDialog("Loading data failed!");
-        });
-
-        Thread thread = new Thread(saveTask);
-        thread.start();
-        progressDialog.show();
+        Task<Void> task = new LoadTask(file.getPath(), this::addTreeItemMessage);
+        UIUtils.runBackground(task, "Load data failed!");
     }
 
     // save captured data to file
@@ -310,20 +270,7 @@ public class MainController {
             return;
         }
         val root = messageTree.getRoot();
-        val progressDialog = new ProgressDialog();
         val saveTask = new SaveTask(file.getPath(), root);
-
-        progressDialog.bindTask(saveTask);
-        saveTask.setOnSucceeded(e -> Platform.runLater(progressDialog::close));
-        saveTask.setOnFailed(e -> {
-            Platform.runLater(progressDialog::close);
-            Throwable throwable = saveTask.getException();
-            logger.error("Save data failed", throwable);
-            UIUtils.showMessageDialog("Save data failed!");
-        });
-
-        Thread thread = new Thread(saveTask);
-        thread.start();
-        progressDialog.show();
+        UIUtils.runBackground(saveTask, "Save data failed!");
     }
 }

@@ -64,6 +64,9 @@ public class ProxyConfigDialog extends Dialog<ProxyConfig> {
             controller.getHostField().setText(n.getHost());
             controller.getPortFiled().setText("" + n.getPort());
             controller.getTimeoutField().setText("" + n.getTimeout());
+            controller.getUseCustomKeyStoreCheckBox().setSelected(n.isUseCustomKeyStore());
+            controller.getKeyStoreField().setText(n.getKeyStore());
+            controller.getKeyStorePasswordField().setText(new String(n.getKeyStorePassword()));
         });
 
     }
@@ -73,6 +76,9 @@ public class ProxyConfigDialog extends Dialog<ProxyConfig> {
         proxyConfig.setHost(controller.getHostField().getText());
         proxyConfig.setPort(Integer.parseInt(controller.getPortFiled().getText()));
         proxyConfig.setTimeout(Integer.parseInt(controller.getTimeoutField().getText()));
+        proxyConfig.setUseCustomKeyStore(controller.getUseCustomKeyStoreCheckBox().isSelected());
+        proxyConfig.setKeyStore(controller.getKeyStoreField().getText());
+        proxyConfig.setKeyStorePassword(controller.getKeyStorePasswordField().getText().toCharArray());
         return proxyConfig;
     }
 
