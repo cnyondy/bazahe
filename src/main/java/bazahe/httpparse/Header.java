@@ -1,6 +1,6 @@
 package bazahe.httpparse;
 
-import net.dongliu.commons.collection.Pair;
+import bazahe.def.Pair;
 
 /**
  * Header with name and value

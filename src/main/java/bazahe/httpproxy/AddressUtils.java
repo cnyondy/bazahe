@@ -1,7 +1,5 @@
 package bazahe.httpproxy;
 
-import net.dongliu.commons.Strings;
-
 import javax.annotation.Nullable;
 
 /**
@@ -9,11 +7,19 @@ import javax.annotation.Nullable;
  */
 class AddressUtils {
     static String getHostFromTarget(String target) {
-        return Strings.before(target, ":");
+        int idx = target.indexOf(":");
+        if (idx > 0) {
+            return target.substring(0, idx);
+        }
+        return target;
     }
 
     static int getPortFromTarget(String target) {
-        return Integer.parseInt(Strings.after(target, ":"));
+        int idx = target.indexOf(":");
+        if (idx > 0) {
+            return Integer.parseInt(target.substring(idx + 1));
+        }
+        throw new RuntimeException("Target has no port: " + target);
     }
 
     static String getUrl(boolean ssl, @Nullable String upgrade, String host, int port, String path) {

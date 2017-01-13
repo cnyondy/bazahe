@@ -8,8 +8,10 @@ import bazahe.ui.Constants;
 import bazahe.ui.UIUtils;
 import javafx.concurrent.Task;
 import lombok.extern.log4j.Log4j2;
-import net.dongliu.commons.Marshaller;
 
+import java.io.BufferedInputStream;
+import java.io.InputStream;
+import java.io.ObjectInputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -35,7 +37,11 @@ public class InitContextTask extends Task<Void> {
         updateProgress(1, 10);
         ProxyConfig config;
         if (Files.exists(configPath)) {
-            config = (ProxyConfig) Marshaller.unmarshal(Files.readAllBytes(configPath));
+            try (InputStream in = Files.newInputStream(configPath);
+                 BufferedInputStream bin = new BufferedInputStream(in);
+                 ObjectInputStream oin = new ObjectInputStream(bin)) {
+                config = (ProxyConfig) oin.readObject();
+            }
         } else {
             config = ProxyConfig.getDefault();
         }

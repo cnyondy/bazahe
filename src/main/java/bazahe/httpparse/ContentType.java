@@ -1,12 +1,13 @@
 package bazahe.httpparse;
 
+import com.google.common.collect.ImmutableSet;
 import lombok.Getter;
-import net.dongliu.commons.Strings;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
 import java.nio.charset.Charset;
 import java.nio.charset.UnsupportedCharsetException;
+import java.util.Set;
 
 /**
  * Http content type
@@ -39,9 +40,11 @@ public class ContentType {
                 continue;
             }
             String item = items[i].trim();
-            if (Strings.before(item, "=").trim().equalsIgnoreCase("charset")) {
-                encoding = Strings.after(item, "=").trim();
-                break;
+            int idx = item.indexOf("=");
+            if (idx > 0) {
+                if (item.substring(0, idx).trim().equalsIgnoreCase("charset")) {
+                    encoding = item.substring(idx + 1).trim();
+                }
             }
         }
         return new ContentType(type, toCharsetSafe(encoding));
@@ -59,9 +62,12 @@ public class ContentType {
         }
     }
 
+    private Set<String> textTypes = ImmutableSet.of("text");
+    private Set<String> textSubTypes = ImmutableSet.of("json", "x-www-form-urlencoded", "xml");
+
     public boolean isText() {
-        return Strings.equalsAnyIgnoreCase(mimeType.getType(), "text")
-                || Strings.equalsAnyIgnoreCase(mimeType.getSubType(), "json", "x-www-form-urlencoded", "xml");
+        return textTypes.contains(mimeType.getType())
+                || textSubTypes.contains(mimeType.getSubType());
     }
 
     public boolean isImage() {

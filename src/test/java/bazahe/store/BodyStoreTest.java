@@ -1,6 +1,6 @@
 package bazahe.store;
 
-import net.dongliu.commons.io.InputOutputs;
+import com.google.common.io.ByteStreams;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -25,7 +25,7 @@ public class BodyStoreTest {
         }
         bodyStore.close();
         InputStream inputStream = bodyStore.getInputStream();
-        byte[] bytes = InputOutputs.readAll(inputStream);
+        byte[] bytes = ByteStreams.toByteArray(inputStream);
         assertEquals(520 * 1024, bytes.length);
     }
 

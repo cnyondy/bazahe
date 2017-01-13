@@ -3,6 +3,9 @@ package bazahe.ui.controller;
 import bazahe.def.WebSocketMessage;
 import bazahe.store.BodyStore;
 import bazahe.ui.component.WebSocketMessagePane;
+import com.google.common.base.Joiner;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.CharStreams;
 import javafx.beans.property.ObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -12,14 +15,8 @@ import javafx.scene.control.TextArea;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import lombok.SneakyThrows;
-import net.dongliu.commons.Joiner;
-import net.dongliu.commons.io.InputOutputs;
-import net.dongliu.commons.io.ReaderWriters;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
 
 /**
@@ -33,7 +30,7 @@ public class WebSocketMessageController {
 
     @FXML
     void initialize() {
-        Joiner joiner = Joiner.of("\n");
+        Joiner joiner = Joiner.on("\n");
         root.messageProperty().addListener((ob, o, n) -> {
             if (n == null) {
                 description.setText("");
@@ -58,10 +55,11 @@ public class WebSocketMessageController {
         }
 
         TextArea textArea = new TextArea();
-        InputStreamReader reader = new InputStreamReader(bodyStore.getInputStream(), StandardCharsets.UTF_8);
-        String text = ReaderWriters.readAll(reader);
-        textArea.setText(text);
-        return textArea;
+        try (InputStreamReader reader = new InputStreamReader(bodyStore.getInputStream(), StandardCharsets.UTF_8)) {
+            String text = CharStreams.toString(reader);
+            textArea.setText(text);
+            return textArea;
+        }
     }
 
     @FXML
@@ -79,8 +77,9 @@ public class WebSocketMessageController {
 
         FileChooser fileChooser = new FileChooser();
         File file = fileChooser.showSaveDialog(root.getScene().getWindow());
-        try (OutputStream out = new FileOutputStream(file)) {
-            InputOutputs.copy(bodyStore.getInputStream(), out);
+        try (InputStream in = bodyStore.getInputStream();
+             OutputStream out = new FileOutputStream(file)) {
+            ByteStreams.copy(in, out);
         }
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setContentText("Export Finished!");

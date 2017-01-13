@@ -1,9 +1,9 @@
 package bazahe.httpproxy;
 
+import com.google.common.base.Stopwatch;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
-import net.dongliu.commons.StopWatch;
 
 import javax.net.ssl.KeyManager;
 import javax.net.ssl.KeyManagerFactory;
@@ -12,6 +12,7 @@ import java.math.BigInteger;
 import java.security.KeyStore;
 import java.security.SecureRandom;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -32,9 +33,9 @@ public class SSLContextManager {
 
     public SSLContextManager(String keyStorePath, char[] keyStorePassword) {
         this.keyStorePath = keyStorePath;
-        StopWatch stopWatch = StopWatch.create().start();
+        Stopwatch stopWatch = Stopwatch.createStarted();
         AppKeyStoreGenerator appKeyStoreGenerator = new AppKeyStoreGenerator(keyStorePath, keyStorePassword);
-        logger.info("Initialize AppKeyStoreGenerator cost {} ms", stopWatch.stop().toMillis());
+        logger.info("Initialize AppKeyStoreGenerator cost {} ms", stopWatch.stop().elapsed(TimeUnit.MILLISECONDS));
         BigInteger caCertSerialNumber = appKeyStoreGenerator.getCACertSerialNumber();
 
         lock.writeLock().lock();
@@ -71,14 +72,14 @@ public class SSLContextManager {
     @SneakyThrows
     private SSLContext getSslContextInner(String host) {
         char[] appKeyStorePassword = "123456".toCharArray();
-        StopWatch stopWatch = StopWatch.create().start();
+        Stopwatch stopWatch = Stopwatch.createStarted();
         KeyStore keyStore = appKeyStoreGenerator.generateKeyStore(host, 365, appKeyStorePassword);
         KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
         keyManagerFactory.init(keyStore, appKeyStorePassword);
         KeyManager[] keyManagers = keyManagerFactory.getKeyManagers();
         SSLContext sslContext = SSLContext.getInstance("TLSv1.2");
         sslContext.init(keyManagers, null, new SecureRandom());
-        logger.info("Create ssh context for {}, cost {} ms", host, stopWatch.stop().toMillis());
+        logger.info("Create ssh context for {}, cost {} ms", host, stopWatch.stop().elapsed(TimeUnit.MILLISECONDS));
         return sslContext;
     }
 

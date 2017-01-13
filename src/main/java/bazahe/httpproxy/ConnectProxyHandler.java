@@ -2,15 +2,15 @@ package bazahe.httpproxy;
 
 import bazahe.exception.HttpParserException;
 import bazahe.httpparse.*;
+import com.google.common.base.Strings;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.hash.Hashing;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.Closeables;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
-import net.dongliu.commons.Strings;
-import net.dongliu.commons.codec.Digests;
-import net.dongliu.commons.collection.Sets;
-import net.dongliu.commons.io.Closeables;
-import net.dongliu.commons.io.InputOutputs;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
@@ -19,6 +19,7 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.Socket;
+import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 /**
@@ -96,7 +97,7 @@ public class ConnectProxyHandler implements ProxyHandler {
             // something wrong with ssl
             logger.error("SSL connection error for {}.", target, e);
         } finally {
-            Closeables.closeQuietly(clientSocket);
+            Closeables.close(clientSocket, true);
         }
 
     }
@@ -119,7 +120,7 @@ public class ConnectProxyHandler implements ProxyHandler {
 
     }
 
-    private static final Set<String> methods = Sets.of("GET", "POST", "HEAD", "PUT", "TRACE", "DELETE", "PATCH",
+    private static final Set<String> methods = ImmutableSet.of("GET", "POST", "HEAD", "PUT", "TRACE", "DELETE", "PATCH",
             "OPTIONS");
 
     @SneakyThrows
@@ -131,7 +132,14 @@ public class ConnectProxyHandler implements ProxyHandler {
         if (firstLine == null) {
             return true;
         }
-        String method = Strings.before(firstLine, " ");
+
+        int idx = firstLine.indexOf(" ");
+        if (idx <= 0) {
+            // not http request
+            tunnel(srcIn, dstIn);
+            return true;
+        }
+        String method = firstLine.substring(0, idx);
         if (!methods.contains(method)) {
             // not http request
             tunnel(srcIn, dstIn);
@@ -156,7 +164,7 @@ public class ConnectProxyHandler implements ProxyHandler {
             expect100 = true;
         }
 
-        String id = Digests.md5().update(rawRequestLine).toHexLower() + System.nanoTime();
+        String id = Hashing.md5().hashString(rawRequestLine, StandardCharsets.UTF_8).toString() + System.nanoTime();
         RequestLine requestLine = requestHeaders.getRequestLine();
         String upgrade = requestHeaders.getFirst("Upgrade");
         String host = requestHeaders.getFirst("Host");
@@ -178,13 +186,13 @@ public class ConnectProxyHandler implements ProxyHandler {
         try {
             if (requestBody != null) {
                 if (requestStore != null) {
-                    InputOutputs.copy(requestBody, requestStore);
+                    ByteStreams.copy(requestBody, requestStore);
                 } else {
-                    InputOutputs.skipAll(requestBody);
+                    ByteStreams.exhaust(requestBody);
                 }
             }
         } finally {
-            Closeables.closeQuietly(requestStore);
+            Closeables.close(requestStore, true);
         }
 
         ResponseHeaders responseHeaders = dstIn.readResponseHeaders();
@@ -218,20 +226,20 @@ public class ConnectProxyHandler implements ProxyHandler {
         try {
             if (responseBody != null) {
                 if (responseStore != null) {
-                    InputOutputs.copy(responseBody, responseStore);
+                    ByteStreams.copy(responseBody, responseStore);
                 } else {
-                    InputOutputs.skipAll(responseBody);
+                    ByteStreams.exhaust(responseBody);
                 }
             }
         } finally {
-            Closeables.closeQuietly(responseStore);
+            Closeables.close(responseStore, true);
         }
 
 
         if ("websocket".equals(upgrade) && code == 101) {
             // upgrade to websocket
             logger.info("{} upgrade to websocket", url);
-            int version = Strings.toInt(Strings.nullToEmpty(requestHeaders.getFirst("Sec-WebSocket-Version")), -1);
+            String version = Strings.nullToEmpty(requestHeaders.getFirst("Sec-WebSocket-Version"));
             //TODO: server may not support the version. in this case server will send supported versions, client should
             WebSocketHandler webSocketHandler = new WebSocketHandler();
             webSocketHandler.handle(srcIn, dstIn, host, url, messageListener);

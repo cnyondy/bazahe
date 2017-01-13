@@ -9,10 +9,12 @@ import lombok.Setter;
  *
  * @author Liu Dong
  */
-@Getter
-@Setter
 public class Context {
+    @Getter
+    @Setter
     private volatile ProxyConfig config;
+    @Getter
+    @Setter
     private volatile SSLContextManager sslContextManager;
 
     private static Context instance = new Context();

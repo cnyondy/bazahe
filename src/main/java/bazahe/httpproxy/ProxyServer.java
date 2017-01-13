@@ -1,10 +1,10 @@
 package bazahe.httpproxy;
 
 import bazahe.def.ProxyConfig;
+import com.google.common.io.Closeables;
 import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
-import net.dongliu.commons.io.Closeables;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.net.InetAddress;
@@ -94,7 +94,7 @@ public class ProxyServer {
                 socket.setSoTimeout(proxyConfig.getTimeout() * 1000);
                 worker = new ProxyWorker(socket, sslContextManager, messageListener);
             } catch (Exception e) {
-                Closeables.closeQuietly(socket);
+                Closeables.close(socket, true);
                 logger.error("Create new proxy worker failed.", e);
                 continue;
             }
@@ -114,7 +114,7 @@ public class ProxyServer {
         if (!masterThread.isInterrupted()) {
             logger.info("Stopping proxy server...");
             masterThread.interrupt();
-            Closeables.closeQuietly(serverSocket);
+            Closeables.close(serverSocket, true);
             executor.shutdownNow();
         }
     }

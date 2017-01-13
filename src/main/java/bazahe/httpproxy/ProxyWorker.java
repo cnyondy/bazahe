@@ -3,8 +3,9 @@ package bazahe.httpproxy;
 import bazahe.exception.HttpParserException;
 import bazahe.httpparse.HttpInputStream;
 import bazahe.httpparse.RequestLine;
+import com.google.common.io.Closeables;
+import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
-import net.dongliu.commons.io.Closeables;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
@@ -34,6 +35,7 @@ public class ProxyWorker implements Runnable {
     }
 
     @Override
+    @SneakyThrows
     public void run() {
         try {
             HttpInputStream input = new HttpInputStream(serverSocket.getInputStream());
@@ -73,7 +75,7 @@ public class ProxyWorker implements Runnable {
         } catch (Throwable e) {
             logger.error("", e);
         } finally {
-            Closeables.closeQuietly(serverSocket);
+            Closeables.close(serverSocket, true);
         }
     }
 }

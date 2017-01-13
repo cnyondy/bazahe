@@ -1,7 +1,7 @@
 package bazahe.httpparse;
 
+import com.google.common.io.ByteStreams;
 import lombok.val;
-import net.dongliu.commons.io.InputOutputs;
 
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.IOException;
@@ -113,13 +113,13 @@ public class HttpOutputStream extends OutputStream {
      */
     public synchronized void writeBody(long len, InputStream input) throws IOException {
         if (len > 0) {
-            InputOutputs.copy(input, output);
+            ByteStreams.copy(input, output);
             return;
         }
         int chunkSize = 1024 * 8;
         byte[] buffer = new byte[chunkSize];
         while (true) {
-            int read = InputOutputs.readExact(input, buffer);
+            int read = ByteStreams.read(input, buffer, 0, buffer.length);
             if (read > 0) {
                 String s = Integer.toHexString(read);
                 output.write(s.getBytes(StandardCharsets.US_ASCII));

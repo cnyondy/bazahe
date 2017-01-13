@@ -1,12 +1,12 @@
 package bazahe.httpproxy;
 
 import bazahe.httpparse.*;
+import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Lists;
+import com.google.common.hash.Hashing;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
-import net.dongliu.commons.Strings;
-import net.dongliu.commons.codec.Digests;
-import net.dongliu.commons.collection.Lists;
 import net.dongliu.requests.RawResponse;
 import net.dongliu.requests.RequestBuilder;
 import net.dongliu.requests.Requests;
@@ -18,9 +18,8 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
+import java.nio.charset.StandardCharsets;
+import java.util.*;
 
 /**
  * Non-connect http handler
@@ -63,7 +62,7 @@ public class CommonProxyHandler implements ProxyHandler {
             output.writeLine("HTTP/1.1 100 Continue\r\n");
         }
 
-        String id = Digests.md5().update(rawRequestLine).toHexLower() + System.nanoTime();
+        String id = Hashing.md5().hashString(rawRequestLine, StandardCharsets.UTF_8).toString() + System.nanoTime();
         RequestLine requestLine = requestHeaders.getRequestLine();
         String method = requestLine.getMethod();
         List<Header> newRequestHeaders = filterRequestHeaders(requestHeaders);
@@ -119,13 +118,16 @@ public class CommonProxyHandler implements ProxyHandler {
     private List<Header> filterResponseHeaders(boolean shouldClose, ResponseHeaders responseHeaders) {
         List<Header> newResponseHeaders = new ArrayList<>(responseHeaders.getHeaders());
         long respLen = responseHeaders.contentLen();
+        Set<String> set = new HashSet<>();
+
         if (respLen == -1) {
             if (!responseHeaders.chunked()) {
-                removeHeaders(newResponseHeaders, "Transfer-Encoding");
+                set.add("Transfer-Encoding");
                 newResponseHeaders.add(new Header("Transfer-Encoding", "chunked"));
             }
         }
-        removeHeaders(newResponseHeaders, "Connection");
+        set.add("Connection");
+        removeHeaders(newResponseHeaders, set);
         if (!shouldClose) {
             newResponseHeaders.add(new Header("Connection", "Keep-Alive"));
         } else {
@@ -134,10 +136,13 @@ public class CommonProxyHandler implements ProxyHandler {
         return newResponseHeaders;
     }
 
+    private Set<String> proxyRemoveHeaders = ImmutableSet.of("Connection", "Proxy-Authenticate", "Proxy-Connection",
+            "Transfer-Encoding");
+
     private List<Header> filterRequestHeaders(RequestHeaders requestHeaders) {
         List<Header> newRequestHeaders = new ArrayList<>(requestHeaders.getHeaders());
         newRequestHeaders.removeIf(h -> h.getName().equalsIgnoreCase("Connection"));
-        removeHeaders(newRequestHeaders, "Connection", "Proxy-Authenticate", "Proxy-Connection", "Transfer-Encoding");
+        removeHeaders(newRequestHeaders, proxyRemoveHeaders);
         return newRequestHeaders;
     }
 
@@ -171,12 +176,12 @@ public class CommonProxyHandler implements ProxyHandler {
         return requestBody;
     }
 
-    private void removeHeaders(List<Header> headers, String... names) {
-        headers.removeIf(h -> Strings.equalsAny(h.getName(), names));
+    private void removeHeaders(List<Header> headers, Set<String> names) {
+        headers.removeIf(h -> names.contains(h.getName()));
     }
 
     private ResponseHeaders toResponseHeaders(String statusLine, List<Map.Entry<String, String>> headers) {
-        List<String> rawHeaders = Lists.map(headers, h -> h.getKey() + ": " + h.getValue());
+        List<String> rawHeaders = Lists.transform(headers, h -> h.getKey() + ": " + h.getValue());
         return new ResponseHeaders(statusLine, rawHeaders);
     }
 

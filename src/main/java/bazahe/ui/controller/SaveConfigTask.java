@@ -4,8 +4,10 @@ import bazahe.def.Context;
 import bazahe.def.ProxyConfig;
 import bazahe.httpproxy.SSLContextManager;
 import javafx.concurrent.Task;
-import net.dongliu.commons.Marshaller;
 
+import java.io.BufferedOutputStream;
+import java.io.ObjectOutputStream;
+import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -40,10 +42,12 @@ public class SaveConfigTask extends Task<Void> {
         updateProgress(4, 10);
         context.setConfig(config);
         updateMessage("Save config to file");
-        byte[] data = Marshaller.marshal(config);
         Path configPath = ProxyConfig.configPath();
-        Files.write(configPath, data);
-
+        try (OutputStream os = Files.newOutputStream(configPath);
+             BufferedOutputStream bos = new BufferedOutputStream(os);
+             ObjectOutputStream oos = new ObjectOutputStream(bos)) {
+            oos.writeObject(config);
+        }
         updateProgress(10, 10);
         return null;
     }

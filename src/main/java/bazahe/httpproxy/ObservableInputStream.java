@@ -1,6 +1,6 @@
 package bazahe.httpproxy;
 
-import net.dongliu.commons.io.Closeables;
+import com.google.common.io.Closeables;
 
 import java.io.FilterInputStream;
 import java.io.IOException;
@@ -77,7 +77,7 @@ class ObservableInputStream extends FilterInputStream {
 
     @Override
     public void close() throws IOException {
-        Closeables.closeQuietly(output);
+        Closeables.close(output, true);
         in.close();
     }
 }

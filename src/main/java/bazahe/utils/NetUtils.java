@@ -1,9 +1,8 @@
 package bazahe.utils;
 
+import bazahe.def.Pair;
+import com.google.common.collect.ImmutableList;
 import lombok.extern.log4j.Log4j2;
-import net.dongliu.commons.Strings;
-import net.dongliu.commons.collection.Lists;
-import net.dongliu.commons.collection.Pair;
 
 import javax.annotation.Nonnull;
 import java.net.Inet4Address;
@@ -56,7 +55,7 @@ public class NetUtils {
             networkInterfaces = NetworkInterface.getNetworkInterfaces();
         } catch (SocketException e) {
             logger.warn("cannot get local network interface ip address", e);
-            return Lists.of();
+            return ImmutableList.of();
         }
         List<Pair<String, String>> list = new ArrayList<>();
         while (networkInterfaces.hasMoreElements()) {
@@ -91,22 +90,23 @@ public class NetUtils {
      * img1.fbcdn.com -> img*.fbcdn.com
      */
     public static String genericMultiCDNS(String host) {
-        String first = Strings.before(host, ".");
-        if (first.length() < 2) {
+        int idx = host.indexOf(".");
+        if (idx < 2) {
             return host;
         }
-        if (!Strings.isAsciiLetter(first.charAt(0))) {
+        String first = host.substring(0, idx);
+        if (!Character.isLetter(first.charAt(0))) {
             return host;
         }
         char c = first.charAt(first.length() - 1);
-        if (!Strings.isDigit(c)) {
+        if (!Character.isDigit(c)) {
             return host;
         }
-        int idx = first.length() - 2;
-        while (Strings.isDigit(first.charAt(idx))) {
-            idx--;
+        int firstEnd = first.length() - 2;
+        while (Character.isDigit(first.charAt(firstEnd))) {
+            firstEnd--;
         }
-        return first.substring(0, idx + 1) + "*." + Strings.after(host, ".");
+        return first.substring(0, firstEnd + 1) + "*." + host.substring(idx + 1);
     }
 
 

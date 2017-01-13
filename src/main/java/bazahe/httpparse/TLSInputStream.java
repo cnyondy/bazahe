@@ -1,7 +1,6 @@
 package bazahe.httpparse;
 
 import lombok.Getter;
-import net.dongliu.commons.collection.Lists;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -75,7 +74,7 @@ public class TLSInputStream extends DataInputStream {
         int compressionMethodsLen = in.read();
         byte[] compressionMethods = readExact(compressionMethodsLen);
 
-        List<String> alpnNames = Lists.of();
+        List<String> alpnNames = new ArrayList<>();
         int readed = 2 + 32 + 1 + sessionIdLen + 2 + cipherSuiteLen + 1 + compressionMethodsLen;
         if (readed < length) {
             //read extensions

@@ -1,15 +1,16 @@
 package bazahe.httpproxy;
 
 import bazahe.httpparse.WebSocketInputStream;
+import com.google.common.hash.Hashing;
+import com.google.common.io.Closeables;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
-import net.dongliu.commons.codec.Digests;
-import net.dongliu.commons.io.Closeables;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.StandardCharsets;
 
 /**
  * Handle web socket traffic
@@ -43,7 +44,7 @@ public class WebSocketHandler {
             if (type == -1) {
                 break;
             }
-            String id = Digests.md5().update(url + System.currentTimeMillis()).toHexLower();
+            String id = Hashing.md5().hashString(url + System.currentTimeMillis(), StandardCharsets.UTF_8).toString();
             @Nullable OutputStream outputStream;
             if (messageListener != null) {
                 outputStream = messageListener.onWebSocket(id, host, url, type, isRequest);
@@ -53,7 +54,7 @@ public class WebSocketHandler {
             try {
                 srcWSInput.readMessageBody(outputStream);
             } finally {
-                Closeables.closeQuietly(outputStream);
+                Closeables.close(outputStream, true);
             }
         }
     }

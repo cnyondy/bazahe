@@ -9,6 +9,9 @@ import bazahe.ui.component.HttpMessagePane;
 import bazahe.ui.formater.FormURLEncodedFormatter;
 import bazahe.ui.formater.JSONFormatter;
 import bazahe.ui.formater.XMLFormatter;
+import com.google.common.base.Joiner;
+import com.google.common.io.ByteStreams;
+import com.google.common.io.CharStreams;
 import javafx.beans.property.ObjectProperty;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -18,16 +21,9 @@ import javafx.scene.layout.BorderPane;
 import javafx.scene.text.Text;
 import javafx.stage.FileChooser;
 import lombok.SneakyThrows;
-import net.dongliu.commons.Joiner;
-import net.dongliu.commons.Strings;
-import net.dongliu.commons.io.InputOutputs;
-import net.dongliu.commons.io.ReaderWriters;
 
 import javax.annotation.Nullable;
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.InputStreamReader;
-import java.io.OutputStream;
+import java.io.*;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
 import java.util.function.Function;
@@ -56,7 +52,7 @@ public class HttpMessageController {
 
     @FXML
     void initialize() {
-        Joiner joiner = Joiner.of("\n");
+        Joiner joiner = Joiner.on("\n");
         ObjectProperty<HttpMessage> httpMessageProperty = root.httpMessageProperty();
         if (httpMessageProperty == null) {
             return;
@@ -139,8 +135,10 @@ public class HttpMessageController {
 
         // textual body
         if (storeType.isText()) {
-            String text = ReaderWriters.readAll(new InputStreamReader(bodyStore.getInputStream(),
-                    bodyStore.getCharset()));
+            String text;
+            try (Reader reader = new InputStreamReader(bodyStore.getInputStream(), bodyStore.getCharset())) {
+                text = CharStreams.toString(reader);
+            }
 
             // beautify
             if (bodyStore.isBeaufify()) {
@@ -208,8 +206,9 @@ public class HttpMessageController {
         if (file == null) {
             return;
         }
-        try (OutputStream out = new FileOutputStream(file)) {
-            InputOutputs.copy(bodyStore.getInputStream(), out);
+        try (InputStream in = bodyStore.getInputStream();
+             OutputStream out = new FileOutputStream(file)) {
+            ByteStreams.copy(in, out);
         }
         UIUtils.showMessageDialog("Export Finished!");
     }
@@ -240,9 +239,16 @@ public class HttpMessageController {
     }
 
     private String getFileName(String url, String host) {
-        String s = Strings.afterLast(url, "/");
-        s = Strings.before(s, "?");
-        if (s.isEmpty()) {
+        int begin = url.lastIndexOf("/");
+        String s;
+        if (begin > 0) {
+            int end = url.indexOf("?", begin);
+            if (end < 0) {
+                s = url.substring(begin + 1);
+            } else {
+                s = url.substring(begin + 1, end);
+            }
+        } else {
             s = host;
         }
         return s;

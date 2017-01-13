@@ -1,6 +1,6 @@
 package bazahe.httpparse;
 
-import net.dongliu.commons.io.InputOutputs;
+import com.google.common.io.ByteStreams;
 
 import java.io.EOFException;
 import java.io.FilterInputStream;
@@ -23,7 +23,7 @@ abstract class DataInputStream extends FilterInputStream {
      */
     public byte[] readExact(int size) throws IOException {
         byte[] buffer = new byte[size];
-        int read = InputOutputs.readExact(this, buffer);
+        int read = ByteStreams.read(this, buffer, 0, size);
         if (read != size) {
             throw new EOFException("Unexpected end of stream");
         }

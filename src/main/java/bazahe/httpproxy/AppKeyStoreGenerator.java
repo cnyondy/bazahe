@@ -4,7 +4,6 @@ package bazahe.httpproxy;
 import bazahe.utils.NetUtils;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
-import net.dongliu.commons.codec.Base64s;
 import org.bouncycastle.asn1.*;
 import org.bouncycastle.asn1.pkcs.PKCSObjectIdentifiers;
 import org.bouncycastle.asn1.x500.X500Name;
@@ -87,7 +86,7 @@ public class AppKeyStoreGenerator {
             return data;
         }
         return ("-----BEGIN CERTIFICATE-----\n" +
-                Base64s.mime().encode(data).toBase64String() +
+                Base64.getMimeEncoder().encodeToString(data) +
                 "\n-----END CERTIFICATE-----\n").getBytes(StandardCharsets.US_ASCII);
     }
 

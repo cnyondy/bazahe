@@ -1,11 +1,12 @@
 package bazahe.httpproxy;
 
 import bazahe.httpparse.*;
-import net.dongliu.commons.collection.Lists;
-import net.dongliu.commons.io.InputOutputs;
+import com.google.common.collect.ImmutableList;
+import com.google.common.io.ByteStreams;
 
 import javax.annotation.Nullable;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.Socket;
 
 /**
@@ -72,13 +73,15 @@ public class HttpHandler implements ProxyHandler {
     }
 
     private void sendIndexHtml(HttpOutputStream out) throws IOException {
-        byte[] data = InputOutputs.readAll(getClass().getResourceAsStream("/html/index.html"));
-        sendResponse(out, "text/html; charset=utf-8", data);
+        try (InputStream in = getClass().getResourceAsStream("/html/index.html")) {
+            byte[] data = ByteStreams.toByteArray(in);
+            sendResponse(out, "text/html; charset=utf-8", data);
+        }
     }
 
     private void sendResponse(HttpOutputStream out, String contentType, byte[] body) throws IOException {
         out.writeLine("HTTP/1.1 200 OK");
-        out.writeHeaders(Lists.of(
+        out.writeHeaders(ImmutableList.of(
                 new Header("Content-Type", contentType),
                 new Header("Content-Length", String.valueOf(body.length)),
                 new Header("Connection", "close")

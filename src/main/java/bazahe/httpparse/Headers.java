@@ -1,8 +1,7 @@
 package bazahe.httpparse;
 
+import com.google.common.collect.Lists;
 import lombok.Getter;
-import net.dongliu.commons.Joiner;
-import net.dongliu.commons.collection.Lists;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.Immutable;
@@ -26,7 +25,7 @@ public abstract class Headers implements Serializable {
     private List<String> rawHeaders;
 
     public Headers(List<String> rawHeaders) {
-        this(rawHeaders, Lists.map(rawHeaders, Header::parse));
+        this(rawHeaders, Lists.transform(rawHeaders, Header::parse));
     }
 
     private Headers(List<String> rawHeaders, List<Header> headers) {
@@ -36,7 +35,7 @@ public abstract class Headers implements Serializable {
 
     @Override
     public String toString() {
-        return Joiner.of("\n", "Headers(", ")").join(rawHeaders);
+        return "Headers(" + String.join("\n", rawHeaders) + ")";
     }
 
     /**
@@ -122,6 +121,6 @@ public abstract class Headers implements Serializable {
             rawHeaders.add(in.readUTF());
         }
         this.rawHeaders = rawHeaders;
-        headers = Lists.map(rawHeaders, Header::parse);
+        headers = Lists.transform(rawHeaders, Header::parse);
     }
 }

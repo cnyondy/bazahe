@@ -1,15 +1,11 @@
 package bazahe.store;
 
 import bazahe.httpparse.ContentType;
+import com.google.common.base.Strings;
+import com.google.common.io.ByteStreams;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
-import net.dongliu.commons.BinarySize;
-import net.dongliu.commons.RefValues;
-import net.dongliu.commons.Strings;
-import net.dongliu.commons.io.ByteArrayOutputStreamEx;
-import net.dongliu.commons.io.Closeables;
-import net.dongliu.commons.io.InputOutputs;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
@@ -34,7 +30,7 @@ public class BodyStore extends OutputStream implements Serializable {
     private File file;
     private boolean closed;
 
-    private static final int MAX_BUFFER_SIZE = (int) BinarySize.megabyte(1);
+    private static final int MAX_BUFFER_SIZE = 1024 * 1024;
 
     @Getter
     @Setter
@@ -51,8 +47,8 @@ public class BodyStore extends OutputStream implements Serializable {
 
     public BodyStore(@Nullable BodyStoreType type, @Nullable Charset charset,
                      @Nullable String contentEncoding) {
-        this.type = RefValues.ifNullThen(type, BodyStoreType.unknown);
-        this.charset = RefValues.ifNullThen(charset, StandardCharsets.UTF_8);
+        this.type = type == null ? BodyStoreType.unknown : type;
+        this.charset = charset == null ? StandardCharsets.UTF_8 : charset;
         this.contentEncoding = Strings.nullToEmpty(contentEncoding);
         this.bos = new ByteArrayOutputStreamEx();
     }
@@ -126,9 +122,17 @@ public class BodyStore extends OutputStream implements Serializable {
     public synchronized void close() throws IOException {
         super.close();
         try {
-            Closeables.closeQuietly(fos, bos);
+            if (fos != null) {
+                fos.close();
+            }
         } finally {
-            closed = true;
+            try {
+                if (bos != null) {
+                    bos.close();
+                }
+            } finally {
+                closed = true;
+            }
         }
     }
 
@@ -143,7 +147,9 @@ public class BodyStore extends OutputStream implements Serializable {
         if (bos.size() > MAX_BUFFER_SIZE) {
             try {
                 newTempFile();
-                InputOutputs.copy(bos.asInputStream(), fos);
+                try (InputStream in = bos.asInputStream()) {
+                    ByteStreams.copy(in, fos);
+                }
             } catch (IOException e) {
                 logger.error("Create tmp file for http body failed", e);
                 //TODO: deal with this...
@@ -228,11 +234,16 @@ public class BodyStore extends OutputStream implements Serializable {
                 if (bos != null) {
                     out.writeInt(1);
                     out.writeLong(getSize());
-                    InputOutputs.copy(bos.asInputStream(), out);
+                    try (InputStream in = bos.asInputStream()) {
+                        ByteStreams.copy(in, out);
+                    }
                 } else if (file != null) {
                     out.writeInt(2);
                     out.writeLong(getSize());
-                    InputOutputs.copy(new BufferedInputStream(new FileInputStream(file)), out);
+                    try (InputStream in = new FileInputStream(file);
+                         InputStream bin = new BufferedInputStream(in)) {
+                        ByteStreams.copy(bin, out);
+                    }
                 } else {
                     throw new IllegalStateException();
                 }

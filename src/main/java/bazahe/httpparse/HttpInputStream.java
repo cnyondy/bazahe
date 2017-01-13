@@ -1,13 +1,12 @@
 package bazahe.httpparse;
 
-import net.dongliu.commons.collection.Lists;
-
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -114,7 +113,7 @@ public class HttpInputStream extends InputStream {
 
     public synchronized List<String> readHeaders() throws IOException {
         String line;
-        List<String> rawHeaders = Lists.create();
+        List<String> rawHeaders = new ArrayList<>();
         while (true) {
             line = readLine();
             if (line == null) {
