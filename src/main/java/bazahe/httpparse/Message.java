@@ -1,4 +1,4 @@
-package bazahe.def;
+package bazahe.httpparse;
 
 import lombok.Getter;
 
@@ -38,7 +38,7 @@ public abstract class Message implements Serializable {
         out.writeUTF(url);
     }
 
-    private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
+    private void readObject(ObjectInputStream in) throws IOException {
         id = in.readUTF();
         host = in.readUTF();
         url = in.readUTF();

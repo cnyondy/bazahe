@@ -1,6 +1,7 @@
 package bazahe.httpparse;
 
 import bazahe.exception.HttpParserException;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
@@ -45,10 +46,7 @@ class ChunkedInputStream extends FilterInputStream {
         if (line == null) {
             throw new HttpParserException("chunked stream unexpected end");
         }
-        int idx = line.indexOf(";");
-        if (idx > 0) {
-            line = line.substring(0, idx);
-        }
+        line = StringUtils.substringBefore(line, ";");
         long chunkLen = Long.parseLong(line, 16);
         if (chunkLen == 0) {
             end = true;

@@ -1,6 +1,6 @@
 package bazahe.ui.controller;
 
-import bazahe.def.Message;
+import bazahe.httpparse.Message;
 import javafx.scene.control.TreeCell;
 import javafx.scene.control.TreeView;
 import javafx.util.Callback;

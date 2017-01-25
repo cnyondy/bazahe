@@ -1,8 +1,8 @@
 package bazahe.utils;
 
-import bazahe.def.Pair;
 import com.google.common.collect.ImmutableList;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
 import java.net.Inet4Address;

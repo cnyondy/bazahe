@@ -1,4 +1,4 @@
-package bazahe.def;
+package bazahe;
 
 import lombok.Getter;
 import lombok.Setter;

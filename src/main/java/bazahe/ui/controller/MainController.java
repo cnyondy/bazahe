@@ -1,11 +1,11 @@
 package bazahe.ui.controller;
 
-import bazahe.def.Context;
-import bazahe.def.HttpMessage;
-import bazahe.def.Message;
-import bazahe.def.WebSocketMessage;
+import bazahe.Context;
+import bazahe.httpparse.HttpMessage;
+import bazahe.httpparse.Message;
+import bazahe.httpparse.WebSocketMessage;
 import bazahe.httpproxy.ProxyServer;
-import bazahe.ui.AppResources;
+import bazahe.AppResources;
 import bazahe.ui.UIMessageListener;
 import bazahe.ui.UIUtils;
 import bazahe.ui.component.HttpMessagePane;

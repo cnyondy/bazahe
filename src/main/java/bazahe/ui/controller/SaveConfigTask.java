@@ -1,7 +1,7 @@
 package bazahe.ui.controller;
 
-import bazahe.def.Context;
-import bazahe.def.ProxyConfig;
+import bazahe.Context;
+import bazahe.ProxyConfig;
 import bazahe.httpproxy.SSLContextManager;
 import javafx.concurrent.Task;
 

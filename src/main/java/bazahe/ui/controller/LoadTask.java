@@ -1,6 +1,6 @@
 package bazahe.ui.controller;
 
-import bazahe.def.Message;
+import bazahe.httpparse.Message;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import lombok.Cleanup;

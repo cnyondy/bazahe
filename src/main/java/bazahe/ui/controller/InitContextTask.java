@@ -1,10 +1,10 @@
 package bazahe.ui.controller;
 
-import bazahe.def.Context;
-import bazahe.def.ProxyConfig;
+import bazahe.Context;
+import bazahe.ProxyConfig;
 import bazahe.httpproxy.CAKeyStoreGenerator;
 import bazahe.httpproxy.SSLContextManager;
-import bazahe.ui.Constants;
+import bazahe.Constants;
 import bazahe.ui.UIUtils;
 import javafx.concurrent.Task;
 import lombok.extern.log4j.Log4j2;

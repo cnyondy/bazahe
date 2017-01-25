@@ -16,17 +16,17 @@ public interface MessageListener {
      *
      * @return a output stream for body to write
      */
-    OutputStream onHttpRequest(String id, String host, String url, RequestHeaders requestHeaders);
+    OutputStream onHttpRequest(String messageId, String host, String url, RequestHeaders requestHeaders);
 
     /**
      * On response received
      *
      * @return a output stram for body to write
      */
-    OutputStream onHttpResponse(String id, ResponseHeaders responseHeaders);
+    OutputStream onHttpResponse(String messageId, ResponseHeaders responseHeaders);
 
     /**
      * One receive a websocket message
      */
-    OutputStream onWebSocket(String id, String host, String url, int type, boolean request);
+    OutputStream onWebSocket(String messageId, String host, String url, int type, boolean request);
 }

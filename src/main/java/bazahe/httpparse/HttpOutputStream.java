@@ -10,6 +10,8 @@ import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 
+import static java.nio.charset.StandardCharsets.US_ASCII;
+
 /**
  * Output stream for http
  *
@@ -42,10 +44,10 @@ public class HttpOutputStream extends OutputStream {
 
     public synchronized void writeHeaders(List<Header> respHeaders) throws IOException {
         for (val header : respHeaders) {
-            output.write(header.getKey().getBytes(StandardCharsets.US_ASCII));
+            output.write(header.getName().getBytes(US_ASCII));
             output.write(':');
             output.write(' ');
-            output.write(header.getValue().getBytes(StandardCharsets.US_ASCII));
+            output.write(header.getValue().getBytes(US_ASCII));
             output.write('\r');
             output.write('\n');
         }
@@ -73,7 +75,7 @@ public class HttpOutputStream extends OutputStream {
     }
 
     public synchronized void writeLine(String line) throws IOException {
-        output.write(line.getBytes(StandardCharsets.US_ASCII));
+        output.write(line.getBytes(US_ASCII));
         output.write('\r');
         output.write('\n');
     }
@@ -122,7 +124,7 @@ public class HttpOutputStream extends OutputStream {
             int read = ByteStreams.read(input, buffer, 0, buffer.length);
             if (read > 0) {
                 String s = Integer.toHexString(read);
-                output.write(s.getBytes(StandardCharsets.US_ASCII));
+                output.write(s.getBytes(US_ASCII));
                 output.write('\r');
                 output.write('\n');
                 output.write(buffer, 0, read);

@@ -1,6 +1,6 @@
 package bazahe.ui.controller;
 
-import bazahe.def.WebSocketMessage;
+import bazahe.httpparse.WebSocketMessage;
 import bazahe.store.BodyStore;
 import bazahe.ui.component.WebSocketMessagePane;
 import com.google.common.base.Joiner;

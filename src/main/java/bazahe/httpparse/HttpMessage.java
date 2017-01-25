@@ -1,7 +1,5 @@
-package bazahe.def;
+package bazahe.httpparse;
 
-import bazahe.httpparse.RequestHeaders;
-import bazahe.httpparse.ResponseHeaders;
 import bazahe.store.BodyStore;
 import lombok.Getter;
 import lombok.Setter;

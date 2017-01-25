@@ -1,6 +1,6 @@
 package bazahe.ui.component;
 
-import bazahe.def.WebSocketMessage;
+import bazahe.httpparse.WebSocketMessage;
 import bazahe.ui.controller.WebSocketMessageController;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;

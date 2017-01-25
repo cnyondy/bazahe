@@ -1,8 +1,8 @@
 package bazahe.ui;
 
-import bazahe.def.HttpMessage;
-import bazahe.def.Message;
-import bazahe.def.WebSocketMessage;
+import bazahe.httpparse.HttpMessage;
+import bazahe.httpparse.Message;
+import bazahe.httpparse.WebSocketMessage;
 import bazahe.httpparse.RequestHeaders;
 import bazahe.httpparse.ResponseHeaders;
 import bazahe.httpproxy.MessageListener;
@@ -33,19 +33,19 @@ public class UIMessageListener implements MessageListener {
     }
 
     @Override
-    public OutputStream onHttpRequest(String id, String host, String url, RequestHeaders requestHeaders) {
+    public OutputStream onHttpRequest(String messageId, String host, String url, RequestHeaders requestHeaders) {
         BodyStore bodyStore = BodyStore.of(requestHeaders.contentType(), requestHeaders.contentEncoding());
-        HttpMessage item = new HttpMessage(id, host, url, requestHeaders, bodyStore);
-        this.httpMap.put(id, item);
+        HttpMessage item = new HttpMessage(messageId, host, url, requestHeaders, bodyStore);
+        this.httpMap.put(messageId, item);
         Platform.runLater(() -> consumer.accept(item));
         return bodyStore;
     }
 
     @Override
-    public OutputStream onHttpResponse(String id, ResponseHeaders responseHeaders) {
-        HttpMessage item = this.httpMap.get(id);
+    public OutputStream onHttpResponse(String messageId, ResponseHeaders responseHeaders) {
+        HttpMessage item = this.httpMap.get(messageId);
         if (item == null) {
-            logger.error("Cannot found request item for id: {}", id);
+            logger.error("Cannot found request item for id: {}", messageId);
             return null;
         }
         item.setResponseHeaders(responseHeaders);
@@ -55,11 +55,11 @@ public class UIMessageListener implements MessageListener {
     }
 
     @Override
-    public OutputStream onWebSocket(String id, String host, String url, int type, boolean request) {
+    public OutputStream onWebSocket(String messageId, String host, String url, int type, boolean request) {
         // TODO: currently the hacker way to use bodyStore
         BodyStore bodyStore = new BodyStore(type == 1 ? BodyStoreType.text : BodyStoreType.binary,
                 StandardCharsets.UTF_8, null);
-        WebSocketMessage message = new WebSocketMessage(id, host, url, type, request);
+        WebSocketMessage message = new WebSocketMessage(messageId, host, url, type, request);
         message.setBodyStore(bodyStore);
         Platform.runLater(() -> consumer.accept(message));
         return bodyStore;

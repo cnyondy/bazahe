@@ -1,15 +1,26 @@
 package bazahe.httpparse;
 
-import bazahe.def.Pair;
+import jdk.nashorn.internal.ir.annotations.Immutable;
+import lombok.Getter;
+
+import java.util.Map;
 
 /**
  * Header with name and value
  *
  * @author Liu Dong
  */
-public class Header extends Pair<String, String> {
-    public Header(String first, String second) {
-        super(first, second);
+@Immutable
+public class Header implements Map.Entry<String, String> {
+    @Getter
+    private final String name;
+    @Getter
+    private final String value;
+
+
+    public Header(String name, String value) {
+        this.name = name;
+        this.value = value;
     }
 
     /**
@@ -26,6 +37,16 @@ public class Header extends Pair<String, String> {
 
     @Override
     public String toString() {
-        return "Header(" + getName() + "=" + getValue() + ")";
+        return "Header(" + name + "=" + value + ")";
+    }
+
+    @Override
+    public String getKey() {
+        return name;
+    }
+
+    @Override
+    public String setValue(String value) {
+        throw new UnsupportedOperationException();
     }
 }

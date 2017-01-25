@@ -1,6 +1,6 @@
 package bazahe.httpproxy;
 
-import bazahe.def.ProxyConfig;
+import bazahe.ProxyConfig;
 import com.google.common.io.Closeables;
 import lombok.Setter;
 import lombok.SneakyThrows;

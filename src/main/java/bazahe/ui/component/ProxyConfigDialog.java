@@ -24,7 +24,7 @@
  */
 package bazahe.ui.component;
 
-import bazahe.def.ProxyConfig;
+import bazahe.ProxyConfig;
 import bazahe.ui.controller.ProxyConfigController;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;

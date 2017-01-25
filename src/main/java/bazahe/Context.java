@@ -1,4 +1,4 @@
-package bazahe.def;
+package bazahe;
 
 import bazahe.httpproxy.SSLContextManager;
 import lombok.Getter;

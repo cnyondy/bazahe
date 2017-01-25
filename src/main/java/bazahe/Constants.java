@@ -1,4 +1,4 @@
-package bazahe.ui;
+package bazahe;
 
 /**
  * @author Liu Dong

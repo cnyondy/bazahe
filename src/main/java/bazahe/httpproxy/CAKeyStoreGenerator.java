@@ -1,6 +1,5 @@
 package bazahe.httpproxy;
 
-import bazahe.ui.Constants;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import org.bouncycastle.asn1.ASN1EncodableVector;
@@ -21,9 +20,6 @@ import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.*;
 import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;

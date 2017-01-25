@@ -5,7 +5,6 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 
 import javax.annotation.Nullable;
-import java.io.InputStream;
 
 /**
  * Handle http2 traffic
@@ -24,20 +23,8 @@ public class Http2Handler {
 
         // read client connection preface
         // read server connection preface
-        tunnel(srcInput, destInput);
+        Streams.tunnel(srcInput, destInput);
     }
 
 
-    private void tunnel(InputStream input1, InputStream input2) throws InterruptedException {
-        Thread thread = new Thread(() -> {
-            try {
-                IOUtils.consumeAll(input1);
-            } catch (Throwable t) {
-                logger.warn("tunnel traffic failed", t);
-            }
-        });
-        thread.start();
-        IOUtils.consumeAll(input2);
-        thread.join();
-    }
 }

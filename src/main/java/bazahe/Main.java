@@ -1,4 +1,4 @@
-package bazahe.ui;
+package bazahe;
 
 import javafx.application.Application;
 import javafx.application.Platform;

@@ -1,6 +1,6 @@
 package bazahe.ui.component;
 
-import bazahe.def.HttpMessage;
+import bazahe.httpparse.HttpMessage;
 import bazahe.ui.controller.HttpMessageController;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;

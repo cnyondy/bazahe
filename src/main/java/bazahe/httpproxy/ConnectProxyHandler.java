@@ -4,13 +4,13 @@ import bazahe.exception.HttpParserException;
 import bazahe.httpparse.*;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.hash.Hashing;
 import com.google.common.io.ByteStreams;
 import com.google.common.io.Closeables;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
+import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
@@ -19,7 +19,6 @@ import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
 import java.io.*;
 import java.net.Socket;
-import java.nio.charset.StandardCharsets;
 import java.util.Set;
 
 /**
@@ -50,8 +49,8 @@ public class ConnectProxyHandler implements ProxyHandler {
         RequestLine requestLine = headers.getRequestLine();
         String target = requestLine.getPath();
         logger.debug("Receive connect request to {}", target);
-        String host = AddressUtils.getHostFromTarget(target);
-        int port = AddressUtils.getPortFromTarget(target);
+        String host = AddressUtils.getHost(target);
+        int port = AddressUtils.getPort(target);
         // just tell client ok..
         HttpOutputStream output = new HttpOutputStream(serverSocket.getOutputStream());
         output.writeLine("HTTP/1.1 200 OK\r\n");
@@ -133,16 +132,10 @@ public class ConnectProxyHandler implements ProxyHandler {
             return true;
         }
 
-        int idx = firstLine.indexOf(" ");
-        if (idx <= 0) {
-            // not http request
-            tunnel(srcIn, dstIn);
-            return true;
-        }
-        String method = firstLine.substring(0, idx);
+        String method = StringUtils.substringBefore(firstLine, " ");
         if (!methods.contains(method)) {
             // not http request
-            tunnel(srcIn, dstIn);
+            Streams.tunnel(srcIn, dstIn);
             return true;
         }
 
@@ -164,14 +157,14 @@ public class ConnectProxyHandler implements ProxyHandler {
             expect100 = true;
         }
 
-        String id = Hashing.md5().hashString(rawRequestLine, StandardCharsets.UTF_8).toString() + System.nanoTime();
+        String id = MessageIdGenerator.getInstance().nextId();
         RequestLine requestLine = requestHeaders.getRequestLine();
         String upgrade = requestHeaders.getFirst("Upgrade");
         String host = requestHeaders.getFirst("Host");
         if (host == null) {
-            host = AddressUtils.getHostFromTarget(target);
+            host = AddressUtils.getHost(target);
         }
-        int port = AddressUtils.getPortFromTarget(target);
+        int port = AddressUtils.getPort(target);
 
         String url = AddressUtils.getUrl(ssl, upgrade, host, port, requestLine.getPath());
 
@@ -291,16 +284,4 @@ public class ConnectProxyHandler implements ProxyHandler {
     }
 
 
-    private void tunnel(InputStream input1, InputStream input2) throws InterruptedException {
-        Thread thread = new Thread(() -> {
-            try {
-                IOUtils.consumeAll(input1);
-            } catch (Throwable t) {
-                logger.warn("tunnel traffic failed", t);
-            }
-        });
-        thread.start();
-        IOUtils.consumeAll(input2);
-        thread.join();
-    }
 }

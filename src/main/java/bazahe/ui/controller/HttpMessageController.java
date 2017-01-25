@@ -1,6 +1,6 @@
 package bazahe.ui.controller;
 
-import bazahe.def.HttpMessage;
+import bazahe.httpparse.HttpMessage;
 import bazahe.httpparse.ResponseHeaders;
 import bazahe.store.BodyStore;
 import bazahe.store.BodyStoreType;

@@ -1,4 +1,4 @@
-package bazahe.ui;
+package bazahe;
 
 import java.util.ArrayList;
 import java.util.Collections;

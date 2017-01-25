@@ -47,7 +47,7 @@ public class ProxyWorker implements Runnable {
             }
             RequestLine requestLine = RequestLine.parse(rawRequestLine);
             if (requestLine.isHttp10()) {
-                //TODO: now just forbidden http 1.0
+                //now just forbidden http 1.0
                 logger.error("Http 1.0 not supported");
                 return;
             }

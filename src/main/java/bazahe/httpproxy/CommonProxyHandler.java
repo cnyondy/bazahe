@@ -2,8 +2,6 @@ package bazahe.httpproxy;
 
 import bazahe.httpparse.*;
 import com.google.common.collect.ImmutableSet;
-import com.google.common.collect.Lists;
-import com.google.common.hash.Hashing;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
@@ -18,8 +16,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.util.*;
+
+import static java.util.stream.Collectors.*;
 
 /**
  * Non-connect http handler
@@ -28,16 +27,18 @@ import java.util.*;
  */
 @Log4j2
 public class CommonProxyHandler implements ProxyHandler {
+    
+    private static MessageIdGenerator messageIdGenerator = new MessageIdGenerator();
 
     @Override
-    public void handle(Socket serverSocket, String rawRequestLine,
-                       @Nullable MessageListener messageListener) throws IOException {
-        HttpInputStream inputStream = new HttpInputStream(new BufferedInputStream(serverSocket.getInputStream()));
-        inputStream.putBackLine(rawRequestLine);
-        HttpOutputStream outputStream = new HttpOutputStream(serverSocket.getOutputStream());
+    public void handle(Socket serverSocket, String rawRequestLine, @Nullable MessageListener messageListener)
+            throws IOException {
+        HttpInputStream input = new HttpInputStream(new BufferedInputStream(serverSocket.getInputStream()));
+        input.putBackLine(rawRequestLine);
+        HttpOutputStream output = new HttpOutputStream(serverSocket.getOutputStream());
 
         while (true) {
-            boolean shouldBreak = handleOneRequest(inputStream, outputStream, messageListener);
+            boolean shouldBreak = handleOneRequest(input, output, messageListener);
             if (shouldBreak) {
                 logger.debug("Server close connection");
                 break;
@@ -62,15 +63,17 @@ public class CommonProxyHandler implements ProxyHandler {
             output.writeLine("HTTP/1.1 100 Continue\r\n");
         }
 
-        String id = Hashing.md5().hashString(rawRequestLine, StandardCharsets.UTF_8).toString() + System.nanoTime();
+        String messageId = MessageIdGenerator.getInstance().nextId();
         RequestLine requestLine = requestHeaders.getRequestLine();
         String method = requestLine.getMethod();
-        List<Header> newRequestHeaders = filterRequestHeaders(requestHeaders);
+        List<Header> newRequestHeaders = requestHeaders.getHeaders().stream()
+                .filter(h -> !proxyRemoveHeaders.contains(h.getName()))
+                .collect(toList());
         String url = requestLine.getPath();
 
         @Nullable OutputStream requestOutput = null;
         if (messageListener != null) {
-            requestOutput = messageListener.onHttpRequest(id, new URL(url).getHost(), url, requestHeaders);
+            requestOutput = messageListener.onHttpRequest(messageId, new URL(url).getHost(), url, requestHeaders);
         }
 
         boolean shouldClose = requestHeaders.shouldClose();
@@ -90,14 +93,14 @@ public class CommonProxyHandler implements ProxyHandler {
         ResponseHeaders responseHeaders = toResponseHeaders(rawResponse.getStatusLine(), rawResponse.getHeaders());
         @Nullable OutputStream responseOutput = null;
         if (messageListener != null) {
-            responseOutput = messageListener.onHttpResponse(id, responseHeaders);
+            responseOutput = messageListener.onHttpResponse(messageId, responseHeaders);
         }
         @Cleanup InputStream responseBody = getResponseBodyInput(responseOutput, rawResponse.getInput());
 
         List<Header> newResponseHeaders = filterResponseHeaders(shouldClose, responseHeaders);
         output.writeHeaders(newResponseHeaders);
         long respLen = responseHeaders.contentLen();
-        if (HttpUtils.respHasBody(requestHeaders.getRequestLine().getMethod(), statusCode)) {
+        if (respHasBody(requestHeaders.getRequestLine().getMethod(), statusCode)) {
             output.writeBody(respLen, responseBody);
         }
 
@@ -118,16 +121,16 @@ public class CommonProxyHandler implements ProxyHandler {
     private List<Header> filterResponseHeaders(boolean shouldClose, ResponseHeaders responseHeaders) {
         List<Header> newResponseHeaders = new ArrayList<>(responseHeaders.getHeaders());
         long respLen = responseHeaders.contentLen();
-        Set<String> set = new HashSet<>();
+        Set<String> removeHeaders = new HashSet<>();
 
         if (respLen == -1) {
             if (!responseHeaders.chunked()) {
-                set.add("Transfer-Encoding");
+                removeHeaders.add("Transfer-Encoding");
                 newResponseHeaders.add(new Header("Transfer-Encoding", "chunked"));
             }
         }
-        set.add("Connection");
-        removeHeaders(newResponseHeaders, set);
+        removeHeaders.add("Connection");
+        newResponseHeaders.removeIf(h -> removeHeaders.contains(h.getName()));
         if (!shouldClose) {
             newResponseHeaders.add(new Header("Connection", "Keep-Alive"));
         } else {
@@ -138,13 +141,6 @@ public class CommonProxyHandler implements ProxyHandler {
 
     private Set<String> proxyRemoveHeaders = ImmutableSet.of("Connection", "Proxy-Authenticate", "Proxy-Connection",
             "Transfer-Encoding");
-
-    private List<Header> filterRequestHeaders(RequestHeaders requestHeaders) {
-        List<Header> newRequestHeaders = new ArrayList<>(requestHeaders.getHeaders());
-        newRequestHeaders.removeIf(h -> h.getName().equalsIgnoreCase("Connection"));
-        removeHeaders(newRequestHeaders, proxyRemoveHeaders);
-        return newRequestHeaders;
-    }
 
     @SneakyThrows
     @Nullable
@@ -176,13 +172,18 @@ public class CommonProxyHandler implements ProxyHandler {
         return requestBody;
     }
 
-    private void removeHeaders(List<Header> headers, Set<String> names) {
-        headers.removeIf(h -> names.contains(h.getName()));
-    }
-
     private ResponseHeaders toResponseHeaders(String statusLine, List<Map.Entry<String, String>> headers) {
-        List<String> rawHeaders = Lists.transform(headers, h -> h.getKey() + ": " + h.getValue());
+        List<String> rawHeaders = headers.stream().map(h -> h.getKey() + ": " + h.getValue()).collect(toList());
         return new ResponseHeaders(statusLine, rawHeaders);
     }
 
+    private boolean respHasBody(String method, int statusCode) {
+        if (method.equalsIgnoreCase("HEAD")) {
+            return false;
+        }
+        if (statusCode >= 100 && statusCode < 200 || statusCode == 204 || statusCode == 304) {
+            return false;
+        }
+        return true;
+    }
 }

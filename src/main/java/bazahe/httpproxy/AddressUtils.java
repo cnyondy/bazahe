@@ -1,20 +1,18 @@
 package bazahe.httpproxy;
 
+import org.apache.commons.lang3.StringUtils;
+
 import javax.annotation.Nullable;
 
 /**
  * @author Liu Dong
  */
 class AddressUtils {
-    static String getHostFromTarget(String target) {
-        int idx = target.indexOf(":");
-        if (idx > 0) {
-            return target.substring(0, idx);
-        }
-        return target;
+    static String getHost(String target) {
+        return StringUtils.substringBefore(target, ":");
     }
 
-    static int getPortFromTarget(String target) {
+    static int getPort(String target) {
         int idx = target.indexOf(":");
         if (idx > 0) {
             return Integer.parseInt(target.substring(idx + 1));
