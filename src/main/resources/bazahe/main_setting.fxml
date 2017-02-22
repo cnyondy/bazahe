@@ -3,7 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<GridPane xmlns:fx="http://javafx.com/fxml" fx:controller="bazahe.ui.controller.ProxyConfigController" hgap="6"
+<GridPane xmlns:fx="http://javafx.com/fxml" fx:controller="bazahe.ui.controller.MainSettingController" hgap="6"
           vgap="4">
     <padding>
         <Insets top="25" right="25" bottom="25" left="25"/>

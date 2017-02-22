@@ -1,5 +1,6 @@
 package bazahe.ui.controller;
 
+import bazahe.MainSetting;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -7,35 +8,28 @@ import javafx.scene.control.CheckBox;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.stage.FileChooser;
-import lombok.Getter;
+import org.apache.commons.lang3.math.NumberUtils;
 
 import java.io.File;
 
 /**
  * @author Liu Dong
  */
-public class ProxyConfigController {
+public class MainSettingController {
 
     @FXML
-    @Getter
     private TextField hostField;
     @FXML
-    @Getter
     private TextField portFiled;
     @FXML
-    @Getter
     private TextField timeoutField;
     @FXML
-    @Getter
     private CheckBox useCustomKeyStoreCheckBox;
     @FXML
-    @Getter
     private TextField keyStoreField;
     @FXML
-    @Getter
     private Button chooseFileButton;
     @FXML
-    @Getter
     private PasswordField keyStorePasswordField;
 
 
@@ -48,6 +42,27 @@ public class ProxyConfigController {
         keyStoreField.setDisable(!selected);
         chooseFileButton.setDisable(!selected);
         keyStorePasswordField.setDisable(!selected);
+    }
+
+    public void setModel(MainSetting mainSetting) {
+        hostField.setText(mainSetting.getHost());
+        portFiled.setText("" + mainSetting.getPort());
+        timeoutField.setText("" + mainSetting.getTimeout());
+        useCustomKeyStoreCheckBox.setSelected(mainSetting.isUseCustomKeyStore());
+        keyStoreField.setText(mainSetting.getKeyStore());
+        keyStorePasswordField.setText(new String(mainSetting.getKeyStorePassword()));
+    }
+
+
+    public MainSetting getModel() {
+        MainSetting mainSetting = new MainSetting();
+        mainSetting.setHost(hostField.getText());
+        mainSetting.setPort(NumberUtils.toInt(portFiled.getText()));
+        mainSetting.setTimeout(NumberUtils.toInt(timeoutField.getText()));
+        mainSetting.setUseCustomKeyStore(useCustomKeyStoreCheckBox.isSelected());
+        mainSetting.setKeyStore(keyStoreField.getText());
+        mainSetting.setKeyStorePassword(keyStorePasswordField.getText().toCharArray());
+        return mainSetting;
     }
 
 

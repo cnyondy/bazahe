@@ -43,7 +43,7 @@ public class BodyStore extends OutputStream implements Serializable {
 
     @Getter
     @Setter
-    private transient boolean beaufify;
+    private transient boolean beautify;
 
     public BodyStore(@Nullable BodyStoreType type, @Nullable Charset charset,
                      @Nullable String contentEncoding) {

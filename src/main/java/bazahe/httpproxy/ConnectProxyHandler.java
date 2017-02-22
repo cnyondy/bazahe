@@ -1,5 +1,6 @@
 package bazahe.httpproxy;
 
+import bazahe.Context;
 import bazahe.exception.HttpParserException;
 import bazahe.httpparse.*;
 import com.google.common.base.Strings;
@@ -31,6 +32,7 @@ import java.util.Set;
 public class ConnectProxyHandler implements ProxyHandler {
 
     private final SSLContextManager sslContextManager;
+    private static Context context = Context.getInstance();
 
     public ConnectProxyHandler(SSLContextManager sslContextManager) {
         this.sslContextManager = sslContextManager;
@@ -81,13 +83,11 @@ public class ConnectProxyHandler implements ProxyHandler {
             wrappedServerSocket = sslSocket;
             ssl = true;
 
-            SSLContext clientSSlContext = SSLUtils.createClientSSlContext();
-            SSLSocketFactory factory = clientSSlContext.getSocketFactory();
-            clientSocket = factory.createSocket(host, port);
+            clientSocket = context.createSSLSocket(host, port);
         } else {
             wrappedServerSocket = new WrappedSocket(serverSocket, bos.toByteArray());
             ssl = false;
-            clientSocket = new Socket(host, port);
+            clientSocket = context.createSocket(host, port);
         }
 
         try {

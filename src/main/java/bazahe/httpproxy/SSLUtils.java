@@ -10,10 +10,10 @@ import java.security.SecureRandom;
 /**
  * @author Liu Dong
  */
-class SSLUtils {
+public class SSLUtils {
 
     @SneakyThrows
-    static SSLContext createClientSSlContext() {
+    public static SSLContext createClientSSlContext() {
         TrustManager[] trustAllManagers = new TrustManager[]{
                 new X509TrustManager() {
                     public void checkClientTrusted(java.security.cert.X509Certificate[] certs, String authType) {

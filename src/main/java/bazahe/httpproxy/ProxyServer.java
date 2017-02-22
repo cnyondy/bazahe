@@ -1,6 +1,6 @@
 package bazahe.httpproxy;
 
-import bazahe.ProxyConfig;
+import bazahe.MainSetting;
 import com.google.common.io.Closeables;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -25,7 +25,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @ThreadSafe
 public class ProxyServer {
 
-    private final ProxyConfig proxyConfig;
+    private final MainSetting mainSetting;
     private final SSLContextManager sslContextManager;
     private volatile ServerSocket serverSocket;
     @Setter
@@ -35,8 +35,8 @@ public class ProxyServer {
     private volatile Thread masterThread;
     private final AtomicInteger threadCounter = new AtomicInteger();
 
-    public ProxyServer(ProxyConfig config, SSLContextManager sslContextManager) {
-        this.proxyConfig = Objects.requireNonNull(config);
+    public ProxyServer(MainSetting config, SSLContextManager sslContextManager) {
+        this.mainSetting = Objects.requireNonNull(config);
         this.sslContextManager = sslContextManager;
     }
 
@@ -70,12 +70,12 @@ public class ProxyServer {
      */
     @SneakyThrows
     private void run() {
-        if (proxyConfig.getHost().isEmpty()) {
-            serverSocket = new ServerSocket(proxyConfig.getPort(), 128);
+        if (mainSetting.getHost().isEmpty()) {
+            serverSocket = new ServerSocket(mainSetting.getPort(), 128);
         } else {
-            serverSocket = new ServerSocket(proxyConfig.getPort(), 128, InetAddress.getByName(proxyConfig.getHost()));
+            serverSocket = new ServerSocket(mainSetting.getPort(), 128, InetAddress.getByName(mainSetting.getHost()));
         }
-        logger.info("proxy server run at {}:{}", proxyConfig.getHost(), proxyConfig.getPort());
+        logger.info("proxy server run at {}:{}", mainSetting.getHost(), mainSetting.getPort());
         while (true) {
             Socket socket;
             try {
@@ -91,7 +91,7 @@ public class ProxyServer {
             }
             ProxyWorker worker;
             try {
-                socket.setSoTimeout(proxyConfig.getTimeout() * 1000);
+                socket.setSoTimeout(mainSetting.getTimeout() * 1000);
                 worker = new ProxyWorker(socket, sslContextManager, messageListener);
             } catch (Exception e) {
                 Closeables.close(socket, true);

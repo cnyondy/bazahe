@@ -1,26 +1,20 @@
 package bazahe.ui.controller;
 
+import bazahe.AppResources;
 import bazahe.Context;
 import bazahe.httpparse.HttpMessage;
 import bazahe.httpparse.Message;
 import bazahe.httpparse.WebSocketMessage;
 import bazahe.httpproxy.ProxyServer;
-import bazahe.AppResources;
 import bazahe.ui.UIMessageListener;
 import bazahe.ui.UIUtils;
-import bazahe.ui.component.HttpMessagePane;
-import bazahe.ui.component.MyButton;
-import bazahe.ui.component.ProxyConfigDialog;
-import bazahe.ui.component.WebSocketMessagePane;
+import bazahe.ui.component.*;
 import bazahe.utils.NetUtils;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.Label;
-import javafx.scene.control.SplitPane;
-import javafx.scene.control.TreeItem;
-import javafx.scene.control.TreeView;
+import javafx.scene.control.*;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import lombok.SneakyThrows;
@@ -50,7 +44,7 @@ public class MainController {
     @FXML
     private SplitPane splitPane;
     @FXML
-    private MyButton proxyConfigureButton;
+    private SplitMenuButton proxyConfigureButton;
     @FXML
     private MyButton proxyControlButton;
 
@@ -68,18 +62,6 @@ public class MainController {
     private Context context = Context.getInstance();
 
     @FXML
-    @SneakyThrows
-    void configureProxy(ActionEvent e) {
-        val dialog = new ProxyConfigDialog();
-        dialog.proxyConfigProperty().setValue(context.getConfig());
-        val newConfig = dialog.showAndWait();
-        if (newConfig.isPresent()) {
-            val task = new SaveConfigTask(newConfig.get(), context);
-            UIUtils.runBackground(task, "Set new config failed");
-        }
-    }
-
-    @FXML
     void proxyControl(ActionEvent e) {
         if (proxyStart) {
             stopProxy();
@@ -95,7 +77,7 @@ public class MainController {
         openFileButton.setDisable(true);
         saveFileButton.setDisable(true);
         try {
-            proxyServer = new ProxyServer(context.getConfig(), context.getSslContextManager());
+            proxyServer = new ProxyServer(context.getMainSetting(), context.getSslContextManager());
             proxyServer.setMessageListener(new UIMessageListener(this::addTreeItemMessage));
             proxyServer.start();
         } catch (Throwable t) {
@@ -155,18 +137,45 @@ public class MainController {
     }
 
     /**
-     * Load app config, and keyStore contains private key/certs
+     * Load app mainSetting, and keyStore contains private key/certs
      */
     private void loadConfigAndKeyStore() {
         val task = new InitContextTask(context);
-        UIUtils.runBackground(task, "Init config failed");
+        UIUtils.runBackground(task, "Init mainSetting failed");
+    }
+
+    /**
+     * Handle setting menu
+     */
+    @FXML
+    @SneakyThrows
+    void updateSetting(ActionEvent e) {
+        val dialog = new MainSettingDialog();
+        dialog.proxyConfigProperty().setValue(context.getMainSetting());
+        val newConfig = dialog.showAndWait();
+        if (newConfig.isPresent()) {
+            val task = new SaveSettingTask(context, newConfig.get(), context.getSecondaryProxy());
+            UIUtils.runBackground(task, "save settings failed");
+        }
+    }
+
+
+    @FXML
+    void setSecondaryProxy(ActionEvent e) {
+        SecondaryProxyDialog dialog = new SecondaryProxyDialog();
+        dialog.secondaryProxyProperty().setValue(context.getSecondaryProxy());
+        val newConfig = dialog.showAndWait();
+        if (newConfig.isPresent()) {
+            val task = new SaveSettingTask(context, context.getMainSetting(), newConfig.get());
+            UIUtils.runBackground(task, "save secondary proxy setting failed");
+        }
     }
 
     /**
      * Get listened addresses, show in toolbar
      */
     private void updateListenedAddress() {
-        val config = context.getConfig();
+        val config = context.getMainSetting();
         String host = config.getHost().trim();
         int port = config.getPort();
         if (!host.isEmpty()) {
@@ -216,7 +225,7 @@ public class MainController {
     }
 
     @FXML
-    private void clearAll(ActionEvent event) {
+    private void clearAll(ActionEvent e) {
         messageTree.setRoot(new TreeItem<>(new RTreeItemValue.NodeValue("")));
     }
 
@@ -244,7 +253,7 @@ public class MainController {
 
 
     @FXML
-    void open(ActionEvent event) {
+    void open(ActionEvent e) {
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Bazahe archive data", "*.baza"));
         File file = fileChooser.showOpenDialog(this.root.getScene().getWindow());
@@ -260,7 +269,7 @@ public class MainController {
 
     // save captured data to file
     @FXML
-    void save(ActionEvent event) throws IOException {
+    void save(ActionEvent e) throws IOException {
 
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Bazahe archive data", "*.baza"));
@@ -273,4 +282,5 @@ public class MainController {
         val saveTask = new SaveTask(file.getPath(), root);
         UIUtils.runBackground(saveTask, "Save data failed!");
     }
+
 }

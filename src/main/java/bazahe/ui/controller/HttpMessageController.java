@@ -110,7 +110,7 @@ public class HttpMessageController {
 
         boolean showBeautify = storeType == BodyStoreType.json || storeType == BodyStoreType.www_form ||
                 storeType == BodyStoreType.xml;
-        beautifyButton.setSelected(bodyStore.isBeaufify());
+        beautifyButton.setSelected(bodyStore.isBeautify());
         beautifyButton.setManaged(showBeautify);
         beautifyButton.setVisible(showBeautify);
 
@@ -141,7 +141,7 @@ public class HttpMessageController {
             }
 
             // beautify
-            if (bodyStore.isBeaufify()) {
+            if (bodyStore.isBeautify()) {
                 Function<String, String> formatter = getFormatter(bodyStore.getCharset(), storeType);
                 text = formatter.apply(text);
             }
@@ -287,7 +287,7 @@ public class HttpMessageController {
         if (bodyStore == null) {
             return;
         }
-        bodyStore.setBeaufify(beautifyButton.isSelected());
+        bodyStore.setBeautify(beautifyButton.isSelected());
         if (bodyStore.isClosed() && bodyStore.getSize() != 0 && bodyStore.getType().isText()) {
             refreshBody(bodyStore);
         }

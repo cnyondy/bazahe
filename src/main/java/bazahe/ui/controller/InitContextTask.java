@@ -1,10 +1,10 @@
 package bazahe.ui.controller;
 
-import bazahe.Context;
-import bazahe.ProxyConfig;
-import bazahe.httpproxy.CAKeyStoreGenerator;
-import bazahe.httpproxy.SSLContextManager;
 import bazahe.Constants;
+import bazahe.Context;
+import bazahe.MainSetting;
+import bazahe.SecondaryProxy;
+import bazahe.httpproxy.CAKeyStoreGenerator;
 import bazahe.ui.UIUtils;
 import javafx.concurrent.Task;
 import lombok.extern.log4j.Log4j2;
@@ -31,28 +31,30 @@ public class InitContextTask extends Task<Void> {
 
     @Override
     public Void call() throws Exception {
-        // load config
-        updateMessage("Loading config file...");
-        Path configPath = ProxyConfig.configPath();
+        // load mainSetting
+        updateMessage("Loading mainSetting file...");
+        Path configPath = MainSetting.configPath();
         updateProgress(1, 10);
-        ProxyConfig config;
+        MainSetting mainSetting;
+        SecondaryProxy secondaryProxy;
         if (Files.exists(configPath)) {
             try (InputStream in = Files.newInputStream(configPath);
                  BufferedInputStream bin = new BufferedInputStream(in);
                  ObjectInputStream oin = new ObjectInputStream(bin)) {
-                config = (ProxyConfig) oin.readObject();
+                mainSetting = (MainSetting) oin.readObject();
+                secondaryProxy = (SecondaryProxy) oin.readObject();
             }
         } else {
-            config = ProxyConfig.getDefault();
+            mainSetting = MainSetting.getDefault();
+            secondaryProxy = new SecondaryProxy();
         }
-        context.setConfig(config);
         updateProgress(3, 10);
 
         updateMessage("Loading key store file...");
-        Path keyStorePath = Paths.get(config.usedKeyStore());
-        char[] keyStorePassword = config.usedPassword();
+        Path keyStorePath = Paths.get(mainSetting.usedKeyStore());
+        char[] keyStorePassword = mainSetting.usedPassword();
         if (!Files.exists(keyStorePath)) {
-            if (!config.isUseCustomKeyStore()) {
+            if (!mainSetting.isUseCustomKeyStore()) {
                 logger.info("Generate new key store file");
                 updateMessage("Generating new key store...");
                 // generate one new key store
@@ -60,20 +62,16 @@ public class InitContextTask extends Task<Void> {
                 generator.generate(keyStorePassword, Constants.rootCertificateValidates);
                 byte[] keyStoreData = generator.getKeyStoreData();
                 Files.write(keyStorePath, keyStoreData);
-                updateProgress(8, 10);
             } else {
                 UIUtils.showMessageDialog("KeyStore file not found");
                 //TODO: How to deal with this?
             }
 
-        } else {
-            updateProgress(5, 10);
         }
-
-        updateMessage("Loading key store file...");
-        SSLContextManager sslContextManager = new SSLContextManager(keyStorePath.toString(), keyStorePassword);
+        context.setMainSettingAndRefreshSSLContextManager(mainSetting);
+        updateProgress(8, 10);
+        context.setSecondaryProxyAndRefreshSocketFactory(secondaryProxy);
         updateProgress(10, 10);
-        context.setSslContextManager(sslContextManager);
         return null;
     }
 }

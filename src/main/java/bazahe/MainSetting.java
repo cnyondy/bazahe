@@ -11,14 +11,15 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
- * The proxy config infos
+ * The proxy mainSetting infos
  *
  * @author Liu Dong
  */
 @Getter
 @Setter
 @ToString
-public class ProxyConfig implements Serializable {
+public class MainSetting implements Serializable {
+    private static final long serialVersionUID = -1828819182428842928L;
     private String host;
     private int port;
     // timeout in seconds
@@ -39,7 +40,7 @@ public class ProxyConfig implements Serializable {
     }
 
     /**
-     * Get config file path
+     * Get mainSetting file path
      */
     public static Path configPath() {
         return getParentPath().resolve(Paths.get("config"));
@@ -73,13 +74,13 @@ public class ProxyConfig implements Serializable {
         return defaultKeyStorePassword();
     }
 
-    public static ProxyConfig getDefault() {
-        ProxyConfig proxyConfig = new ProxyConfig();
-        proxyConfig.setHost("");
-        proxyConfig.setPort(1024);
-        proxyConfig.setKeyStore("");
-        proxyConfig.setKeyStorePassword(new char[0]);
-        proxyConfig.setTimeout(120);
-        return proxyConfig;
+    public static MainSetting getDefault() {
+        MainSetting mainSetting = new MainSetting();
+        mainSetting.setHost("");
+        mainSetting.setPort(1024);
+        mainSetting.setKeyStore("");
+        mainSetting.setKeyStorePassword(new char[0]);
+        mainSetting.setTimeout(120);
+        return mainSetting;
     }
 }
