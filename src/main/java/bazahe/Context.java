@@ -4,6 +4,7 @@ import bazahe.httpproxy.SSLContextManager;
 import bazahe.httpproxy.SSLUtils;
 import lombok.Getter;
 import lombok.SneakyThrows;
+import lombok.extern.log4j.Log4j2;
 
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -17,6 +18,7 @@ import java.nio.file.Paths;
  *
  * @author Liu Dong
  */
+@Log4j2
 public class Context {
     @Getter
     private volatile MainSetting mainSetting;
@@ -26,6 +28,8 @@ public class Context {
     private volatile SSLContextManager sslContextManager;
     @Getter
     private volatile Dialer dialer;
+    @Getter
+    private volatile Proxy proxy = Proxy.NO_PROXY;
 
 
     private static Context instance = new Context();
@@ -46,7 +50,6 @@ public class Context {
     public void setSecondaryProxyAndRefreshSocketFactory(SecondaryProxy secondaryProxy) {
         if (secondaryProxy.isUse()) {
             dialer = (host, port) -> {
-                Proxy proxy;
                 if (secondaryProxy.getType().equals("socks5")) {
                     proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(secondaryProxy.getHost(),
                             secondaryProxy.getPort()));
@@ -54,7 +57,7 @@ public class Context {
                     proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(secondaryProxy.getHost(),
                             secondaryProxy.getPort()));
                 } else {
-                    proxy = Proxy.NO_PROXY;
+                    throw new RuntimeException("unsupport proxy type: " + secondaryProxy.getType());
                 }
                 Socket socket = new Socket(proxy);
                 socket.connect(InetSocketAddress.createUnresolved(host, port));
@@ -62,6 +65,7 @@ public class Context {
             };
         } else {
             dialer = Socket::new;
+            proxy = Proxy.NO_PROXY;
         }
 
 

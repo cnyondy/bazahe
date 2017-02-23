@@ -1,19 +1,20 @@
 package bazahe.httpproxy;
 
+import bazahe.Context;
 import bazahe.httpparse.*;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.io.ByteStreams;
 import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
-import net.dongliu.requests.RawResponse;
-import net.dongliu.requests.RequestBuilder;
-import net.dongliu.requests.Requests;
 
 import javax.annotation.Nullable;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.Proxy;
 import java.net.Socket;
 import java.net.URL;
 import java.util.*;
@@ -27,8 +28,6 @@ import static java.util.stream.Collectors.*;
  */
 @Log4j2
 public class CommonProxyHandler implements ProxyHandler {
-    
-    private static MessageIdGenerator messageIdGenerator = new MessageIdGenerator();
 
     @Override
     public void handle(Socket serverSocket, String rawRequestLine, @Nullable MessageListener messageListener)
@@ -46,6 +45,8 @@ public class CommonProxyHandler implements ProxyHandler {
         }
     }
 
+    //TODO: HttpUrlConnection always resolve dns before send request when using a proxy.
+    //how ever, it get a connection pool
     @SneakyThrows
     private boolean handleOneRequest(HttpInputStream input, HttpOutputStream output,
                                      @Nullable MessageListener messageListener) {
@@ -79,23 +80,61 @@ public class CommonProxyHandler implements ProxyHandler {
         boolean shouldClose = requestHeaders.shouldClose();
         @Cleanup @Nullable InputStream requestBody = getRequestBodyInputStream(input, requestHeaders, requestOutput);
 
-        RequestBuilder requestBuilder = Requests.newRequest(method, url)
-                .compress(false).followRedirect(false)
-                .verify(false)
-                .headers(newRequestHeaders);
+        Proxy proxy = Context.getInstance().getProxy();
+        int timeout = Context.getInstance().getMainSetting().getTimeout() * 1000;
+        HttpURLConnection conn = (HttpURLConnection) new URL(url).openConnection(proxy);
+        conn.setRequestMethod(method);
+        conn.setReadTimeout(timeout);
+        conn.setConnectTimeout(timeout);
+        conn.setInstanceFollowRedirects(false);
         if (requestBody != null) {
-            requestBuilder.body(requestBody);
+            conn.setDoOutput(true);
         }
-        @Cleanup RawResponse rawResponse = requestBuilder.send();
 
-        int statusCode = rawResponse.getStatusCode();
-        output.writeLine(rawResponse.getStatusLine());
-        ResponseHeaders responseHeaders = toResponseHeaders(rawResponse.getStatusLine(), rawResponse.getHeaders());
+        for (Header header : newRequestHeaders) {
+            conn.setRequestProperty(header.getName(), String.valueOf(header.getValue()));
+        }
+        if (shouldClose) {
+            conn.setRequestProperty("Connection", "close");
+        }
+        conn.connect();
+        if (requestBody != null) {
+            ByteStreams.copy(requestBody, conn.getOutputStream());
+        }
+        int statusCode = conn.getResponseCode();
+        String statusLine = null;
+        // headers and cookies
+        List<Map.Entry<String, String>> headerList = new ArrayList<>();
+        int index = 0;
+        while (true) {
+            String key = conn.getHeaderFieldKey(index);
+            String value = conn.getHeaderField(index);
+            if (value == null) {
+                break;
+            }
+            index++;
+            //status line
+            if (key == null) {
+                statusLine = value;
+                continue;
+            }
+            headerList.add(new Header(key, value));
+        }
+        InputStream responseInput;
+        try {
+            responseInput = conn.getInputStream();
+        } catch (IOException e) {
+            responseInput = conn.getErrorStream();
+        }
+
+        Objects.requireNonNull(statusLine);
+        output.writeLine(statusLine);
+        ResponseHeaders responseHeaders = toResponseHeaders(statusLine, headerList);
         @Nullable OutputStream responseOutput = null;
         if (messageListener != null) {
             responseOutput = messageListener.onHttpResponse(messageId, responseHeaders);
         }
-        @Cleanup InputStream responseBody = getResponseBodyInput(responseOutput, rawResponse.getInput());
+        @Cleanup InputStream responseBody = getResponseBodyInput(responseOutput, responseInput);
 
         List<Header> newResponseHeaders = filterResponseHeaders(shouldClose, responseHeaders);
         output.writeHeaders(newResponseHeaders);
