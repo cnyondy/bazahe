@@ -17,17 +17,4 @@
 
     <Label text="Timeout(Seconds)" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
     <TextField fx:id="timeoutField" GridPane.columnIndex="1" GridPane.rowIndex="3" maxWidth="80"/>
-
-    <CheckBox fx:id="useCustomKeyStoreCheckBox" GridPane.columnIndex="0" GridPane.rowIndex="4" GridPane.columnSpan="2"
-              text="Use Custom Root CA KeyStore"/>
-
-    <Label text="Root CA KeyStore" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
-    <TextField fx:id="keyStoreField" GridPane.columnIndex="1" GridPane.rowIndex="5" prefWidth="400" disable="true"/>
-    <Button fx:id="chooseFileButton" text="Choose KeyStore File" GridPane.columnIndex="1" GridPane.rowIndex="6"
-            onAction="#choseFile" disable="true"/>
-
-    <Label text="KeyStore Password" GridPane.columnIndex="0" GridPane.rowIndex="7"/>
-    <PasswordField fx:id="keyStorePasswordField" GridPane.columnIndex="1" GridPane.rowIndex="7" prefWidth="250"
-                   disable="true"/>
-
 </GridPane>

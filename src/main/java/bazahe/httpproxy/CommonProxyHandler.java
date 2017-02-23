@@ -27,7 +27,7 @@ import static java.util.stream.Collectors.*;
  * @author Liu Dong
  */
 @Log4j2
-public class CommonProxyHandler implements ProxyHandler {
+public class CommonProxyHandler implements Handler {
 
     @Override
     public void handle(Socket serverSocket, String rawRequestLine, @Nullable MessageListener messageListener)

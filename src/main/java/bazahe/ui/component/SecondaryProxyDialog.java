@@ -24,7 +24,7 @@
  */
 package bazahe.ui.component;
 
-import bazahe.SecondaryProxy;
+import bazahe.SecondaryProxySetting;
 import bazahe.ui.controller.SecondaryProxyController;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
@@ -39,9 +39,9 @@ import lombok.SneakyThrows;
 /**
  * Show second proxy setting.
  */
-public class SecondaryProxyDialog extends Dialog<SecondaryProxy> {
+public class SecondaryProxyDialog extends Dialog<SecondaryProxySetting> {
 
-    private final ObjectProperty<SecondaryProxy> secondaryProxy = new SimpleObjectProperty<>();
+    private final ObjectProperty<SecondaryProxySetting> secondaryProxy = new SimpleObjectProperty<>();
 
     @SneakyThrows
     public SecondaryProxyDialog() {
@@ -64,11 +64,11 @@ public class SecondaryProxyDialog extends Dialog<SecondaryProxy> {
 
     }
 
-    public SecondaryProxy getSecondaryProxy() {
+    public SecondaryProxySetting getSecondaryProxy() {
         return secondaryProxy.get();
     }
 
-    public ObjectProperty<SecondaryProxy> secondaryProxyProperty() {
+    public ObjectProperty<SecondaryProxySetting> secondaryProxyProperty() {
         return secondaryProxy;
     }
 

@@ -14,10 +14,10 @@ import java.net.Socket;
  *
  * @author Liu Dong
  */
-public class HttpHandler implements ProxyHandler {
+public class HttpRequestHandler implements Handler {
     private final SSLContextManager sslContextManager;
 
-    public HttpHandler(SSLContextManager sslContextManager) {
+    public HttpRequestHandler(SSLContextManager sslContextManager) {
         this.sslContextManager = sslContextManager;
     }
 

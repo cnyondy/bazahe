@@ -5,6 +5,7 @@ import bazahe.Context;
 import bazahe.httpparse.HttpMessage;
 import bazahe.httpparse.Message;
 import bazahe.httpparse.WebSocketMessage;
+import bazahe.httpproxy.AppKeyStoreGenerator;
 import bazahe.httpproxy.ProxyServer;
 import bazahe.ui.UIMessageListener;
 import bazahe.ui.UIUtils;
@@ -24,6 +25,7 @@ import org.controlsfx.control.PopOver;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 
 import static java.util.stream.Collectors.*;
 
@@ -33,6 +35,8 @@ import static java.util.stream.Collectors.*;
 @Log4j2
 public class MainController {
 
+    @FXML
+    private SplitMenuButton setKeyStoreButton;
     @FXML
     private MyButton saveFileButton;
     @FXML
@@ -151,22 +155,35 @@ public class MainController {
     @SneakyThrows
     void updateSetting(ActionEvent e) {
         val dialog = new MainSettingDialog();
-        dialog.proxyConfigProperty().setValue(context.getMainSetting());
+        dialog.mainSettingProperty().setValue(context.getMainSetting());
         val newConfig = dialog.showAndWait();
         if (newConfig.isPresent()) {
-            val task = new SaveSettingTask(context, newConfig.get(), context.getSecondaryProxy());
+            val task = new SaveSettingTask(context, newConfig.get(), context.getKeyStoreSetting(),
+                    context.getSecondaryProxySetting());
             UIUtils.runBackground(task, "save settings failed");
         }
     }
 
+    @FXML
+    void setKeyStore(ActionEvent e) {
+        val dialog = new KeyStoreSettingDialog();
+        dialog.keyStoreSettingProperty().setValue(context.getKeyStoreSetting());
+        val newConfig = dialog.showAndWait();
+        if (newConfig.isPresent()) {
+            val task = new SaveSettingTask(context, context.getMainSetting(), newConfig.get(),
+                    context.getSecondaryProxySetting());
+            UIUtils.runBackground(task, "save key store failed");
+        }
+    }
 
     @FXML
     void setSecondaryProxy(ActionEvent e) {
         SecondaryProxyDialog dialog = new SecondaryProxyDialog();
-        dialog.secondaryProxyProperty().setValue(context.getSecondaryProxy());
+        dialog.secondaryProxyProperty().setValue(context.getSecondaryProxySetting());
         val newConfig = dialog.showAndWait();
         if (newConfig.isPresent()) {
-            val task = new SaveSettingTask(context, context.getMainSetting(), newConfig.get());
+            val task = new SaveSettingTask(context, context.getMainSetting(), context.getKeyStoreSetting(),
+                    newConfig.get());
             UIUtils.runBackground(task, "save secondary proxy setting failed");
         }
     }
@@ -270,7 +287,6 @@ public class MainController {
     // save captured data to file
     @FXML
     void save(ActionEvent e) throws IOException {
-
         FileChooser fileChooser = new FileChooser();
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Bazahe archive data", "*.baza"));
         fileChooser.setInitialFileName("bazahe.baza");
@@ -279,8 +295,40 @@ public class MainController {
             return;
         }
         val root = messageTree.getRoot();
-        val saveTask = new SaveTask(file.getPath(), root);
+        val saveTask = new SaveTrafficDataTask(file.getPath(), root);
         UIUtils.runBackground(saveTask, "Save data failed!");
     }
 
+
+    @FXML
+    @SneakyThrows
+    void exportPem(ActionEvent e) {
+        AppKeyStoreGenerator appKeyStoreGenerator = Context.getInstance().getSslContextManager()
+                .getAppKeyStoreGenerator();
+        byte[] data = appKeyStoreGenerator.exportCACertificate(true);
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Pem file", "*.pem"));
+        fileChooser.setInitialFileName("bazahe.pem");
+        File file = fileChooser.showSaveDialog(this.root.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+        Files.write(file.toPath(), data);
+    }
+
+    @FXML
+    @SneakyThrows
+    void exportCrt(ActionEvent e) {
+        AppKeyStoreGenerator appKeyStoreGenerator = Context.getInstance().getSslContextManager()
+                .getAppKeyStoreGenerator();
+        byte[] data = appKeyStoreGenerator.exportCACertificate(false);
+        FileChooser fileChooser = new FileChooser();
+        fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Crt file", "*.crt"));
+        fileChooser.setInitialFileName("bazahe.crt");
+        File file = fileChooser.showSaveDialog(this.root.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+        Files.write(file.toPath(), data);
+    }
 }

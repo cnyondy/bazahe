@@ -12,9 +12,9 @@ import java.io.Serializable;
 @Getter
 @Setter
 @ToString
-public class SecondaryProxy implements Serializable {
+public class SecondaryProxySetting implements Serializable {
     private static final long serialVersionUID = 7257755061846443485L;
-    private String type = "socks";
+    private String type = "socks5";
     private String host = "";
     private int port;
     private String user = "";

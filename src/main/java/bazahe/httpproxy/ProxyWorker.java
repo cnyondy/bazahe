@@ -51,13 +51,13 @@ public class ProxyWorker implements Runnable {
                 logger.error("Http 1.0 not supported");
                 return;
             }
-            ProxyHandler handler;
+            Handler handler;
             String method = requestLine.getMethod();
             String path = requestLine.getPath();
             if (method.equalsIgnoreCase("CONNECT")) {
                 handler = new ConnectProxyHandler(sslContextManager);
             } else if (path.startsWith("/")) {
-                handler = new HttpHandler(sslContextManager);
+                handler = new HttpRequestHandler(sslContextManager);
             } else {
                 handler = new CommonProxyHandler();
             }

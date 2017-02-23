@@ -1,7 +1,7 @@
 package bazahe.ui.component;
 
-import bazahe.MainSetting;
-import bazahe.ui.controller.MainSettingController;
+import bazahe.KeyStoreSetting;
+import bazahe.ui.controller.KeyStoreSettingController;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXMLLoader;
@@ -15,18 +15,18 @@ import lombok.SneakyThrows;
 /**
  * Show proxy configure.
  */
-public class MainSettingDialog extends Dialog<MainSetting> {
+public class KeyStoreSettingDialog extends Dialog<KeyStoreSetting> {
 
-    private final ObjectProperty<MainSetting> mainSetting = new SimpleObjectProperty<>();
+    private final ObjectProperty<KeyStoreSetting> keyStoreSetting = new SimpleObjectProperty<>();
 
     @SneakyThrows
-    public MainSettingDialog() {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/bazahe/main_setting.fxml"));
+    public KeyStoreSettingDialog() {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/bazahe/key_store_setting.fxml"));
         GridPane gridPane = loader.load();
-        MainSettingController controller = loader.getController();
+        KeyStoreSettingController controller = loader.getController();
 
         getDialogPane().setContent(gridPane);
-        setTitle("Settings");
+        setTitle("KeyStore Setting");
         final DialogPane dialogPane = getDialogPane();
         dialogPane.getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
         dialogPane.setContent(gridPane);
@@ -36,16 +36,16 @@ public class MainSettingDialog extends Dialog<MainSetting> {
             return data == ButtonData.OK_DONE ? controller.getModel() : null;
         });
 
-        mainSetting.addListener((o, old, n) -> controller.setModel(n));
+        keyStoreSetting.addListener((o, old, n) -> controller.setModel(n));
 
     }
 
-    public MainSetting getMainSetting() {
-        return mainSetting.get();
+    public KeyStoreSetting getKeyStoreSetting() {
+        return keyStoreSetting.get();
     }
 
-    public ObjectProperty<MainSetting> mainSettingProperty() {
-        return mainSetting;
+    public ObjectProperty<KeyStoreSetting> keyStoreSettingProperty() {
+        return keyStoreSetting;
     }
 
 }

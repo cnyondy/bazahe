@@ -29,7 +29,7 @@ import java.util.Set;
  * @author Liu Dong
  */
 @Log4j2
-public class ConnectProxyHandler implements ProxyHandler {
+public class ConnectProxyHandler implements Handler {
 
     private final SSLContextManager sslContextManager;
     private static Context context = Context.getInstance();

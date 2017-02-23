@@ -1,6 +1,6 @@
 package bazahe.ui.controller;
 
-import bazahe.SecondaryProxy;
+import bazahe.SecondaryProxySetting;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import org.apache.commons.lang3.math.NumberUtils;
@@ -48,14 +48,14 @@ public class SecondaryProxyController {
         }
     }
 
-    public void setModel(SecondaryProxy secondaryProxy) {
-        useSecondaryProxy.setSelected(secondaryProxy.isUse());
-        hostField.setText(secondaryProxy.getHost());
-        portFiled.setText(String.valueOf(secondaryProxy.getPort()));
-        userField.setText(secondaryProxy.getUser());
-        passwordField.setText(secondaryProxy.getPasssword());
+    public void setModel(SecondaryProxySetting secondaryProxySetting) {
+        useSecondaryProxy.setSelected(secondaryProxySetting.isUse());
+        hostField.setText(secondaryProxySetting.getHost());
+        portFiled.setText(String.valueOf(secondaryProxySetting.getPort()));
+        userField.setText(secondaryProxySetting.getUser());
+        passwordField.setText(secondaryProxySetting.getPasssword());
 //        proxyTypeGroup.selectToggle();
-        String type = secondaryProxy.getType();
+        String type = secondaryProxySetting.getType();
         if (type.equals("socks5") || type.isEmpty()) {
             socks5.setSelected(true);
         } else if (type.equals("http")) {
@@ -65,15 +65,15 @@ public class SecondaryProxyController {
         }
     }
 
-    public SecondaryProxy getModel() {
-        SecondaryProxy secondaryProxy = new SecondaryProxy();
-        secondaryProxy.setUse(useSecondaryProxy.isSelected());
-        secondaryProxy.setHost(hostField.getText());
-        secondaryProxy.setPort(NumberUtils.toInt(portFiled.getText()));
-        secondaryProxy.setUser(userField.getText());
-        secondaryProxy.setPasssword(passwordField.getText());
+    public SecondaryProxySetting getModel() {
+        SecondaryProxySetting secondaryProxySetting = new SecondaryProxySetting();
+        secondaryProxySetting.setUse(useSecondaryProxy.isSelected());
+        secondaryProxySetting.setHost(hostField.getText());
+        secondaryProxySetting.setPort(NumberUtils.toInt(portFiled.getText()));
+        secondaryProxySetting.setUser(userField.getText());
+        secondaryProxySetting.setPasssword(passwordField.getText());
         RadioButton radioButton = (RadioButton) proxyTypeGroup.getSelectedToggle();
-        secondaryProxy.setType(radioButton.getId());
-        return secondaryProxy;
+        secondaryProxySetting.setType(radioButton.getId());
+        return secondaryProxySetting;
     }
 }

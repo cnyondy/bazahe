@@ -9,7 +9,7 @@ import java.net.Socket;
  *
  * @author Liu Dong
  */
-public interface ProxyHandler {
+public interface Handler {
 
     void handle(Socket serverSocket, String rawRequestLine, @Nullable MessageListener messageListener) throws IOException;
 }

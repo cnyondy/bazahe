@@ -12,6 +12,7 @@ import java.net.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Objects;
 
 /**
  * Context and settings
@@ -23,7 +24,9 @@ public class Context {
     @Getter
     private volatile MainSetting mainSetting;
     @Getter
-    private volatile SecondaryProxy secondaryProxy;
+    private volatile KeyStoreSetting keyStoreSetting;
+    @Getter
+    private volatile SecondaryProxySetting secondaryProxySetting;
     @Getter
     private volatile SSLContextManager sslContextManager;
     @Getter
@@ -31,33 +34,41 @@ public class Context {
     @Getter
     private volatile Proxy proxy = Proxy.NO_PROXY;
 
-
     private static Context instance = new Context();
 
     private Context() {
     }
 
+
     @SneakyThrows
-    public void setMainSettingAndRefreshSSLContextManager(MainSetting mainSetting) {
-        Path path = Paths.get(mainSetting.usedKeyStore());
+    public void setKeyStoreSetting(KeyStoreSetting setting) {
+        Objects.requireNonNull(setting);
+        Path path = Paths.get(setting.usedKeyStore());
         if (sslContextManager == null || !Files.isSameFile(path, Paths.get(this.sslContextManager.getKeyStorePath()))) {
 //            updateMessage("Load new key store file");
-            this.sslContextManager = new SSLContextManager(mainSetting.usedKeyStore(), mainSetting.usedPassword());
+            this.sslContextManager = new SSLContextManager(setting.usedKeyStore(),
+                    setting.usedPassword().toCharArray());
         }
-        this.mainSetting = mainSetting;
+        this.keyStoreSetting = setting;
     }
 
-    public void setSecondaryProxyAndRefreshSocketFactory(SecondaryProxy secondaryProxy) {
-        if (secondaryProxy.isUse()) {
+    @SneakyThrows
+    public void setMainSetting(MainSetting mainSetting) {
+        this.mainSetting = Objects.requireNonNull(mainSetting);
+    }
+
+    public void setSecondaryProxySetting(SecondaryProxySetting secondaryProxySetting) {
+        Objects.requireNonNull(secondaryProxySetting);
+        if (secondaryProxySetting.isUse()) {
             dialer = (host, port) -> {
-                if (secondaryProxy.getType().equals("socks5")) {
-                    proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(secondaryProxy.getHost(),
-                            secondaryProxy.getPort()));
-                } else if (secondaryProxy.getType().equals("http")) {
-                    proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(secondaryProxy.getHost(),
-                            secondaryProxy.getPort()));
+                if (secondaryProxySetting.getType().equals("socks5")) {
+                    proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(secondaryProxySetting.getHost(),
+                            secondaryProxySetting.getPort()));
+                } else if (secondaryProxySetting.getType().equals("http")) {
+                    proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(secondaryProxySetting.getHost(),
+                            secondaryProxySetting.getPort()));
                 } else {
-                    throw new RuntimeException("unsupport proxy type: " + secondaryProxy.getType());
+                    throw new RuntimeException("unsupport proxy type: " + secondaryProxySetting.getType());
                 }
                 Socket socket = new Socket(proxy);
                 socket.connect(InetSocketAddress.createUnresolved(host, port));
@@ -69,22 +80,22 @@ public class Context {
         }
 
 
-        if (secondaryProxy.isUse() && (this.secondaryProxy == null ||
-                !secondaryProxy.getUser().equals(this.secondaryProxy.getUser()) ||
-                !secondaryProxy.getPasssword().equals(this.secondaryProxy.getPasssword()))) {
-            if (secondaryProxy.getUser().isEmpty()) {
+        if (secondaryProxySetting.isUse() && (this.secondaryProxySetting == null ||
+                !secondaryProxySetting.getUser().equals(this.secondaryProxySetting.getUser()) ||
+                !secondaryProxySetting.getPasssword().equals(this.secondaryProxySetting.getPasssword()))) {
+            if (secondaryProxySetting.getUser().isEmpty()) {
                 Authenticator.setDefault(null);
             } else {
                 Authenticator.setDefault(new Authenticator() {
                     @Override
                     protected PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(secondaryProxy.getUser(),
-                                secondaryProxy.getPasssword().toCharArray());
+                        return new PasswordAuthentication(secondaryProxySetting.getUser(),
+                                secondaryProxySetting.getPasssword().toCharArray());
                     }
                 });
             }
         }
-        this.secondaryProxy = secondaryProxy;
+        this.secondaryProxySetting = secondaryProxySetting;
     }
 
     public static Context getInstance() {
@@ -106,6 +117,7 @@ public class Context {
     public Socket createSSLSocket(String host, int port) {
         SSLContext clientSSlContext = SSLUtils.createClientSSlContext();
         SSLSocketFactory factory = clientSSlContext.getSocketFactory();
-        return factory.createSocket(createSocket(host, port), secondaryProxy.getHost(), secondaryProxy.getPort(), true);
+        return factory.createSocket(createSocket(host, port), secondaryProxySetting.getHost(),
+                secondaryProxySetting.getPort(), true);
     }
 }

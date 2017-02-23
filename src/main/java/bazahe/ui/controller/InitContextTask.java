@@ -1,9 +1,6 @@
 package bazahe.ui.controller;
 
-import bazahe.Constants;
-import bazahe.Context;
-import bazahe.MainSetting;
-import bazahe.SecondaryProxy;
+import bazahe.*;
 import bazahe.httpproxy.CAKeyStoreGenerator;
 import bazahe.ui.UIUtils;
 import javafx.concurrent.Task;
@@ -36,25 +33,28 @@ public class InitContextTask extends Task<Void> {
         Path configPath = MainSetting.configPath();
         updateProgress(1, 10);
         MainSetting mainSetting;
-        SecondaryProxy secondaryProxy;
+        KeyStoreSetting keyStoreSetting;
+        SecondaryProxySetting secondaryProxySetting;
         if (Files.exists(configPath)) {
             try (InputStream in = Files.newInputStream(configPath);
                  BufferedInputStream bin = new BufferedInputStream(in);
                  ObjectInputStream oin = new ObjectInputStream(bin)) {
                 mainSetting = (MainSetting) oin.readObject();
-                secondaryProxy = (SecondaryProxy) oin.readObject();
+                keyStoreSetting = (KeyStoreSetting) oin.readObject();
+                secondaryProxySetting = (SecondaryProxySetting) oin.readObject();
             }
         } else {
             mainSetting = MainSetting.getDefault();
-            secondaryProxy = new SecondaryProxy();
+            keyStoreSetting = KeyStoreSetting.getDefault();
+            secondaryProxySetting = new SecondaryProxySetting();
         }
         updateProgress(3, 10);
 
         updateMessage("Loading key store file...");
-        Path keyStorePath = Paths.get(mainSetting.usedKeyStore());
-        char[] keyStorePassword = mainSetting.usedPassword();
+        Path keyStorePath = Paths.get(keyStoreSetting.usedKeyStore());
+        char[] keyStorePassword = keyStoreSetting.usedPassword().toCharArray();
         if (!Files.exists(keyStorePath)) {
-            if (!mainSetting.isUseCustomKeyStore()) {
+            if (!keyStoreSetting.isUseCustom()) {
                 logger.info("Generate new key store file");
                 updateMessage("Generating new key store...");
                 // generate one new key store
@@ -68,9 +68,10 @@ public class InitContextTask extends Task<Void> {
             }
 
         }
-        context.setMainSettingAndRefreshSSLContextManager(mainSetting);
+        context.setMainSetting(mainSetting);
+        context.setKeyStoreSetting(keyStoreSetting);
         updateProgress(8, 10);
-        context.setSecondaryProxyAndRefreshSocketFactory(secondaryProxy);
+        context.setSecondaryProxySetting(secondaryProxySetting);
         updateProgress(10, 10);
         return null;
     }

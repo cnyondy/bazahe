@@ -14,11 +14,11 @@ import java.io.OutputStream;
  *
  * @author Liu Dong
  */
-public class SaveTask extends Task<Void> {
+public class SaveTrafficDataTask extends Task<Void> {
     private String path;
     private TreeItem<RTreeItemValue> root;
 
-    public SaveTask(String path, TreeItem<RTreeItemValue> root) {
+    public SaveTrafficDataTask(String path, TreeItem<RTreeItemValue> root) {
         this.path = path;
         this.root = root;
     }
