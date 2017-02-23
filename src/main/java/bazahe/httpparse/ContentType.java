@@ -63,7 +63,8 @@ public class ContentType {
     }
 
     private Set<String> textTypes = ImmutableSet.of("text");
-    private Set<String> textSubTypes = ImmutableSet.of("json", "x-www-form-urlencoded", "xml");
+    private Set<String> textSubTypes = ImmutableSet.of("json", "x-www-form-urlencoded", "xml", "x-javascript",
+            "javascript", "html");
 
     public boolean isText() {
         return textTypes.contains(mimeType.getType())

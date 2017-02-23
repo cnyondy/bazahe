@@ -6,6 +6,9 @@ import com.google.common.io.ByteStreams;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.compress.compressors.lzma.LZMACompressorInputStream;
+import org.apache.commons.compress.compressors.z.ZCompressorInputStream;
+import org.brotli.dec.BrotliInputStream;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
@@ -86,7 +89,7 @@ public class BodyStore extends OutputStream implements Serializable {
                     bodyStoreType = BodyStoreType.www_form;
                 } else if ("css".equals(subType)) {
                     bodyStoreType = BodyStoreType.css;
-                } else if ("javascript".equals(subType)) {
+                } else if ("javascript".equals(subType) || "x-javascript".equals(subType)) {
                     bodyStoreType = BodyStoreType.javascript;
                 } else {
                     bodyStoreType = BodyStoreType.text;
@@ -211,10 +214,20 @@ public class BodyStore extends OutputStream implements Serializable {
         }
 
         try {
-            if ("gzip".equalsIgnoreCase(contentEncoding)) {
+            if (Strings.isNullOrEmpty(contentEncoding) || contentEncoding.equalsIgnoreCase("identity")) {
+                // do nothing
+            } else if ("gzip".equalsIgnoreCase(contentEncoding)) {
                 input = new GZIPInputStream(input);
             } else if ("deflate".equalsIgnoreCase(contentEncoding)) {
                 input = new DeflaterInputStream(input);
+            } else if (contentEncoding.equalsIgnoreCase("compress")) {
+                input = new ZCompressorInputStream(input);
+            } else if ("br".equalsIgnoreCase(contentEncoding)) {
+                input = new BrotliInputStream(input);
+            } else if ("lzma".equalsIgnoreCase(contentEncoding)) {
+                input = new LZMACompressorInputStream(input);
+            } else {
+                logger.warn("unsupported content-encoding: {}", contentEncoding);
             }
         } catch (Throwable t) {
             logger.error("Decode stream failed, encoding: {}", contentEncoding, t);
