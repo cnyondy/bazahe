@@ -20,7 +20,7 @@
                 <Tooltip text="Settings"/>
             </tooltip>
             <items>
-                <MenuItem text="Secondary Proxy" onAction="#setSecondaryProxy"/>
+                <MenuItem text="External Proxy" onAction="#setProxy"/>
             </items>
         </SplitMenuButton>
         <SplitMenuButton onAction="#setKeyStore" fx:id="setKeyStoreButton">
@@ -33,10 +33,10 @@
                 <Tooltip text="Settings"/>
             </tooltip>
             <items>
-                <MenuItem text="Export Cert(.pem)" onAction="#exportPem"/>
+                <MenuItem text="Export Cert(PEM)" onAction="#exportPem"/>
             </items>
             <items>
-                <MenuItem text="Export Cert(.crt)" onAction="#exportCrt"/>
+                <MenuItem text="Export Cert(CRT)" onAction="#exportCrt"/>
             </items>
         </SplitMenuButton>
 

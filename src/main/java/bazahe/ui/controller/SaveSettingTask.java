@@ -1,9 +1,9 @@
 package bazahe.ui.controller;
 
 import bazahe.Context;
-import bazahe.KeyStoreSetting;
-import bazahe.MainSetting;
-import bazahe.SecondaryProxySetting;
+import bazahe.setting.KeyStoreSetting;
+import bazahe.setting.MainSetting;
+import bazahe.setting.ProxySetting;
 import javafx.concurrent.Task;
 
 import java.io.BufferedOutputStream;
@@ -11,7 +11,6 @@ import java.io.ObjectOutputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Objects;
 
 import static java.util.Objects.requireNonNull;
 
@@ -23,15 +22,15 @@ public class SaveSettingTask extends Task<Void> {
     private Context context;
     private MainSetting mainSetting;
     private KeyStoreSetting keyStoreSetting;
-    private SecondaryProxySetting secondaryProxySetting;
+    private ProxySetting proxySetting;
 
     public SaveSettingTask(Context context, MainSetting mainSetting,
                            KeyStoreSetting keyStoreSetting,
-                           SecondaryProxySetting secondaryProxySetting) {
+                           ProxySetting proxySetting) {
         this.context = context;
         this.mainSetting = requireNonNull(mainSetting);
         this.keyStoreSetting = requireNonNull(keyStoreSetting);
-        this.secondaryProxySetting = requireNonNull(secondaryProxySetting);
+        this.proxySetting = requireNonNull(proxySetting);
     }
 
     @Override
@@ -42,7 +41,7 @@ public class SaveSettingTask extends Task<Void> {
         updateProgress(1, 10);
         context.setKeyStoreSetting(keyStoreSetting);
         updateProgress(5, 10);
-        context.setSecondaryProxySetting(secondaryProxySetting);
+        context.setProxySetting(proxySetting);
         updateProgress(7, 10);
         updateMessage("Save mainSetting to file");
         Path configPath = MainSetting.configPath();
@@ -51,7 +50,7 @@ public class SaveSettingTask extends Task<Void> {
              ObjectOutputStream oos = new ObjectOutputStream(bos)) {
             oos.writeObject(mainSetting);
             oos.writeObject(keyStoreSetting);
-            oos.writeObject(secondaryProxySetting);
+            oos.writeObject(proxySetting);
         }
         updateProgress(10, 10);
         return null;

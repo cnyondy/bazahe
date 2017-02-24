@@ -1,6 +1,6 @@
 package bazahe.ui.component;
 
-import bazahe.KeyStoreSetting;
+import bazahe.setting.KeyStoreSetting;
 import bazahe.ui.controller.KeyStoreSettingController;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;

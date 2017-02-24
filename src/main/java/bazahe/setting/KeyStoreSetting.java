@@ -1,4 +1,4 @@
-package bazahe;
+package bazahe.setting;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -28,7 +28,7 @@ public class KeyStoreSetting implements Serializable {
      * The default key store file path
      */
     private static Path defaultKeyStorePath() {
-        return Constants.getParentPath().resolve(Paths.get("bazahe.p12"));
+        return Settings.getParentPath().resolve(Paths.get("bazahe.p12"));
     }
 
     /**

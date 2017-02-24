@@ -24,7 +24,7 @@ public class Main extends Application {
         root.requestFocus();
 
         stage.setOnCloseRequest(e -> {
-            for (Runnable task : AppResources.tasks) {
+            for (Runnable task : ShutdownHooks.tasks) {
                 try {
                     task.run();
                 } catch (Throwable t) {

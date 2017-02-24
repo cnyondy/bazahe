@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * @author Liu Dong
  */
-public class AppResources {
+public class ShutdownHooks {
 
     static final List<Runnable> tasks = Collections.synchronizedList(new ArrayList<>());
 

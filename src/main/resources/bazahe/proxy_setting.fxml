@@ -3,13 +3,13 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.*?>
 <?import javafx.scene.layout.*?>
-<GridPane xmlns:fx="http://javafx.com/fxml" fx:controller="bazahe.ui.controller.SecondaryProxyController" hgap="6"
+<GridPane xmlns:fx="http://javafx.com/fxml" fx:controller="bazahe.ui.controller.ProxySettingController" hgap="6"
           vgap="4">
     <padding>
         <Insets top="25" right="25" bottom="25" left="25"/>
     </padding>
 
-    <CheckBox fx:id="useSecondaryProxy" text="Use Secondary Proxy" GridPane.columnIndex="0" GridPane.rowIndex="1"
+    <CheckBox fx:id="useProxy" text="Use External Proxy" GridPane.columnIndex="0" GridPane.rowIndex="1"
               GridPane.columnSpan="2"/>
 
     <fx:define>

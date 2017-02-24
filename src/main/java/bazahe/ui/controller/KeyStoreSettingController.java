@@ -1,6 +1,6 @@
 package bazahe.ui.controller;
 
-import bazahe.KeyStoreSetting;
+import bazahe.setting.KeyStoreSetting;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;

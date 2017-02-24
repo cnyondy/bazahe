@@ -1,4 +1,4 @@
-package bazahe;
+package bazahe.setting;
 
 import lombok.SneakyThrows;
 
@@ -9,7 +9,7 @@ import java.nio.file.Paths;
 /**
  * @author Liu Dong
  */
-public class Constants {
+public class Settings {
 
     public static final int rootCertificateValidates = 3650;
 

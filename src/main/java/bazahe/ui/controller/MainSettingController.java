@@ -1,6 +1,6 @@
 package bazahe.ui.controller;
 
-import bazahe.MainSetting;
+import bazahe.setting.MainSetting;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
 import org.apache.commons.lang3.math.NumberUtils;

@@ -2,6 +2,10 @@ package bazahe.ui.controller;
 
 import bazahe.*;
 import bazahe.httpproxy.CAKeyStoreGenerator;
+import bazahe.setting.KeyStoreSetting;
+import bazahe.setting.MainSetting;
+import bazahe.setting.ProxySetting;
+import bazahe.setting.Settings;
 import bazahe.ui.UIUtils;
 import javafx.concurrent.Task;
 import lombok.extern.log4j.Log4j2;
@@ -34,19 +38,19 @@ public class InitContextTask extends Task<Void> {
         updateProgress(1, 10);
         MainSetting mainSetting;
         KeyStoreSetting keyStoreSetting;
-        SecondaryProxySetting secondaryProxySetting;
+        ProxySetting proxySetting;
         if (Files.exists(configPath)) {
             try (InputStream in = Files.newInputStream(configPath);
                  BufferedInputStream bin = new BufferedInputStream(in);
                  ObjectInputStream oin = new ObjectInputStream(bin)) {
                 mainSetting = (MainSetting) oin.readObject();
                 keyStoreSetting = (KeyStoreSetting) oin.readObject();
-                secondaryProxySetting = (SecondaryProxySetting) oin.readObject();
+                proxySetting = (ProxySetting) oin.readObject();
             }
         } else {
             mainSetting = MainSetting.getDefault();
             keyStoreSetting = KeyStoreSetting.getDefault();
-            secondaryProxySetting = SecondaryProxySetting.getDefault();
+            proxySetting = ProxySetting.getDefault();
         }
         updateProgress(3, 10);
 
@@ -59,7 +63,7 @@ public class InitContextTask extends Task<Void> {
                 updateMessage("Generating new key store...");
                 // generate one new key store
                 CAKeyStoreGenerator generator = new CAKeyStoreGenerator();
-                generator.generate(keyStorePassword, Constants.rootCertificateValidates);
+                generator.generate(keyStorePassword, Settings.rootCertificateValidates);
                 byte[] keyStoreData = generator.getKeyStoreData();
                 Files.write(keyStorePath, keyStoreData);
             } else {
@@ -71,7 +75,7 @@ public class InitContextTask extends Task<Void> {
         context.setMainSetting(mainSetting);
         context.setKeyStoreSetting(keyStoreSetting);
         updateProgress(8, 10);
-        context.setSecondaryProxySetting(secondaryProxySetting);
+        context.setProxySetting(proxySetting);
         updateProgress(10, 10);
         return null;
     }

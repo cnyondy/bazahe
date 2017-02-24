@@ -1,6 +1,6 @@
 package bazahe.ui.controller;
 
-import bazahe.AppResources;
+import bazahe.ShutdownHooks;
 import bazahe.Context;
 import bazahe.httpparse.HttpMessage;
 import bazahe.httpparse.Message;
@@ -120,11 +120,12 @@ public class MainController {
     @FXML
     @SneakyThrows
     void initialize() {
-        AppResources.registerTask(() -> {
+        ShutdownHooks.registerTask(() -> {
             if (proxyServer != null) {
                 proxyServer.stop();
             }
         });
+
         catalogController = catalogPane.getController();
         catalogController.setListener(message -> {
             if (message == null) {
@@ -155,7 +156,7 @@ public class MainController {
         val newConfig = dialog.showAndWait();
         if (newConfig.isPresent()) {
             val task = new SaveSettingTask(context, newConfig.get(), context.getKeyStoreSetting(),
-                    context.getSecondaryProxySetting());
+                    context.getProxySetting());
             UIUtils.runBackground(task, "save settings failed");
         }
     }
@@ -167,15 +168,15 @@ public class MainController {
         val newConfig = dialog.showAndWait();
         if (newConfig.isPresent()) {
             val task = new SaveSettingTask(context, context.getMainSetting(), newConfig.get(),
-                    context.getSecondaryProxySetting());
+                    context.getProxySetting());
             UIUtils.runBackground(task, "save key store failed");
         }
     }
 
     @FXML
-    void setSecondaryProxy(ActionEvent e) {
-        SecondaryProxyDialog dialog = new SecondaryProxyDialog();
-        dialog.secondaryProxyProperty().setValue(context.getSecondaryProxySetting());
+    void setProxy(ActionEvent e) {
+        ProxySettingDialog dialog = new ProxySettingDialog();
+        dialog.proxySettingProperty().setValue(context.getProxySetting());
         val newConfig = dialog.showAndWait();
         if (newConfig.isPresent()) {
             val task = new SaveSettingTask(context, context.getMainSetting(), context.getKeyStoreSetting(),

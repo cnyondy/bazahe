@@ -1,4 +1,4 @@
-package bazahe;
+package bazahe.setting;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -13,7 +13,7 @@ import java.io.Serializable;
 @Getter
 @Setter
 @ToString
-public class SecondaryProxySetting implements Serializable {
+public class ProxySetting implements Serializable {
     private static final long serialVersionUID = 7257755061846443485L;
     private String type;
     private String host;
@@ -22,8 +22,8 @@ public class SecondaryProxySetting implements Serializable {
     private String password;
     private boolean use;
 
-    public static SecondaryProxySetting getDefault() {
-        val setting = new SecondaryProxySetting();
+    public static ProxySetting getDefault() {
+        val setting = new ProxySetting();
         setting.setType("socks5");
         setting.setHost("");
         setting.setPort(0);

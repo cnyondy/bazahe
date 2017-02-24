@@ -2,6 +2,9 @@ package bazahe;
 
 import bazahe.httpproxy.SSLContextManager;
 import bazahe.httpproxy.SSLUtils;
+import bazahe.setting.KeyStoreSetting;
+import bazahe.setting.MainSetting;
+import bazahe.setting.ProxySetting;
 import lombok.Getter;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
@@ -26,7 +29,7 @@ public class Context {
     @Getter
     private volatile KeyStoreSetting keyStoreSetting;
     @Getter
-    private volatile SecondaryProxySetting secondaryProxySetting;
+    private volatile ProxySetting proxySetting;
     @Getter
     private volatile SSLContextManager sslContextManager;
     @Getter
@@ -57,18 +60,17 @@ public class Context {
         this.mainSetting = Objects.requireNonNull(mainSetting);
     }
 
-    public void setSecondaryProxySetting(SecondaryProxySetting secondaryProxySetting) {
-        Objects.requireNonNull(secondaryProxySetting);
-        if (secondaryProxySetting.isUse()) {
+    public void setProxySetting(ProxySetting proxySetting) {
+        Objects.requireNonNull(proxySetting);
+        if (proxySetting.isUse()) {
             dialer = (host, port) -> {
-                if (secondaryProxySetting.getType().equals("socks5")) {
-                    proxy = new Proxy(Proxy.Type.SOCKS, new InetSocketAddress(secondaryProxySetting.getHost(),
-                            secondaryProxySetting.getPort()));
-                } else if (secondaryProxySetting.getType().equals("http")) {
-                    proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(secondaryProxySetting.getHost(),
-                            secondaryProxySetting.getPort()));
+                InetSocketAddress proxyAddress = new InetSocketAddress(proxySetting.getHost(), proxySetting.getPort());
+                if (proxySetting.getType().equals("socks5")) {
+                    proxy = new Proxy(Proxy.Type.SOCKS, proxyAddress);
+                } else if (proxySetting.getType().equals("http")) {
+                    proxy = new Proxy(Proxy.Type.HTTP, proxyAddress);
                 } else {
-                    throw new RuntimeException("unsupport proxy type: " + secondaryProxySetting.getType());
+                    throw new RuntimeException("unsupported proxy type: " + proxySetting.getType());
                 }
                 Socket socket = new Socket(proxy);
                 socket.connect(InetSocketAddress.createUnresolved(host, port));
@@ -80,22 +82,22 @@ public class Context {
         }
 
 
-        if (secondaryProxySetting.isUse() && (this.secondaryProxySetting == null ||
-                !secondaryProxySetting.getUser().equals(this.secondaryProxySetting.getUser()) ||
-                !secondaryProxySetting.getPassword().equals(this.secondaryProxySetting.getPassword()))) {
-            if (secondaryProxySetting.getUser().isEmpty()) {
+        if (proxySetting.isUse() && (this.proxySetting == null ||
+                !proxySetting.getUser().equals(this.proxySetting.getUser()) ||
+                !proxySetting.getPassword().equals(this.proxySetting.getPassword()))) {
+            if (proxySetting.getUser().isEmpty()) {
                 Authenticator.setDefault(null);
             } else {
                 Authenticator.setDefault(new Authenticator() {
                     @Override
                     protected PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(secondaryProxySetting.getUser(),
-                                secondaryProxySetting.getPassword().toCharArray());
+                        return new PasswordAuthentication(proxySetting.getUser(),
+                                proxySetting.getPassword().toCharArray());
                     }
                 });
             }
         }
-        this.secondaryProxySetting = secondaryProxySetting;
+        this.proxySetting = proxySetting;
     }
 
     public static Context getInstance() {
@@ -117,7 +119,6 @@ public class Context {
     public Socket createSSLSocket(String host, int port) {
         SSLContext clientSSlContext = SSLUtils.createClientSSlContext();
         SSLSocketFactory factory = clientSSlContext.getSocketFactory();
-        return factory.createSocket(createSocket(host, port), secondaryProxySetting.getHost(),
-                secondaryProxySetting.getPort(), true);
+        return factory.createSocket(createSocket(host, port), proxySetting.getHost(), proxySetting.getPort(), true);
     }
 }

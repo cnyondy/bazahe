@@ -1,4 +1,4 @@
-package bazahe;
+package bazahe.setting;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -27,7 +27,7 @@ public class MainSetting implements Serializable {
      * Get mainSetting file path
      */
     public static Path configPath() {
-        return Constants.getParentPath().resolve(Paths.get("config"));
+        return Settings.getParentPath().resolve(Paths.get("config"));
     }
 
 

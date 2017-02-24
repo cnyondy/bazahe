@@ -1,6 +1,6 @@
 package bazahe.ui.component;
 
-import bazahe.MainSetting;
+import bazahe.setting.MainSetting;
 import bazahe.ui.controller.MainSettingController;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;

@@ -24,8 +24,8 @@
  */
 package bazahe.ui.component;
 
-import bazahe.SecondaryProxySetting;
-import bazahe.ui.controller.SecondaryProxyController;
+import bazahe.setting.ProxySetting;
+import bazahe.ui.controller.ProxySettingController;
 import javafx.beans.property.ObjectProperty;
 import javafx.beans.property.SimpleObjectProperty;
 import javafx.fxml.FXMLLoader;
@@ -39,15 +39,15 @@ import lombok.SneakyThrows;
 /**
  * Show second proxy setting.
  */
-public class SecondaryProxyDialog extends Dialog<SecondaryProxySetting> {
+public class ProxySettingDialog extends Dialog<ProxySetting> {
 
-    private final ObjectProperty<SecondaryProxySetting> secondaryProxy = new SimpleObjectProperty<>();
+    private final ObjectProperty<ProxySetting> proxySetting = new SimpleObjectProperty<>();
 
     @SneakyThrows
-    public SecondaryProxyDialog() {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/bazahe/secondary_proxy_setting.fxml"));
+    public ProxySettingDialog() {
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/bazahe/proxy_setting.fxml"));
         GridPane gridPane = loader.load();
-        SecondaryProxyController controller = loader.getController();
+        ProxySettingController controller = loader.getController();
 
         getDialogPane().setContent(gridPane);
         setTitle("Proxy Setting");
@@ -60,16 +60,16 @@ public class SecondaryProxyDialog extends Dialog<SecondaryProxySetting> {
             return data == ButtonData.OK_DONE ? controller.getModel() : null;
         });
 
-        secondaryProxy.addListener((o, old, n) -> controller.setModel(n));
+        proxySetting.addListener((o, old, n) -> controller.setModel(n));
 
     }
 
-    public SecondaryProxySetting getSecondaryProxy() {
-        return secondaryProxy.get();
+    public ProxySetting getProxySetting() {
+        return proxySetting.get();
     }
 
-    public ObjectProperty<SecondaryProxySetting> secondaryProxyProperty() {
-        return secondaryProxy;
+    public ObjectProperty<ProxySetting> proxySettingProperty() {
+        return proxySetting;
     }
 
 }
