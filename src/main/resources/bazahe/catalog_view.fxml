@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import bazahe.ui.component.CatalogPane?>
+<?import javafx.geometry.Insets?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<fx:root type="bazahe.ui.component.CatalogPane" xmlns:fx="http://javafx.com/fxml"
+         fx:controller="bazahe.ui.controller.CatalogController"
+         fx:id="root">
+    <top>
+        <HBox spacing="4" alignment="CENTER_LEFT">
+            <padding>
+                <Insets top="4" bottom="2" left="4" right="4"/>
+            </padding>
+            <fx:define>
+                <ToggleGroup fx:id="viewTypeGroup"/>
+            </fx:define>
+            <RadioButton text="Tree view" toggleGroup="$viewTypeGroup" userData="tree" selected="true"/>
+            <RadioButton text="List view" toggleGroup="$viewTypeGroup" userData="list"/>
+        </HBox>
+    </top>
+    <center>
+        <VBox>
+            <StackPane fx:id="stackPane" VBox.vgrow="ALWAYS" maxWidth="Infinity" maxHeight="Infinity">
+                <ListView fx:id="messageList" VBox.vgrow="ALWAYS" maxWidth="Infinity" maxHeight="Infinity"/>
+                <TreeView fx:id="messageTree" VBox.vgrow="ALWAYS" maxWidth="Infinity" maxHeight="Infinity"/>
+            </StackPane>
+        </VBox>
+    </center>
+</fx:root>

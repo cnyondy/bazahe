@@ -15,7 +15,9 @@ import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.SplitMenuButton;
+import javafx.scene.control.SplitPane;
 import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import lombok.SneakyThrows;
@@ -26,6 +28,7 @@ import org.controlsfx.control.PopOver;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Collection;
 
 import static java.util.stream.Collectors.*;
 
@@ -36,13 +39,14 @@ import static java.util.stream.Collectors.*;
 public class MainController {
 
     @FXML
+    private CatalogPane catalogPane;
+    private CatalogController catalogController;
+    @FXML
     private SplitMenuButton setKeyStoreButton;
     @FXML
     private MyButton saveFileButton;
     @FXML
     private MyButton openFileButton;
-    @FXML
-    private TreeView<RTreeItemValue> messageTree;
     @FXML
     private VBox root;
     @FXML
@@ -82,7 +86,7 @@ public class MainController {
         saveFileButton.setDisable(true);
         try {
             proxyServer = new ProxyServer(context.getMainSetting(), context.getSslContextManager());
-            proxyServer.setMessageListener(new UIMessageListener(this::addTreeItemMessage));
+            proxyServer.setMessageListener(new UIMessageListener(catalogController::addTreeItemMessage));
             proxyServer.start();
         } catch (Throwable t) {
             logger.error("Start proxy failed", t);
@@ -121,22 +125,14 @@ public class MainController {
                 proxyServer.stop();
             }
         });
-
-        val root = new TreeItem<RTreeItemValue>(new RTreeItemValue.NodeValue(""));
-        root.setExpanded(true);
-        messageTree.setRoot(root);
-        messageTree.setShowRoot(false);
-        messageTree.setCellFactory(new TreeCellFactory());
-        messageTree.setOnMouseClicked(new TreeViewMouseHandler());
-        messageTree.getSelectionModel().selectedItemProperty().addListener((ov, o, n) -> {
-            if (n == null || n.getValue() instanceof RTreeItemValue.NodeValue) {
+        catalogController = catalogPane.getController();
+        catalogController.setListener(message -> {
+            if (message == null) {
                 hideContent();
             } else {
-                RTreeItemValue.LeafValue value = (RTreeItemValue.LeafValue) n.getValue();
-                showMessage(value.getMessage());
+                showMessage(message);
             }
         });
-
         loadConfigAndKeyStore();
     }
 
@@ -243,31 +239,8 @@ public class MainController {
 
     @FXML
     private void clearAll(ActionEvent e) {
-        messageTree.setRoot(new TreeItem<>(new RTreeItemValue.NodeValue("")));
+        catalogController.clearAll();
     }
-
-    @SneakyThrows
-    private void addTreeItemMessage(Message message) {
-        val root = messageTree.getRoot();
-        String host = NetUtils.genericMultiCDNS(message.getHost());
-
-
-        for (val item : root.getChildren()) {
-            val node = (RTreeItemValue.NodeValue) item.getValue();
-            if (node.getPattern().equals(host)) {
-                item.getChildren().add(new TreeItem<>(new RTreeItemValue.LeafValue(message)));
-                node.increaseChildren();
-                return;
-            }
-        }
-
-        val node = new RTreeItemValue.NodeValue(host);
-        val nodeItem = new TreeItem<RTreeItemValue>(node);
-        root.getChildren().add(nodeItem);
-        nodeItem.getChildren().add(new TreeItem<>(new RTreeItemValue.LeafValue(message)));
-        node.increaseChildren();
-    }
-
 
     @FXML
     void open(ActionEvent e) {
@@ -278,9 +251,8 @@ public class MainController {
             return;
         }
 
-        val root = messageTree.getRoot();
-        root.getChildren().clear();
-        Task<Void> task = new LoadTask(file.getPath(), this::addTreeItemMessage);
+        catalogController.clearAll();
+        Task<Void> task = new LoadTask(file.getPath(), catalogController::addTreeItemMessage);
         UIUtils.runBackground(task, "Load data failed!");
     }
 
@@ -294,8 +266,8 @@ public class MainController {
         if (file == null) {
             return;
         }
-        val root = messageTree.getRoot();
-        val saveTask = new SaveTrafficDataTask(file.getPath(), root);
+        Collection<Message> messages = catalogController.getMessages();
+        val saveTask = new SaveTrafficDataTask(file.getPath(), messages);
         UIUtils.runBackground(saveTask, "Save data failed!");
     }
 

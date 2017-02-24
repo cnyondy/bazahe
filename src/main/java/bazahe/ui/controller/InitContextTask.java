@@ -46,7 +46,7 @@ public class InitContextTask extends Task<Void> {
         } else {
             mainSetting = MainSetting.getDefault();
             keyStoreSetting = KeyStoreSetting.getDefault();
-            secondaryProxySetting = new SecondaryProxySetting();
+            secondaryProxySetting = SecondaryProxySetting.getDefault();
         }
         updateProgress(3, 10);
 

@@ -15,9 +15,9 @@ public class SecondaryProxyController {
     @FXML
     private CheckBox useSecondaryProxy;
     @FXML
-    private RadioButton socks5;
+    private RadioButton socks5Radio;
     @FXML
-    private RadioButton http;
+    private RadioButton httpRadio;
     @FXML
     private TextField passwordField;
     @FXML
@@ -53,13 +53,13 @@ public class SecondaryProxyController {
         hostField.setText(secondaryProxySetting.getHost());
         portFiled.setText(String.valueOf(secondaryProxySetting.getPort()));
         userField.setText(secondaryProxySetting.getUser());
-        passwordField.setText(secondaryProxySetting.getPasssword());
+        passwordField.setText(secondaryProxySetting.getPassword());
 //        proxyTypeGroup.selectToggle();
         String type = secondaryProxySetting.getType();
         if (type.equals("socks5") || type.isEmpty()) {
-            socks5.setSelected(true);
+            socks5Radio.setSelected(true);
         } else if (type.equals("http")) {
-            http.setSelected(true);
+            httpRadio.setSelected(true);
         } else {
             throw new RuntimeException("unknown proxy type: " + type);
         }
@@ -71,9 +71,9 @@ public class SecondaryProxyController {
         secondaryProxySetting.setHost(hostField.getText());
         secondaryProxySetting.setPort(NumberUtils.toInt(portFiled.getText()));
         secondaryProxySetting.setUser(userField.getText());
-        secondaryProxySetting.setPasssword(passwordField.getText());
+        secondaryProxySetting.setPassword(passwordField.getText());
         RadioButton radioButton = (RadioButton) proxyTypeGroup.getSelectedToggle();
-        secondaryProxySetting.setType(radioButton.getId());
+        secondaryProxySetting.setType((String) radioButton.getUserData());
         return secondaryProxySetting;
     }
 }

@@ -82,7 +82,7 @@ public class Context {
 
         if (secondaryProxySetting.isUse() && (this.secondaryProxySetting == null ||
                 !secondaryProxySetting.getUser().equals(this.secondaryProxySetting.getUser()) ||
-                !secondaryProxySetting.getPasssword().equals(this.secondaryProxySetting.getPasssword()))) {
+                !secondaryProxySetting.getPassword().equals(this.secondaryProxySetting.getPassword()))) {
             if (secondaryProxySetting.getUser().isEmpty()) {
                 Authenticator.setDefault(null);
             } else {
@@ -90,7 +90,7 @@ public class Context {
                     @Override
                     protected PasswordAuthentication getPasswordAuthentication() {
                         return new PasswordAuthentication(secondaryProxySetting.getUser(),
-                                secondaryProxySetting.getPasssword().toCharArray());
+                                secondaryProxySetting.getPassword().toCharArray());
                     }
                 });
             }

@@ -4,7 +4,10 @@
 <?import javafx.scene.control.*?>
 <?import javafx.scene.image.Image?>
 <?import javafx.scene.image.ImageView?>
-<?import javafx.scene.layout.*?>
+<?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
+<?import javafx.scene.layout.StackPane?>
+<?import javafx.scene.layout.VBox?>
 <VBox xmlns:fx="http://javafx.com/fxml" fx:id="root" fx:controller="bazahe.ui.controller.MainController">
     <ToolBar>
         <SplitMenuButton onAction="#updateSetting" fx:id="proxyConfigureButton">
@@ -62,7 +65,7 @@
     </ToolBar>
 
     <SplitPane prefHeight="${root.height}" fx:id="splitPane" dividerPositions="0.2">
-        <TreeView fx:id="messageTree" VBox.vgrow="ALWAYS" maxWidth="Infinity" maxHeight="Infinity"/>
+        <CatalogPane fx:id="catalogPane"/>
         <StackPane>
             <HttpMessagePane fx:id="httpMessagePane" visible="false"/>
             <WebSocketMessagePane fx:id="webSocketMessagePane" visible="false"/>

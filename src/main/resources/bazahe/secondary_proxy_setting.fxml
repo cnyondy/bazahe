@@ -17,8 +17,8 @@
     </fx:define>
     <Label text="Proxy Type" GridPane.columnIndex="0" GridPane.rowIndex="2"/>
     <HBox GridPane.columnIndex="1" GridPane.rowIndex="2">
-        <RadioButton text="socks5" toggleGroup="$proxyTypeGroup" selected="true" fx:id="socks5"/>
-        <RadioButton text="http" toggleGroup="$proxyTypeGroup" fx:id="http"/>
+        <RadioButton text="socks5" toggleGroup="$proxyTypeGroup" selected="true" fx:id="socks5Radio" userData="socks5"/>
+        <RadioButton text="http" toggleGroup="$proxyTypeGroup" fx:id="httpRadio" userData="http"/>
     </HBox>
 
     <Label text="Host" GridPane.columnIndex="0" GridPane.rowIndex="3"/>

@@ -34,7 +34,7 @@ public class MainSetting implements Serializable {
     public static MainSetting getDefault() {
         MainSetting mainSetting = new MainSetting();
         mainSetting.setHost("");
-        mainSetting.setPort(1024);
+        mainSetting.setPort(6080);
         mainSetting.setTimeout(120);
         return mainSetting;
     }
