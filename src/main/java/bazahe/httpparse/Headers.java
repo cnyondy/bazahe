@@ -1,5 +1,6 @@
 package bazahe.httpparse;
 
+import bazahe.utils.ListUtils;
 import lombok.Getter;
 
 import javax.annotation.Nullable;
@@ -10,8 +11,6 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
-
-import static java.util.stream.Collectors.*;
 
 /**
  * Commons for request headers and response headers
@@ -26,7 +25,7 @@ public abstract class Headers implements Serializable {
     private List<String> rawHeaders;
 
     public Headers(List<String> rawHeaders) {
-        this(rawHeaders, rawHeaders.stream().map(Header::parse).collect(toList()));
+        this(rawHeaders, ListUtils.convert(rawHeaders, Header::parse));
     }
 
     private Headers(List<String> rawHeaders, List<Header> headers) {
@@ -122,6 +121,6 @@ public abstract class Headers implements Serializable {
             rawHeaders.add(in.readUTF());
         }
         this.rawHeaders = rawHeaders;
-        headers = rawHeaders.stream().map(Header::parse).collect(toList());
+        headers = ListUtils.convert(rawHeaders, Header::parse);
     }
 }

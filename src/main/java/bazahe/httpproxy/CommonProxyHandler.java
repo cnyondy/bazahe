@@ -2,6 +2,7 @@ package bazahe.httpproxy;
 
 import bazahe.Context;
 import bazahe.httpparse.*;
+import bazahe.utils.ListUtils;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
 import lombok.Cleanup;
@@ -18,8 +19,6 @@ import java.net.Proxy;
 import java.net.Socket;
 import java.net.URL;
 import java.util.*;
-
-import static java.util.stream.Collectors.*;
 
 /**
  * Non-connect http handler
@@ -67,9 +66,8 @@ public class CommonProxyHandler implements Handler {
         String messageId = MessageIdGenerator.getInstance().nextId();
         RequestLine requestLine = requestHeaders.getRequestLine();
         String method = requestLine.getMethod();
-        List<Header> newRequestHeaders = requestHeaders.getHeaders().stream()
-                .filter(h -> !proxyRemoveHeaders.contains(h.getName()))
-                .collect(toList());
+        List<Header> newRequestHeaders = ListUtils.filter(requestHeaders.getHeaders(),
+                h -> !proxyRemoveHeaders.contains(h.getName()));
         String url = requestLine.getPath();
 
         @Nullable OutputStream requestOutput = null;
@@ -104,7 +102,7 @@ public class CommonProxyHandler implements Handler {
         int statusCode = conn.getResponseCode();
         String statusLine = null;
         // headers and cookies
-        List<Map.Entry<String, String>> headerList = new ArrayList<>();
+        List<Header> headerList = new ArrayList<>();
         int index = 0;
         while (true) {
             String key = conn.getHeaderFieldKey(index);
@@ -211,8 +209,8 @@ public class CommonProxyHandler implements Handler {
         return requestBody;
     }
 
-    private ResponseHeaders toResponseHeaders(String statusLine, List<Map.Entry<String, String>> headers) {
-        List<String> rawHeaders = headers.stream().map(h -> h.getKey() + ": " + h.getValue()).collect(toList());
+    private ResponseHeaders toResponseHeaders(String statusLine, List<Header> headers) {
+        List<String> rawHeaders = ListUtils.convert(headers, h -> h.getKey() + ": " + h.getValue());
         return new ResponseHeaders(statusLine, rawHeaders);
     }
 
