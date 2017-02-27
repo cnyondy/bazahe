@@ -1,8 +1,6 @@
 package bazahe.setting;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.Value;
 
 import java.io.Serializable;
 import java.nio.file.Path;
@@ -13,16 +11,13 @@ import java.nio.file.Paths;
  *
  * @author Liu Dong
  */
-@Getter
-@Setter
-@ToString
+@Value
 public class KeyStoreSetting implements Serializable {
     private static final long serialVersionUID = -8001899659204205513L;
     // path for keyStore file
-    private boolean useCustom;
     private String keyStore;
     private String keyStorePassword;
-
+    private boolean useCustom;
 
     /**
      * The default key store file path
@@ -53,10 +48,6 @@ public class KeyStoreSetting implements Serializable {
     }
 
     public static KeyStoreSetting getDefault() {
-        KeyStoreSetting setting = new KeyStoreSetting();
-        setting.setKeyStore("");
-        setting.setKeyStorePassword("");
-        setting.setUseCustom(false);
-        return setting;
+        return new KeyStoreSetting("", "", false);
     }
 }

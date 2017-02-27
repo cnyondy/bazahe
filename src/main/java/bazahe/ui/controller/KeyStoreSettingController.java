@@ -45,11 +45,8 @@ public class KeyStoreSettingController {
 
 
     public KeyStoreSetting getModel() {
-        KeyStoreSetting setting = new KeyStoreSetting();
-        setting.setUseCustom(useCustomCheckBox.isSelected());
-        setting.setKeyStore(keyStoreField.getText());
-        setting.setKeyStorePassword(keyStorePasswordField.getText());
-        return setting;
+        return new KeyStoreSetting(keyStoreField.getText(), keyStorePasswordField.getText(),
+                useCustomCheckBox.isSelected());
     }
 
 

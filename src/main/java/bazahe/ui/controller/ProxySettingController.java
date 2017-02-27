@@ -66,14 +66,13 @@ public class ProxySettingController {
     }
 
     public ProxySetting getModel() {
-        ProxySetting proxySetting = new ProxySetting();
-        proxySetting.setUse(useProxy.isSelected());
-        proxySetting.setHost(hostField.getText());
-        proxySetting.setPort(StringUtils.toInt(portFiled.getText()));
-        proxySetting.setUser(userField.getText());
-        proxySetting.setPassword(passwordField.getText());
+        boolean use = useProxy.isSelected();
+        String host = hostField.getText();
+        int port = StringUtils.toInt(portFiled.getText());
+        String user = userField.getText();
+        String password = passwordField.getText();
         RadioButton radioButton = (RadioButton) proxyTypeGroup.getSelectedToggle();
-        proxySetting.setType((String) radioButton.getUserData());
-        return proxySetting;
+        String type = (String) radioButton.getUserData();
+        return new ProxySetting(type, host, port, user, password, use);
     }
 }

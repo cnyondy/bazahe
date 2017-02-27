@@ -24,11 +24,8 @@ public class MainSettingController {
     }
 
     public MainSetting getModel() {
-        MainSetting mainSetting = new MainSetting();
-        mainSetting.setHost(hostField.getText());
-        mainSetting.setPort(StringUtils.toInt(portFiled.getText()));
-        mainSetting.setTimeout(StringUtils.toInt(timeoutField.getText()));
-        return mainSetting;
+        return new MainSetting(hostField.getText(), StringUtils.toInt(portFiled.getText()),
+                StringUtils.toInt(timeoutField.getText()));
     }
 
 }

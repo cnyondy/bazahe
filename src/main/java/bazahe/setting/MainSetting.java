@@ -1,8 +1,6 @@
 package bazahe.setting;
 
-import lombok.Getter;
-import lombok.Setter;
-import lombok.ToString;
+import lombok.Value;
 
 import java.io.Serializable;
 import java.nio.file.Path;
@@ -13,15 +11,13 @@ import java.nio.file.Paths;
  *
  * @author Liu Dong
  */
-@Getter
-@Setter
-@ToString
+@Value
 public class MainSetting implements Serializable {
     private static final long serialVersionUID = -1828819182428842928L;
-    private String host;
-    private int port;
+    private final String host;
+    private final int port;
     // timeout in seconds
-    private int timeout;
+    private final int timeout;
 
     /**
      * Get mainSetting file path
@@ -32,10 +28,6 @@ public class MainSetting implements Serializable {
 
 
     public static MainSetting getDefault() {
-        MainSetting mainSetting = new MainSetting();
-        mainSetting.setHost("");
-        mainSetting.setPort(6080);
-        mainSetting.setTimeout(120);
-        return mainSetting;
+        return new MainSetting("", 6080, 120);
     }
 }
