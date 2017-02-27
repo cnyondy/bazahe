@@ -1,7 +1,7 @@
 package bazahe.httpproxy;
 
 
-import bazahe.utils.NetUtils;
+import bazahe.utils.NetWorkUtils;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import org.bouncycastle.asn1.*;
@@ -134,8 +134,8 @@ public class AppKeyStoreGenerator {
         ExtensionsGenerator extensionsGenerator = new ExtensionsGenerator();
         extensionsGenerator.addExtension(Extension.subjectAlternativeName, false, () -> {
             ASN1EncodableVector nameVector = new ASN1EncodableVector();
-            int hostType = NetUtils.getHostType(host);
-            if (hostType == NetUtils.HOST_TYPE_IPV4 || hostType == NetUtils.HOST_TYPE_IPV6) {
+            int hostType = NetWorkUtils.getHostType(host);
+            if (hostType == NetWorkUtils.HOST_TYPE_IPV4 || hostType == NetWorkUtils.HOST_TYPE_IPV6) {
                 nameVector.add(new GeneralName(GeneralName.iPAddress, host));
             } else {
                 nameVector.add(new GeneralName(GeneralName.dNSName, host));

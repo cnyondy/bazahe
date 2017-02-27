@@ -25,7 +25,7 @@ public class HttpMessagePane extends SplitPane {
     public HttpMessagePane() {
         setOrientation(Orientation.HORIZONTAL);
         setDividerPositions(0.4);
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/bazahe/http_message.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/http_message.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.load();
         HttpMessageController controller = fxmlLoader.getController();

@@ -21,7 +21,7 @@ public class MainSettingDialog extends Dialog<MainSetting> {
 
     @SneakyThrows
     public MainSettingDialog() {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/bazahe/main_setting.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/main_setting.fxml"));
         GridPane gridPane = loader.load();
         MainSettingController controller = loader.getController();
 

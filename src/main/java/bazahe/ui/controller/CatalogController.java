@@ -2,7 +2,7 @@ package bazahe.ui.controller;
 
 import bazahe.httpparse.Message;
 import bazahe.ui.component.CatalogPane;
-import bazahe.utils.NetUtils;
+import bazahe.utils.NetWorkUtils;
 import javafx.collections.ObservableList;
 import javafx.event.EventHandler;
 import javafx.fxml.FXML;
@@ -57,7 +57,6 @@ public class CatalogController {
         });
         messageList.getSelectionModel().selectedItemProperty().addListener((ov, o, n) -> listener.accept(n));
 
-
         val root = new TreeItem<RTreeItemValue>(new RTreeItemValue.NodeValue(""));
         root.setExpanded(true);
         messageTree.setRoot(root);
@@ -96,7 +95,7 @@ public class CatalogController {
     void addTreeItemMessage(Message message) {
         messageList.getItems().add(message);
         val root = messageTree.getRoot();
-        String host = NetUtils.genericMultiCDNS(message.getHost());
+        String host = NetWorkUtils.genericMultiCDNS(message.getHost());
 
 
         for (val item : root.getChildren()) {
@@ -151,7 +150,6 @@ public class CatalogController {
 
 
     private class TreeViewMouseHandler implements EventHandler<MouseEvent> {
-
         @Override
         @SuppressWarnings("unchecked")
         public void handle(MouseEvent event) {
@@ -160,6 +158,9 @@ public class CatalogController {
             }
 
             TreeItem<RTreeItemValue> treeItem = messageTree.getSelectionModel().getSelectedItem();
+            if (treeItem == null) {
+                return;
+            }
             RTreeItemValue itemValue = treeItem.getValue();
 
             ContextMenu contextMenu = new ContextMenu();

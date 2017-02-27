@@ -73,7 +73,7 @@ public class HttpRequestHandler implements Handler {
     }
 
     private void sendIndexHtml(HttpOutputStream out) throws IOException {
-        try (InputStream in = getClass().getResourceAsStream("/html/index.html")) {
+        try (InputStream in = getClass().getResourceAsStream("/www/html/index.html")) {
             byte[] data = ByteStreams.toByteArray(in);
             sendResponse(out, "text/html; charset=utf-8", data);
         }

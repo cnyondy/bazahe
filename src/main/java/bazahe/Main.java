@@ -16,7 +16,7 @@ public class Main extends Application {
 
     @Override
     public void start(Stage stage) throws Exception {
-        VBox root = FXMLLoader.load(getClass().getResource("/bazahe/main.fxml"));
+        VBox root = FXMLLoader.load(getClass().getResource("/fxml/main.fxml"));
         Scene scene = new Scene(root, 1200, 800);
         stage.setTitle("Bazahe");
         stage.setScene(scene);

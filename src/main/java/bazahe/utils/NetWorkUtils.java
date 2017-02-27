@@ -2,7 +2,6 @@ package bazahe.utils;
 
 import com.google.common.collect.ImmutableList;
 import lombok.extern.log4j.Log4j2;
-import org.apache.commons.lang3.tuple.Pair;
 
 import javax.annotation.Nonnull;
 import java.net.Inet4Address;
@@ -19,7 +18,7 @@ import java.util.List;
  * @author Liu Dong
  */
 @Log4j2
-public class NetUtils {
+public class NetWorkUtils {
 
     public static final int HOST_TYPE_IPV6 = 0;
     public static final int HOST_TYPE_IPV4 = 1;
@@ -48,8 +47,22 @@ public class NetUtils {
         return type == HOST_TYPE_DOMAIN;
     }
 
+
+    public static String getHost(String target) {
+        return StringUtils.substringBefore(target, ":");
+    }
+
+    public static int getPort(String target) {
+        int idx = target.indexOf(":");
+        if (idx > 0) {
+            return Integer.parseInt(target.substring(idx + 1));
+        }
+        throw new RuntimeException("Target has no port: " + target);
+    }
+    
+
     @Nonnull
-    public static List<Pair<String, String>> getAddresses() {
+    public static List<NetworkInfo> getAddresses() {
         Enumeration<NetworkInterface> networkInterfaces;
         try {
             networkInterfaces = NetworkInterface.getNetworkInterfaces();
@@ -57,7 +70,7 @@ public class NetUtils {
             logger.warn("cannot get local network interface ip address", e);
             return ImmutableList.of();
         }
-        List<Pair<String, String>> list = new ArrayList<>();
+        List<NetworkInfo> list = new ArrayList<>();
         while (networkInterfaces.hasMoreElements()) {
             NetworkInterface networkInterface = networkInterfaces.nextElement();
             try {
@@ -78,7 +91,7 @@ public class NetUtils {
                 }
             }
             if (!ip.isEmpty()) {
-                list.add(Pair.of(name, ip));
+                list.add(new NetworkInfo(name, ip));
             }
         }
         return list;

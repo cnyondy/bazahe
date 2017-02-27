@@ -1,9 +1,9 @@
 package bazahe.ui.controller;
 
 import bazahe.setting.MainSetting;
+import bazahe.utils.StringUtils;
 import javafx.fxml.FXML;
 import javafx.scene.control.TextField;
-import org.apache.commons.lang3.math.NumberUtils;
 
 /**
  * @author Liu Dong
@@ -26,9 +26,9 @@ public class MainSettingController {
     public MainSetting getModel() {
         MainSetting mainSetting = new MainSetting();
         mainSetting.setHost(hostField.getText());
-        mainSetting.setPort(NumberUtils.toInt(portFiled.getText()));
-        mainSetting.setTimeout(NumberUtils.toInt(timeoutField.getText()));
+        mainSetting.setPort(StringUtils.toInt(portFiled.getText()));
+        mainSetting.setTimeout(StringUtils.toInt(timeoutField.getText()));
         return mainSetting;
     }
-    
+
 }

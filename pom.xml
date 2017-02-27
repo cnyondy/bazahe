@@ -14,6 +14,7 @@
     </properties>
 
     <dependencies>
+        <!-- common libs -->
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
@@ -28,19 +29,17 @@
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>20.0</version>
+            <version>21.0</version>
         </dependency>
-        <dependency>
-            <groupId>org.apache.commons</groupId>
-            <artifactId>commons-lang3</artifactId>
-            <version>3.5</version>
-        </dependency>
+
+        <!-- javafx -->
         <dependency>
             <groupId>org.controlsfx</groupId>
             <artifactId>controlsfx</artifactId>
             <version>8.40.12</version>
         </dependency>
 
+        <!-- decompress -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
@@ -52,6 +51,7 @@
             <version>0.1.0</version>
         </dependency>
 
+        <!-- for jsse -->
         <dependency>
             <groupId>org.bouncycastle</groupId>
             <artifactId>bcprov-jdk15on</artifactId>
@@ -62,12 +62,15 @@
             <artifactId>bcpkix-jdk15on</artifactId>
             <version>1.55</version>
         </dependency>
+
+        <!-- json -->
         <dependency>
             <groupId>org.json</groupId>
             <artifactId>json</artifactId>
             <version>20160810</version>
         </dependency>
 
+        <!-- log -->
         <dependency>
             <groupId>org.apache.logging.log4j</groupId>
             <artifactId>log4j-api</artifactId>
@@ -81,6 +84,7 @@
             <optional>true</optional>
         </dependency>
 
+        <!-- test -->
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>

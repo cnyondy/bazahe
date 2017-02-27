@@ -45,7 +45,7 @@ public class ProxySettingDialog extends Dialog<ProxySetting> {
 
     @SneakyThrows
     public ProxySettingDialog() {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/bazahe/proxy_setting.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/proxy_setting.fxml"));
         GridPane gridPane = loader.load();
         ProxySettingController controller = loader.getController();
 

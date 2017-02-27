@@ -3,6 +3,8 @@ package bazahe.httpproxy;
 import bazahe.Context;
 import bazahe.exception.HttpParserException;
 import bazahe.httpparse.*;
+import bazahe.utils.NetWorkUtils;
+import bazahe.utils.StringUtils;
 import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.io.ByteStreams;
@@ -11,7 +13,6 @@ import lombok.Cleanup;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 import lombok.val;
-import org.apache.commons.lang3.StringUtils;
 
 import javax.annotation.Nullable;
 import javax.net.ssl.SSLContext;
@@ -51,8 +52,8 @@ public class ConnectProxyHandler implements Handler {
         RequestLine requestLine = headers.getRequestLine();
         String target = requestLine.getPath();
         logger.debug("Receive connect request to {}", target);
-        String host = AddressUtils.getHost(target);
-        int port = AddressUtils.getPort(target);
+        String host = NetWorkUtils.getHost(target);
+        int port = NetWorkUtils.getPort(target);
         // just tell client ok..
         HttpOutputStream output = new HttpOutputStream(serverSocket.getOutputStream());
         output.writeLine("HTTP/1.1 200 OK\r\n");
@@ -162,11 +163,11 @@ public class ConnectProxyHandler implements Handler {
         String upgrade = requestHeaders.getFirst("Upgrade");
         String host = requestHeaders.getFirst("Host");
         if (host == null) {
-            host = AddressUtils.getHost(target);
+            host = NetWorkUtils.getHost(target);
         }
-        int port = AddressUtils.getPort(target);
+        int port = NetWorkUtils.getPort(target);
 
-        String url = AddressUtils.getUrl(ssl, upgrade, host, port, requestLine.getPath());
+        String url = getUrl(ssl, upgrade, host, port, requestLine.getPath());
 
 
         @Nullable OutputStream requestStore = null;
@@ -284,4 +285,18 @@ public class ConnectProxyHandler implements Handler {
     }
 
 
+    private static String getUrl(boolean ssl, @Nullable String upgrade, String host, int port, String path) {
+        String protocol;
+        if ("websocket".equals(upgrade)) {
+            protocol = ssl ? "wss" : "ws";
+        } else {
+            protocol = ssl ? "https" : "http";
+        }
+        StringBuilder sb = new StringBuilder(protocol).append("://").append(host);
+        if (!(port == 443 && ssl || port == 80 && !ssl)) {
+            sb.append(":").append(port);
+        }
+        sb.append(path);
+        return sb.toString();
+    }
 }

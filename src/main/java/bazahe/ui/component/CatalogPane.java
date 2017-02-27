@@ -18,7 +18,7 @@ public class CatalogPane extends BorderPane {
 
     @SneakyThrows
     public CatalogPane() {
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/bazahe/catalog_view.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/catalog_view.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.load();
         controller = fxmlLoader.getController();

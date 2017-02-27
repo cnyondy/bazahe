@@ -1,7 +1,7 @@
 package bazahe.ui.controller;
 
-import bazahe.ShutdownHooks;
 import bazahe.Context;
+import bazahe.ShutdownHooks;
 import bazahe.httpparse.HttpMessage;
 import bazahe.httpparse.Message;
 import bazahe.httpparse.WebSocketMessage;
@@ -10,7 +10,7 @@ import bazahe.httpproxy.ProxyServer;
 import bazahe.ui.UIMessageListener;
 import bazahe.ui.UIUtils;
 import bazahe.ui.component.*;
-import bazahe.utils.NetUtils;
+import bazahe.utils.NetWorkUtils;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.event.ActionEvent;
@@ -197,14 +197,14 @@ public class MainController {
             return;
         }
         Platform.runLater(() -> listenedAddressLabel.setText("Listened *" + ":" + port));
-        val addresses = NetUtils.getAddresses();
+        val addresses = NetWorkUtils.getAddresses();
         if (addresses.isEmpty()) {
             // not found valid network interface
             return;
         }
 
 
-        String s = addresses.stream().map(p -> p.getKey() + " " + p.getValue() + ":" + port)
+        String s = addresses.stream().map(p -> p.getName() + " " + p.getIp() + ":" + port)
                 .collect(joining("\n"));
         PopOver popOver = new PopOver();
         popOver.setArrowLocation(PopOver.ArrowLocation.TOP_RIGHT);

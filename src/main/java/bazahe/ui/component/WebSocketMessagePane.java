@@ -22,7 +22,7 @@ public class WebSocketMessagePane extends BorderPane {
 
     @SneakyThrows
     public WebSocketMessagePane() {
-        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/bazahe/web_socket_message.fxml"));
+        FXMLLoader fxmlLoader = new FXMLLoader(getClass().getResource("/fxml/web_socket_message.fxml"));
         fxmlLoader.setRoot(this);
         fxmlLoader.load();
         WebSocketMessageController controller = fxmlLoader.getController();

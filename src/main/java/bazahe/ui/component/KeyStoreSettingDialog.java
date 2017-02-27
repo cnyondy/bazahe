@@ -21,7 +21,7 @@ public class KeyStoreSettingDialog extends Dialog<KeyStoreSetting> {
 
     @SneakyThrows
     public KeyStoreSettingDialog() {
-        FXMLLoader loader = new FXMLLoader(getClass().getResource("/bazahe/key_store_setting.fxml"));
+        FXMLLoader loader = new FXMLLoader(getClass().getResource("/fxml/key_store_setting.fxml"));
         GridPane gridPane = loader.load();
         KeyStoreSettingController controller = loader.getController();
 

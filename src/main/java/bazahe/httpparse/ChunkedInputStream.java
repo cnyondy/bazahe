@@ -1,7 +1,7 @@
 package bazahe.httpparse;
 
 import bazahe.exception.HttpParserException;
-import org.apache.commons.lang3.StringUtils;
+import bazahe.utils.StringUtils;
 
 import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;

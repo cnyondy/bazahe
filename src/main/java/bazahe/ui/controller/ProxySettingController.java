@@ -1,9 +1,9 @@
 package bazahe.ui.controller;
 
 import bazahe.setting.ProxySetting;
+import bazahe.utils.StringUtils;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
-import org.apache.commons.lang3.math.NumberUtils;
 
 /**
  * For set secondary proxy
@@ -69,7 +69,7 @@ public class ProxySettingController {
         ProxySetting proxySetting = new ProxySetting();
         proxySetting.setUse(useProxy.isSelected());
         proxySetting.setHost(hostField.getText());
-        proxySetting.setPort(NumberUtils.toInt(portFiled.getText()));
+        proxySetting.setPort(StringUtils.toInt(portFiled.getText()));
         proxySetting.setUser(userField.getText());
         proxySetting.setPassword(passwordField.getText());
         RadioButton radioButton = (RadioButton) proxyTypeGroup.getSelectedToggle();
