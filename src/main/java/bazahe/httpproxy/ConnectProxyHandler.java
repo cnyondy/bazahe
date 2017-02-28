@@ -3,6 +3,7 @@ package bazahe.httpproxy;
 import bazahe.Context;
 import bazahe.exception.HttpParserException;
 import bazahe.httpparse.*;
+import bazahe.utils.ByteStreamUtils;
 import bazahe.utils.NetWorkUtils;
 import bazahe.utils.StringUtils;
 import com.google.common.base.Strings;
@@ -19,7 +20,10 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLHandshakeException;
 import javax.net.ssl.SSLSocket;
 import javax.net.ssl.SSLSocketFactory;
-import java.io.*;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.Socket;
 import java.util.Set;
 
@@ -40,10 +44,8 @@ public class ConnectProxyHandler implements Handler {
     }
 
     @Override
-    public void handle(Socket serverSocket, String rawRequestLine, @Nullable MessageListener messageListener)
+    public void handle(Socket serverSocket, HttpInputStream input, @Nullable MessageListener messageListener)
             throws IOException {
-        HttpInputStream input = new HttpInputStream(serverSocket.getInputStream());
-        input.putBackLine(rawRequestLine);
         RequestHeaders headers = input.readRequestHeaders();
         if (headers == null) {
             //should not happen because we already check it
@@ -61,7 +63,7 @@ public class ConnectProxyHandler implements Handler {
 
         // read first two byte to see if is ssl/tls connection
         val bos = new ByteArrayOutputStream();
-        TLSInputStream tlsIn = new TLSInputStream(new ObservableInputStream(serverSocket.getInputStream(), bos));
+        TLSInputStream tlsIn = new TLSInputStream(new TeeInputStream(serverSocket.getInputStream(), bos));
         val tlsPlaintextHeader = tlsIn.readPlaintextHeader();
 
         boolean ssl;
@@ -105,10 +107,11 @@ public class ConnectProxyHandler implements Handler {
     private void handle(Socket serverSocket, Socket clientSocket, Boolean ssl, String target,
                         @Nullable MessageListener messageListener) throws IOException {
         OutputStream srcOut = clientSocket.getOutputStream();
-        HttpInputStream srcIn = new HttpInputStream(new BufferedInputStream(
-                new ObservableInputStream(serverSocket.getInputStream(), srcOut)));
-        HttpInputStream dstIn = new HttpInputStream(new BufferedInputStream(
-                new ObservableInputStream(clientSocket.getInputStream(), serverSocket.getOutputStream())));
+        HttpInputStream srcIn = new HttpInputStream(new TeeInputStream(serverSocket.getInputStream(), srcOut));
+        HttpInputStream dstIn = new HttpInputStream(new TeeInputStream(clientSocket.getInputStream(),
+                serverSocket.getOutputStream()));
+        srcIn.enableBuffered();
+        dstIn.enableBuffered();
 
 
         while (true) {
@@ -128,7 +131,9 @@ public class ConnectProxyHandler implements Handler {
                                      boolean ssl, String target,
                                      @Nullable MessageListener messageListener) {
         // If is http traffics
+        srcIn.mark(4096);
         String firstLine = srcIn.readLine();
+        srcIn.reset();
         if (firstLine == null) {
             return true;
         }
@@ -136,11 +141,10 @@ public class ConnectProxyHandler implements Handler {
         String method = StringUtils.substringBefore(firstLine, " ");
         if (!methods.contains(method)) {
             // not http request
-            Streams.tunnel(srcIn, dstIn);
+            ByteStreamUtils.tunnel(srcIn, dstIn);
             return true;
         }
 
-        srcIn.putBackLine(firstLine);
         @Nullable RequestHeaders requestHeaders = srcIn.readRequestHeaders();
         // client close connection
         if (requestHeaders == null) {

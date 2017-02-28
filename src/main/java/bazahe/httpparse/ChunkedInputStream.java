@@ -3,18 +3,15 @@ package bazahe.httpparse;
 import bazahe.exception.HttpParserException;
 import bazahe.utils.StringUtils;
 
-import javax.annotation.Nullable;
 import javax.annotation.concurrent.ThreadSafe;
-import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 
 /**
  * @author Liu Dong
  */
 @ThreadSafe
-class ChunkedInputStream extends FilterInputStream {
+class ChunkedInputStream extends AbstractInputStream {
     private boolean closed = false;
 
     private boolean end = false;
@@ -139,41 +136,5 @@ class ChunkedInputStream extends FilterInputStream {
     @Override
     public synchronized boolean markSupported() {
         return false;
-    }
-
-
-    private final byte[] lineBuffer = new byte[65536];
-
-    /**
-     * Read ascii line, separated by '\r\n'
-     *
-     * @return the line. return null if reach end of input stream
-     */
-    @Nullable
-    private String readLine() throws IOException {
-        int count = 0;
-        boolean flag = false;
-        while (true) {
-            int c = super.read();
-            if (c == -1) {
-                break;
-            }
-            if (c == '\r') {
-                flag = true;
-            } else if (flag) {
-                if (c == '\n') {
-                    break;
-                } else {
-                    flag = false;
-                }
-            }
-            lineBuffer[count] = (byte) c;
-            count++;
-        }
-
-        if (count == 0) {
-            return null;
-        }
-        return new String(lineBuffer, 0, count - 1, StandardCharsets.US_ASCII);
     }
 }

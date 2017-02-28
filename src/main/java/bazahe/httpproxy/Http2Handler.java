@@ -1,6 +1,7 @@
 package bazahe.httpproxy;
 
 import bazahe.httpparse.HttpInputStream;
+import bazahe.utils.ByteStreamUtils;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 
@@ -23,7 +24,7 @@ public class Http2Handler {
 
         // read client connection preface
         // read server connection preface
-        Streams.tunnel(srcInput, destInput);
+        ByteStreamUtils.tunnel(srcInput, destInput);
     }
 
 

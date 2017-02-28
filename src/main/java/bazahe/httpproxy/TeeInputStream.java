@@ -11,10 +11,10 @@ import java.util.Objects;
 /**
  * @author Liu Dong
  */
-class ObservableInputStream extends FilterInputStream {
+class TeeInputStream extends FilterInputStream {
     private final OutputStream output;
 
-    protected ObservableInputStream(InputStream in, OutputStream output) {
+    protected TeeInputStream(InputStream in, OutputStream output) {
         super(Objects.requireNonNull(in));
         this.output = Objects.requireNonNull(output);
     }

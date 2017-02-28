@@ -22,11 +22,10 @@ public class HttpRequestHandler implements Handler {
     }
 
     @Override
-    public void handle(Socket serverSocket, String rawRequestLine,
-                       @Nullable MessageListener messageListener) throws IOException {
-        HttpInputStream input = new HttpInputStream(serverSocket.getInputStream());
+    public void handle(Socket serverSocket, HttpInputStream input, @Nullable MessageListener messageListener)
+            throws IOException {
+        input.enableBuffered();
         HttpOutputStream out = new HttpOutputStream(serverSocket.getOutputStream());
-        input.putBackLine(rawRequestLine);
         RequestHeaders headers = input.readRequestHeaders();
         if (headers == null) {
             return;

@@ -5,7 +5,6 @@ import javax.annotation.concurrent.ThreadSafe;
 import java.io.EOFException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -15,70 +14,11 @@ import java.util.List;
  * @author Liu Dong
  */
 @ThreadSafe
-public class HttpInputStream extends InputStream {
+public class HttpInputStream extends AbstractInputStream {
     private volatile boolean closed;
-    private final InputStream inputStream;
 
     public HttpInputStream(InputStream input) {
-        this.inputStream = input;
-    }
-
-    private byte[] lineBuffer = new byte[256];
-
-    /**
-     * Read ascii line, separated by '\r\n'
-     *
-     * @return the line. return null if reach end of input stream
-     */
-    @Nullable
-    public synchronized String readLine() throws IOException {
-        if (this.line != null) {
-            String line = this.line;
-            this.line = null;
-            return line;
-        }
-        int count = 0;
-        boolean flag = false;
-        while (true) {
-            int c = read();
-            if (c == -1) {
-                break;
-            }
-            if (c == '\r') {
-                flag = true;
-            } else if (flag) {
-                if (c == '\n') {
-                    break;
-                } else {
-                    flag = false;
-                }
-            }
-            if (count >= lineBuffer.length) {
-                byte[] newBuffer = new byte[lineBuffer.length * 2];
-                System.arraycopy(lineBuffer, 0, newBuffer, 0, lineBuffer.length);
-                lineBuffer = newBuffer;
-            }
-            lineBuffer[count] = (byte) c;
-            count++;
-        }
-
-        if (count == 0) {
-            return null;
-        }
-        return new String(lineBuffer, 0, count - 1, StandardCharsets.US_ASCII);
-    }
-
-    @Nullable
-    private String line;
-
-    /**
-     * Hacker for putback request line... do not relay on this method
-     */
-    public synchronized void putBackLine(String line) {
-        if (this.line != null) {
-            throw new IllegalStateException();
-        }
-        this.line = line;
+        super(input);
     }
 
     /**
@@ -126,47 +66,6 @@ public class HttpInputStream extends InputStream {
             rawHeaders.add(line);
         }
         return rawHeaders;
-    }
-
-
-    @Override
-    public synchronized int read() throws IOException {
-        return inputStream.read();
-    }
-
-    @Override
-    public synchronized int read(byte[] b) throws IOException {
-        return inputStream.read(b);
-    }
-
-    @Override
-    public synchronized int read(byte[] b, int off, int len) throws IOException {
-        return inputStream.read(b, off, len);
-    }
-
-    @Override
-    public synchronized long skip(long n) throws IOException {
-        return inputStream.skip(n);
-    }
-
-    @Override
-    public synchronized int available() throws IOException {
-        return inputStream.available();
-    }
-
-    @Override
-    public void mark(int readlimit) {
-        inputStream.mark(readlimit);
-    }
-
-    @Override
-    public synchronized void reset() throws IOException {
-        inputStream.reset();
-    }
-
-    @Override
-    public synchronized boolean markSupported() {
-        return inputStream.markSupported();
     }
 
     @Override

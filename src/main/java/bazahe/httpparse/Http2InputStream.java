@@ -13,7 +13,7 @@ import java.io.InputStream;
  * @author Liu Dong
  */
 @Log4j2
-public class Http2InputStream extends DataInputStream {
+public class Http2InputStream extends AbstractInputStream implements NumberReader {
 
     private CompressionContext compressionContext;
 

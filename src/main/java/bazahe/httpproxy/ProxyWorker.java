@@ -39,7 +39,9 @@ public class ProxyWorker implements Runnable {
     public void run() {
         try {
             HttpInputStream input = new HttpInputStream(serverSocket.getInputStream());
+            input.mark(4096);
             String rawRequestLine = input.readLine();
+            input.reset();
             if (rawRequestLine == null) {
                 //error
                 logger.error("empty client request");
@@ -61,7 +63,7 @@ public class ProxyWorker implements Runnable {
             } else {
                 handler = new CommonProxyHandler();
             }
-            handler.handle(serverSocket, rawRequestLine, messageListener);
+            handler.handle(serverSocket, input, messageListener);
         } catch (HttpParserException e) {
             logger.error("Illegal http data", e);
         } catch (SocketTimeoutException e) {

@@ -1,5 +1,7 @@
 package bazahe.httpproxy;
 
+import bazahe.httpparse.HttpInputStream;
+
 import javax.annotation.Nullable;
 import java.io.IOException;
 import java.net.Socket;
@@ -11,5 +13,6 @@ import java.net.Socket;
  */
 public interface Handler {
 
-    void handle(Socket serverSocket, String rawRequestLine, @Nullable MessageListener messageListener) throws IOException;
+    void handle(Socket serverSocket, HttpInputStream input, @Nullable MessageListener messageListener)
+            throws IOException;
 }

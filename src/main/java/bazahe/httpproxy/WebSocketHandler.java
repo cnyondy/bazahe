@@ -33,19 +33,19 @@ public class WebSocketHandler {
         thread.join();
     }
 
-    private void readWebSocket(InputStream inputStream, String host, String url,
-                               @Nullable MessageListener messageListener, boolean isRequest) throws IOException {
-        WebSocketInputStream srcWSInput = new WebSocketInputStream(inputStream);
+    private void readWebSocket(InputStream input, String host, String url, @Nullable MessageListener messageListener,
+                               boolean isRequest) throws IOException {
+        WebSocketInputStream srcWSInput = new WebSocketInputStream(input);
 
         while (true) {
-            int type = srcWSInput.readMessage();
-            if (type == -1) {
+            WebSocketInputStream.Frame frame = srcWSInput.readMessage();
+            if (frame == null) {
                 break;
             }
             String messageId = MessageIdGenerator.getInstance().nextId();
             @Nullable OutputStream outputStream;
             if (messageListener != null) {
-                outputStream = messageListener.onWebSocket(messageId, host, url, type, isRequest);
+                outputStream = messageListener.onWebSocket(messageId, host, url, frame.getOpcode(), isRequest);
             } else {
                 outputStream = null;
             }

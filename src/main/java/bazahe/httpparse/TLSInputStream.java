@@ -13,7 +13,7 @@ import java.util.List;
  *
  * @author Liu Dong
  */
-public class TLSInputStream extends DataInputStream {
+public class TLSInputStream extends AbstractInputStream implements NumberReader {
 
     public TLSInputStream(InputStream in) {
         super(in);
@@ -23,9 +23,9 @@ public class TLSInputStream extends DataInputStream {
      * Read TLSPlaintext Header
      */
     public TLSPlaintextHeader readPlaintextHeader() throws IOException {
-        int contentType = in.read();
-        int majorVersion = in.read();
-        int minorVersion = in.read();
+        int contentType = read();
+        int majorVersion = read();
+        int minorVersion = read();
         int length = readUnsigned2();
         return new TLSPlaintextHeader(contentType, majorVersion, minorVersion, length);
     }
@@ -37,7 +37,7 @@ public class TLSInputStream extends DataInputStream {
      * @throws IOException
      */
     public HandShakeMessage<?> readHandShakeMessage() throws IOException {
-        int messageType = in.read();
+        int messageType = read();
         int length = readUnsigned3();
         if (messageType == HandShakeMessage.hello_request) {
             return new HandShakeMessage<>(messageType, length, readHelloRequest(length));
@@ -64,14 +64,14 @@ public class TLSInputStream extends DataInputStream {
     }
 
     private List<String> readHello(int length) throws IOException {
-        int majorVersion = in.read();
-        int minorVersion = in.read();
+        int majorVersion = read();
+        int minorVersion = read();
         byte[] random = readExact(32);
-        int sessionIdLen = in.read();
+        int sessionIdLen = read();
         byte[] sessionId = readExact(sessionIdLen);
         int cipherSuiteLen = readUnsigned2();
         byte[] cipherSuite = readExact(cipherSuiteLen);
-        int compressionMethodsLen = in.read();
+        int compressionMethodsLen = read();
         byte[] compressionMethods = readExact(compressionMethodsLen);
 
         List<String> alpnNames = new ArrayList<>();

@@ -10,7 +10,6 @@ import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
 
 import javax.annotation.Nullable;
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,10 +28,9 @@ import java.util.*;
 public class CommonProxyHandler implements Handler {
 
     @Override
-    public void handle(Socket serverSocket, String rawRequestLine, @Nullable MessageListener messageListener)
+    public void handle(Socket serverSocket, HttpInputStream input, @Nullable MessageListener messageListener)
             throws IOException {
-        HttpInputStream input = new HttpInputStream(new BufferedInputStream(serverSocket.getInputStream()));
-        input.putBackLine(rawRequestLine);
+        input.enableBuffered();
         HttpOutputStream output = new HttpOutputStream(serverSocket.getOutputStream());
 
         while (true) {
@@ -147,7 +145,7 @@ public class CommonProxyHandler implements Handler {
     private InputStream getResponseBodyInput(@Nullable OutputStream responseOutput, InputStream responseBody) {
         if (responseOutput != null) {
             try {
-                responseBody = new ObservableInputStream(responseBody, responseOutput);
+                responseBody = new TeeInputStream(responseBody, responseOutput);
             } catch (Throwable e) {
                 logger.error("", e);
             }
@@ -200,7 +198,7 @@ public class CommonProxyHandler implements Handler {
                 requestOutput.close();
             } else {
                 try {
-                    requestBody = new ObservableInputStream(requestBody, requestOutput);
+                    requestBody = new TeeInputStream(requestBody, requestOutput);
                 } catch (Throwable e) {
                     logger.error("", e);
                 }

@@ -1,5 +1,7 @@
 package bazahe.httpparse;
 
+import lombok.Getter;
+import lombok.ToString;
 import lombok.extern.log4j.Log4j2;
 
 import javax.annotation.Nullable;
@@ -15,7 +17,7 @@ import java.net.SocketException;
  * @author Liu Dong
  */
 @Log4j2
-public class WebSocketInputStream extends DataInputStream {
+public class WebSocketInputStream extends AbstractInputStream implements NumberReader {
 
     public WebSocketInputStream(InputStream inputStream) {
         super(inputStream);
@@ -26,16 +28,13 @@ public class WebSocketInputStream extends DataInputStream {
     /**
      * Read an entire webSocket data message
      *
-     * @return the type(opcode) of this message. return -1 if reach the end of stream
+     * @return the websocket message. return null if reach the end of stream
      */
-    public int readMessage() throws IOException {
+    @Nullable
+    public Frame readMessage() throws IOException {
         Frame frame = readDataFrame();
         lastFrame = frame;
-        if (frame == null) {
-            return -1;
-        }
-
-        return frame.opcode;
+        return frame;
     }
 
     /**
@@ -91,7 +90,7 @@ public class WebSocketInputStream extends DataInputStream {
     private Frame readFrameHeader() throws IOException {
         int first;
         try {
-            first = in.read();
+            first = read();
         } catch (SocketException e) {
             // special hack for socket close. because we did not use control frames
             if (e.getMessage() != null && e.getMessage().contains("closed")) {
@@ -102,13 +101,13 @@ public class WebSocketInputStream extends DataInputStream {
         if (first == -1) {
             return null;
         }
-        int second = in.read();
+        int second = read();
         boolean fin = BitUtils.getBit(first, 7) != 0;
         boolean rsv1 = BitUtils.getBit(first, 6) != 0;
         boolean rsv2 = BitUtils.getBit(first, 5) != 0;
         boolean rsv3 = BitUtils.getBit(first, 4) != 0;
         int opcode = first & 0xf;
-        boolean mask = BitUtils.getBit(first, 7) != 0;
+        boolean mask = BitUtils.getBit(second, 7) != 0;
         long payloadLen = second & 0x7f;
         if (payloadLen <= 125) {
 
@@ -125,7 +124,9 @@ public class WebSocketInputStream extends DataInputStream {
         return new Frame(fin, opcode, payloadLen, mask, maskData);
     }
 
-    private class Frame {
+    @ToString
+    @Getter
+    public class Frame {
         private static final int FRAME_CONTINUATION = 0;
         private static final int FRAME_TEXT = 1;
         private static final int FRAME_BINARY = 2;
@@ -158,7 +159,7 @@ public class WebSocketInputStream extends DataInputStream {
             long total = 0;
             while (true) {
                 int toRead = (int) Math.min(payloadLen - total, bufferSize);
-                int read = in.read(buffer, 0, toRead);
+                int read = read(buffer, 0, toRead);
                 if (read == -1) {
                     break;
                 }
@@ -175,7 +176,7 @@ public class WebSocketInputStream extends DataInputStream {
             long total = 0;
             while (true) {
                 int toRead = (int) Math.min(payloadLen - total, bufferSize);
-                int read = in.read(buffer, 0, toRead);
+                int read = read(buffer, 0, toRead);
                 if (read == -1) {
                     break;
                 }
