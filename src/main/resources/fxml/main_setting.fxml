@@ -17,4 +17,10 @@
 
     <Label text="Timeout(Seconds)" GridPane.columnIndex="0" GridPane.rowIndex="3"/>
     <TextField fx:id="timeoutField" GridPane.columnIndex="1" GridPane.rowIndex="3" maxWidth="80"/>
+
+    <Label text="Save Path" GridPane.columnIndex="0" GridPane.rowIndex="4"/>
+    <TextField fx:id="savePath" GridPane.columnIndex="1" GridPane.rowIndex="4" maxWidth="250"/>
+
+    <Label text="Auto Save Resource" GridPane.columnIndex="0" GridPane.rowIndex="5"/>
+    <CheckBox fx:id="autoSave" GridPane.columnIndex="1" GridPane.rowIndex="5" />
 </GridPane>

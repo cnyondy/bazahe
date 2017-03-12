@@ -19,6 +19,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.SplitMenuButton;
 import javafx.scene.control.SplitPane;
 import javafx.scene.layout.VBox;
+import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import lombok.SneakyThrows;
 import lombok.extern.log4j.Log4j2;
@@ -30,7 +31,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.Collection;
 
-import static java.util.stream.Collectors.*;
+import static java.util.stream.Collectors.joining;
 
 /**
  * @author Liu Dong
@@ -44,7 +45,7 @@ public class MainController {
     @FXML
     private SplitMenuButton setKeyStoreButton;
     @FXML
-    private MyButton saveFileButton;
+    private SplitMenuButton saveFileButton;
     @FXML
     private MyButton openFileButton;
     @FXML
@@ -112,7 +113,8 @@ public class MainController {
                 openFileButton.setDisable(false);
                 saveFileButton.setDisable(false);
                 listenedAddressLabel.setText("");
-                listenedAddressLabel.setOnMouseClicked(event -> {});
+                listenedAddressLabel.setOnMouseClicked(event -> {
+                });
             });
         }).start();
     }
@@ -246,6 +248,10 @@ public class MainController {
     @FXML
     void open(ActionEvent e) {
         FileChooser fileChooser = new FileChooser();
+        File dir = new File(context.getMainSetting().getPath());
+        if (dir.exists()) {
+            fileChooser.setInitialDirectory(dir);
+        }
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Bazahe archive data", "*.baza"));
         File file = fileChooser.showOpenDialog(this.root.getScene().getWindow());
         if (file == null) {
@@ -261,6 +267,10 @@ public class MainController {
     @FXML
     void save(ActionEvent e) throws IOException {
         FileChooser fileChooser = new FileChooser();
+        File dir = new File(context.getMainSetting().getPath());
+        if (dir.exists()) {
+            fileChooser.setInitialDirectory(dir);
+        }
         fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("Bazahe archive data", "*.baza"));
         fileChooser.setInitialFileName("bazahe.baza");
         File file = fileChooser.showSaveDialog(this.root.getScene().getWindow());
@@ -303,5 +313,22 @@ public class MainController {
             return;
         }
         Files.write(file.toPath(), data);
+    }
+
+    @FXML
+    @SneakyThrows
+    public void saveResources(ActionEvent actionEvent) {
+        DirectoryChooser dirChooser = new DirectoryChooser();
+        File dir = new File(context.getMainSetting().getPath());
+        if (dir.exists()) {
+            dirChooser.setInitialDirectory(dir);
+        }
+        File file = dirChooser.showDialog(this.root.getScene().getWindow());
+        if (file == null) {
+            return;
+        }
+        Collection<Message> messages = catalogController.getMessages();
+        val saveTask = new SaveTrafficResourceTask(file.getPath(), messages);
+        UIUtils.runBackground(saveTask, "Save resource failed!");
     }
 }

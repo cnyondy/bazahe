@@ -167,7 +167,7 @@ public class BodyStore extends OutputStream implements Serializable {
         file = File.createTempFile("bazahe_tmp", ".tmp");
         file.deleteOnExit();
         fos = new BufferedOutputStream(new FileOutputStream(file));
-        bos.close();
+        if (null != bos) bos.close();
     }
 
     /**

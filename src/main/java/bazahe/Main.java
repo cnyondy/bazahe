@@ -13,9 +13,11 @@ import lombok.extern.log4j.Log4j2;
  */
 @Log4j2
 public class Main extends Application {
+    public static Stage Stage;
 
     @Override
     public void start(Stage stage) throws Exception {
+        Stage = stage;
         VBox root = FXMLLoader.load(getClass().getResource("/fxml/main.fxml"));
         Scene scene = new Scene(root, 1200, 800);
         stage.setTitle("Bazahe");
@@ -28,7 +30,7 @@ public class Main extends Application {
                 try {
                     task.run();
                 } catch (Throwable t) {
-                    logger.error("", t);
+                    //logger.error("", t);
                 }
             }
             Platform.exit();

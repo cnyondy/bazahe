@@ -1,5 +1,7 @@
 package bazahe.ui.controller;
 
+import bazahe.Main;
+import bazahe.httpparse.HttpMessage;
 import bazahe.httpparse.Message;
 import bazahe.ui.component.CatalogPane;
 import bazahe.utils.NetWorkUtils;
@@ -17,8 +19,10 @@ import lombok.Setter;
 import lombok.SneakyThrows;
 import lombok.val;
 
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -93,6 +97,14 @@ public class CatalogController {
 
     @SneakyThrows
     void addTreeItemMessage(Message message) {
+        if(message instanceof HttpMessage){
+            HttpMessage httpMessage = (HttpMessage) message;
+            SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss.S|");
+            String dateString = formatter.format(new Date(httpMessage.getRequestTime()));
+            Main.Stage.setTitle(dateString+httpMessage.getUrl());
+        }
+
+
         messageList.getItems().add(message);
         val root = messageTree.getRoot();
         String host = NetWorkUtils.genericMultiCDNS(message.getHost());

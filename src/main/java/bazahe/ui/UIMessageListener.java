@@ -36,6 +36,7 @@ public class UIMessageListener implements MessageListener {
     public OutputStream onHttpRequest(String messageId, String host, String url, RequestHeaders requestHeaders) {
         BodyStore bodyStore = BodyStore.of(requestHeaders.contentType(), requestHeaders.contentEncoding());
         HttpMessage item = new HttpMessage(messageId, host, url, requestHeaders, bodyStore);
+        item.setRequestTime(System.currentTimeMillis());
         this.httpMap.put(messageId, item);
         Platform.runLater(() -> consumer.accept(item));
         return bodyStore;
@@ -48,6 +49,7 @@ public class UIMessageListener implements MessageListener {
             logger.error("Cannot found request item for id: {}", messageId);
             return null;
         }
+        item.setResponseTime(System.currentTimeMillis());
         item.setResponseHeaders(responseHeaders);
         BodyStore bodyStore = BodyStore.of(responseHeaders.contentType(), responseHeaders.contentEncoding());
         item.setResponseBody(bodyStore);

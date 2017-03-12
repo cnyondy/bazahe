@@ -18,6 +18,8 @@ public class MainSetting implements Serializable {
     private final int port;
     // timeout in seconds
     private final int timeout;
+    private final String path;
+    private final boolean autoSave;
 
     /**
      * Get mainSetting file path
@@ -28,6 +30,7 @@ public class MainSetting implements Serializable {
 
 
     public static MainSetting getDefault() {
-        return new MainSetting("", 6080, 120);
+        return new MainSetting("", 6080, 120,
+                System.getProperty("user.dir"), false);
     }
 }
